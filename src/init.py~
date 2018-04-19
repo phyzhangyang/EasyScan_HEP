@@ -165,5 +165,5 @@ def checkItemInList(List):
     for item in List:
         counter = List.count(item)
         if counter>1:
-            ErrorStop('Figure name / output variable name "%s" duplicating %i times! Please correct in [plot] / [programX] in your input file!!'%(item, counter))
+            ErrorStop('Figure name / output variable name "%s" duplicating %i times! Please correct in [plot] / [programX] in your input file!!'%(name, counter))
          

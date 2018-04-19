@@ -92,7 +92,6 @@ def ReadIn(Configfile,ES,Programs,CS,Ploter):
         Programs[ii].setInputVar(cf.get(ii, 'Input variable'))
         Programs[ii].setOutputFile(cf.get(ii, 'Output file'))
         Programs[ii].setOutputVar(cf.get(ii, 'Output variable'))
-        ##new 20180419 liang
         for key, item in Programs[ii]._OutputVar.items():
             for subitem in item:
                 outputVarNames.append(subitem[0])

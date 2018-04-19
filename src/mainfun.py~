@@ -614,8 +614,9 @@ class program:
                     path = os.path.join(path,"SavedFile")
                     SavePath = os.path.join(path, os.path.basename(self._OutputFile[ii]))+"."+str(self._Count)
                     shutil.copy(self._OutputFile[ii],SavePath)
-                ##new 20180419 liang
                 par[jj[0]] = self._OutputFile[ii].split('/')[-1]
+                print par[jj[0]]
+                raw_input()
             
             if len(self._OutPosVar[ii])+ len(self._OutLabelVar[ii]) + len(self._OutSLHAVar[ii])>0 :
                 oulines = open(self._OutputFile[ii]).readlines()

@@ -24,14 +24,24 @@ import readin
 
 # define basic class object
 ES       = mf.EasyScanInput()
-Programs ={}
+Programs = {}
 CS       = mf.constraint()
 Ploter   = mf.plot()
 ProgID   = readin.ReadIn(sys.argv[1],ES,Programs,CS,Ploter)
 
-
+## new 20180416 liang
+if ES.getScanMethod() == 'RANDOM':
+    ResultFile = 'RandomData.txt'
+elif ES.getScanMethod() == 'MCMC':
+    ResultFile = 'MCMCData.txt'
+elif ES.getScanMethod() == 'MULTINEST':
+    ResultFile = 'MultiNestData/ev.dat'
+elif ES.getScanMethod() == 'GRID':
+    ResultFile = 'GridData.txt'
+elif ES.getScanMethod() == 'READ':
+    ResultFile = 'ReadData.txt'
 if ES.getScanMethod() != 'PLOT':
-    ip.WriteResultInf(ES.InPar,ES.OutPar,ES.getFileName(),ES.getScanMethod())
+    ip.WriteResultInf(ES.InPar,ES.OutPar,ES.getFileName(),ES.getScanMethod(), ResultFile)
 
 # logarithm of likelihood function
 def LogLikelihood(cube, ndim, nparams):
@@ -40,11 +50,16 @@ def LogLikelihood(cube, ndim, nparams):
         ES.InPar [name]=cube[i]
         ES.AllPar[name]=cube[i]
     # Run each programs
+    # ES.AllPar is a dictionary involving variables and their values of scanning parameters and output variables. 
     for ii in ProgID:
         if Programs[ii].getRunFlag(ES.AllPar):
             Programs[ii].WriteInputFile(ES.AllPar)
+            # new 20180416 liang
+            Programs[ii].RemoveOutputFile()
             Programs[ii].RunProgram()
             Phy = Programs[ii].ReadOutputFile(ES.AllPar,ES.getFileName())
+            if Phy:
+                Phy = Programs[ii].ReadBound(ES.AllPar)
         else:
             Phy = Programs[ii].SetOutput(ES.AllPar)
         # if the point is unphysical, return log(0)
@@ -72,7 +87,7 @@ def Prior(cube, ndim, nparams):
 ## Load corresponding scan method
 if ES.getScanMethod() == 'RANDOM':
     from scanmanner import randomrun
-    ResultFile = 'RandomData.txt'
+#    ResultFile = 'RandomData.txt'
     randomrun(
         LogLikelihood        = LogLikelihood,
         Prior                = Prior,
@@ -85,7 +100,7 @@ if ES.getScanMethod() == 'RANDOM':
 
 elif ES.getScanMethod() == 'MCMC':
     from scanmanner import mcmcrun
-    ResultFile = 'MCMCData.txt'
+#    ResultFile = 'MCMCData.txt'
     mcmcrun(
         LogLikelihood        = LogLikelihood,
         Prior                = Prior,
@@ -104,7 +119,7 @@ elif ES.getScanMethod() == 'MCMC':
 
 elif ES.getScanMethod() == 'MULTINEST':
     import pymultinest
-    ResultFile = 'MultiNestData/ev.dat'
+#    ResultFile = 'MultiNestData/ev.dat'
     pymultinest.run(
         LogLikelihood        = LogLikelihood,
         Prior                = Prior,
@@ -129,7 +144,7 @@ elif ES.getScanMethod() == 'MULTINEST':
 
 elif ES.getScanMethod() == 'GRID':
     from scanmanner import gridrun
-    ResultFile = 'GridData.txt'
+#    ResultFile = 'GridData.txt'
     gridrun(
         LogLikelihood        = LogLikelihood,
         Prior                = Prior,
@@ -143,7 +158,7 @@ elif ES.getScanMethod() == 'GRID':
 
 elif ES.getScanMethod() == 'READ':
     from scanmanner import readrun
-    ResultFile = 'ReadData.txt'
+#    ResultFile = 'ReadData.txt'
     readrun(
             LogLikelihood        = LogLikelihood,
             Prior                = Prior,
