@@ -3,7 +3,7 @@
 ####################################################################
 
 ## External modules.
-import os,sys
+import os,sys,shutil
 from random import random,gauss
 from math import exp
 ## Internal modules.
@@ -79,9 +79,19 @@ def gridrun(LogLikelihood,Prior,n_dims,n_params,inpar,bin_num,n_print,outputfile
         Prior(cube, n_dims, n_params)
         loglike = LogLikelihood(cube, n_dims, n_params)
         if loglike > sf.log_zero:
+
+            #new 20180420 liang
+            cube, acceptFiles=sf.checkFileInList(cube)
+
             Naccept += 1
             f_out.write('\t'.join([str(x) for x in cube])+'\t'+str(loglike)+'\n')
             f_out.flush()
+
+            #new 20180420 liang
+            for File in acceptFiles:
+                path = os.path.join(outputfiles_basename,"SavedFile")
+                SavePath = os.path.join(path, os.path.basename(File)+"."+str(Naccept))
+                shutil.copy(File, SavePath)
 
         if (Nrun+1)%n_print == 0:
             print '------------ Num: %i ------------'%(Nrun+1)
@@ -109,9 +119,21 @@ def randomrun(LogLikelihood,Prior,n_dims,n_params,n_live_points,n_print,outputfi
         Prior(cube, n_dims, n_params)
         loglike = LogLikelihood(cube, n_dims, n_params)
         if loglike > sf.log_zero:
+
+            #new 20180420 liang
+            cube, acceptFiles=sf.checkFileInList(cube)
+
             Naccept += 1
             f_out.write('\t'.join([str(x) for x in cube])+'\t'+str(loglike)+'\n')
             f_out.flush()
+
+            #new 20180420 liang
+            for File in acceptFiles:
+                path = os.path.join(outputfiles_basename,"SavedFile")
+                SavePath = os.path.join(path, os.path.basename(File)+"."+str(Naccept))
+                shutil.copy(File, SavePath)
+ 
+
         if (Nrun+1)%n_print == 0:
             print '------------ Num: %i ------------'%(Nrun+1)
             print 'Input    par   = '+str(cube[0:n_dims])
@@ -199,6 +221,9 @@ def mcmcrun(LogLikelihood,Prior,n_dims,n_params,n_live_points,inpar,outpar,StepS
                 Flag_accept = random() < exp(CurChisq-Chisq) 
 
         if Flag_accept :
+            #new 20180420 liang
+            CurObs, acceptFiles=sf.checkFileInList(CurObs)
+
             f_out.write('\t'.join([str(x) for x in CurObs])+'\t'+str(-2*CurChisq)+'\t'+str(mult)+'\n')
             f_out.flush()
             CurChisq = Chisq
@@ -208,6 +233,13 @@ def mcmcrun(LogLikelihood,Prior,n_dims,n_params,n_live_points,inpar,outpar,StepS
             if Chisq < MinChisq : MinChisq = Chisq
             Naccept += 1
             mult = 1
+
+            #new 20180420 liang
+            for File in acceptFiles:
+                path = os.path.join(outputfiles_basename,"SavedFile")
+                SavePath = os.path.join(path, os.path.basename(File)+"."+str(Naccept))
+                shutil.copy(File, SavePath)
+
         else:
             mult +=1
 

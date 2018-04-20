@@ -165,5 +165,22 @@ def checkItemInList(List):
     for item in List:
         counter = List.count(item)
         if counter>1:
-            ErrorStop('Figure name / output variable name "%s" duplicating %i times! Please correct in [plot] / [programX] in your input file!!'%(name, counter))
-         
+            ErrorStop('Figure name / output variable name "%s" duplicating %i times! Please correct in [plot] / [programX] in your input file!!'%(item, counter))
+        
+#new 20180420 liang
+def checkFileInList(List):
+    newList=[]
+    files=[]
+    for item in List:
+        try:
+            float(item)
+            newList.append(item)
+        except ValueError:
+            if item.find('//') >= 0:
+                files.append(item)
+                newList.append(item.split('/')[-1])
+            else:
+                newList.append(item)
+
+    return newList, files
+ 
