@@ -218,6 +218,8 @@ def mcmcrun(LogLikelihood,Prior,n_dims,n_params,n_live_points,inpar,outpar,StepS
             if CurChisq > Chisq: 
                 Flag_accept = True
             else:
+                print random()
+                raw_input()
                 Flag_accept = random() < exp(CurChisq-Chisq) 
 
         if Flag_accept :
