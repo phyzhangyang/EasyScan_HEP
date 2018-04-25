@@ -355,7 +355,7 @@ class program:
         outputvar=sf.string2nestlist(outputvar)
         for ii in outputvar:
             if not ii[1] in self._OutFileID:
-                sf.ErrorStop( 'For output variable "%s" in program "%s", There is no output file with ID "%s"'%(ii[0],self._ProgName, ii[1]) )
+                sf.ErrorStop( 'For output variable "%s" in program "%s", There is no output file with ID="%s".'%(ii[0],self._ProgName, ii[1]) )
             self.outvar[ii[0]] = sf.NaN
         sf.Info('Output variable = ')
         for ii in self._OutFileID:
@@ -476,10 +476,14 @@ class program:
             ## inlines is a list of all lines
             ## invars is a list of list of words for all lines
             inlines = open(self._InputFile[ii]).readlines()
-            invar = [ss.split() for ss in inlines]
+            ## new 20180425 liang
+            #invar = [ss.split() for ss in inlines]
+            invar = [re.split(r'[ \t,]+', ss.strip()) for ss in inlines]
 
             ## invarNotModify for giving beutiful file as same as possible compared to the original input file.
-            invarNotModify = [ss.split() for ss in inlines]
+            ## new 20180425 liang
+            #invarNotModify = [ss.split() for ss in inlines]
+            invarNotModify = [re.split(r'[ \t,]+', ss.strip()) for ss in inlines]
 
             ## if return, only support "replace" method
             #return
@@ -531,9 +535,7 @@ class program:
               if invar[xxi] == invarNotModify[xxi]:
                  outlines.append( inlines[xxi] )
               else:
-                 outlines.append( "  \t".join(invar[xxi])+"\n" )
-            #outlines = [ ' '.join(ss)+'\n' for ss in invar]
-            #open(self._InputFile[ii],'w').writelines(outlines)
+                 outlines.append( "  ".join(invar[xxi])+"\n" )
             open(self._InputFile[ii],'w').writelines(outlines)
 
     def RunProgram(self):
@@ -611,16 +613,19 @@ class program:
                 return False
             ## For 'File' method
             for jj in self._OutFileVar[ii]:
+                ##marked 20180420 liang
                 #if jj[3].lower() == 'save' :
                 #    self._Count += 1
                 #    path = os.path.join(path,"SavedFile")
                 #    SavePath = os.path.join(path, os.path.basename(self._OutputFile[ii]))+"."+str(self._Count)
                 #    shutil.copy(self._OutputFile[ii],SavePath)
                 par[jj[0]] = self._OutputFile[ii]
-            
+        
             if len(self._OutPosVar[ii])+ len(self._OutLabelVar[ii]) + len(self._OutSLHAVar[ii])>0 :
                 oulines = open(self._OutputFile[ii]).readlines()
-                ouvar = [ss.split() for ss in oulines]
+                ## new 20180425 liang
+                #ouvar = [ss.split() for ss in oulines]
+                ouvar = [re.split(r'[ \t,]+', ss.strip()) for ss in oulines]
             
             ## For 'Position' method
             for jj in self._OutPosVar[ii]:
@@ -635,10 +640,12 @@ class program:
 #                labelinum = [xxi for xx,xxi in enumerate(oulines) if jj[3] in xx]
                 labeline = [xx for xx in oulines if jj[3] in xx]
                 if len(labeline)>1:
-                    sf.ErrorStop( 'For output variable "%s" in program "%s" with "Label" method, there is %s "%s" in output file "%s". Please choose other method.'%(jj[0],self._ProgName,len(labelinum),jj[3],self._OutputFile[ii]) )
+                    sf.ErrorStop( 'For output variable "%s" in program "%s" with "Label" method, there is %d "%s" in output file "%s". Please choose other method.'%(jj[0],self._ProgName,len(labelinum),jj[3],self._OutputFile[ii]) )
 
                 try:
-                    par[jj[0]] = float(labeline[0].split()[jj[4]-1])
+                    ## new 20180425 liang
+                    #par[jj[0]] = float(labeline[0].split()[jj[4]-1])
+                    par[jj[0]] = float(re.split(r'[ \t,]+',labeline[0].strip())[jj[4]-1])
                 except:
                     sf.Debug('Can not read the output var',jj[0])
                     return False
