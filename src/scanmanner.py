@@ -10,9 +10,10 @@ from math import exp
 import init as sf
 
 def readrun(LogLikelihood,Prior,n_dims,n_params,inpar,bin_num,n_print,outputfiles_basename,outputfiles_filename):
-    #print "readrun() in scanmanner.py 01llllllll"
-    #print outputfiles_basename,outputfiles_filename
     f_out = open(os.path.join(outputfiles_basename,outputfiles_filename),'w')
+    #new 20180420 liang
+    f_out2 = open(os.path.join(outputfiles_basename,'All_'+outputfiles_filename),'w')
+
     import mainfun as mf
     Ploter = mf.plot()
     Ploter.setPlotPar(outputfiles_basename)
@@ -40,11 +41,19 @@ def readrun(LogLikelihood,Prior,n_dims,n_params,inpar,bin_num,n_print,outputfile
             cube[i] = Ploter._data[name][iner]
         
         loglike = LogLikelihood(cube, n_dims, n_params)
-        #if loglike > sf.log_zero:
-        if True:
+        if loglike > sf.log_zero:
+            #new 20180420 liang
+            cube, acceptFiles=sf.checkFileInList(cube)
+
             Naccept += 1
             f_out.write('\t'.join([str(x) for x in cube])+'\t'+str(loglike)+'\n')
             f_out.flush()
+
+            #new 20180420 liang
+            for File in acceptFiles:
+                path = os.path.join(outputfiles_basename,"SavedFile")
+                SavePath = os.path.join(path, os.path.basename(File)+"."+str(Naccept))
+                shutil.copy(File, SavePath)
         
         if (Nrun+1)%n_print == 0:
             print '------------ Num: %i ------------'%(Nrun+1)
@@ -53,6 +62,9 @@ def readrun(LogLikelihood,Prior,n_dims,n_params,inpar,bin_num,n_print,outputfile
             print '     loglike   = '+str(loglike)
             print 'Accepted Num   = '+str(Naccept)
             print 'Total    Num   = '+str(Nrun+1)
+
+        f_out2.write('\t'.join([str(x) for x in cube])+'\t'+str(loglike)+'\n')
+        f_out2.flush()
 
 def gridrun(LogLikelihood,Prior,n_dims,n_params,inpar,bin_num,n_print,outputfiles_basename,outputfiles_filename):
     f_out = open(os.path.join(outputfiles_basename,outputfiles_filename),'w')
@@ -124,8 +136,6 @@ def randomrun(LogLikelihood,Prior,n_dims,n_params,n_live_points,n_print,outputfi
         
         Prior(cube, n_dims, n_params)
         loglike = LogLikelihood(cube, n_dims, n_params)
-        print loglike
-        raw_input()
         if loglike > sf.log_zero:
 
             #new 20180420 liang

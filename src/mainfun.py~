@@ -78,7 +78,7 @@ class program:
             sf.Info('  fileID= %s \tFile= %s'%(ii[0],ii[1]))
 
     ## check functions for whether contents in input variable and output variable in configure is matching with contents in corresponding input file and output file with methods "file", "position", "label", "slha""
-    def checkInOutVar_file(self, fileID):
+    def checkVar_file(self, fileID):
             ## For 'File' method
             ## check the input vars that use 'File' method
 
@@ -100,7 +100,7 @@ class program:
            
             return file_flag 
 
-    def checkInOutVar_position(self, fileID, fileFlag, status):
+    def checkVar_position(self, fileID, fileFlag, status):
             ## For 'Position' method
             ## check the input vars that use 'Position' method
            
@@ -110,7 +110,7 @@ class program:
             if status.lower()=="invar":
                self._InPosVar[ii] = [x for x in self._InputVar if (x[1] == ii) and (x[2].lower() == 'position')]
             elif status.lower()=="outvar":
-               self._InPosVar[ii] = [x for x in self._OutputVar if (x[1] == ii) and (x[2].lower() == 'position')]
+               self._OutPosVar[ii] = [x for x in self._OutputVar if (x[1] == ii) and (x[2].lower() == 'position')]
             else:
                return
 
@@ -141,7 +141,7 @@ class program:
                         sf.ErrorStop('For input variable "%s" in program "%s" with "Position" method, the column number is larger than the number of columns in line %s of input file "%s". Please check your input file.'%(jj[0],self._ProgName,jj[3],self._InputFile[ii]) )
 
 
-    def checkInOutVar_label(self, fileID, fileFlag):
+    def checkVar_label(self, fileID, fileFlag):
             ## For 'Label' method
             ## save the input vars that use 'Label' method
 
@@ -174,7 +174,7 @@ class program:
                         if invar[kk][jj[4]-1] == jj[3]:
                             sf.ErrorStop( 'For input variable "%s" in program "%s" with "Label" method, the extracting item with column ID "%i" is just the label "%s" in the corresponding labeled line "%s" of input file "%s".'%(jj[0], self._ProgName, jj[4], jj[3], invar[labelinum[0]], self._InputFile[ii]) )
 
-    def checkInOutVar_slha(self, fileID, fileFlag):
+    def checkVar_slha(self, fileID, fileFlag):
             ## For 'SLHA' method
             ## check the input vars that use 'SLHA' method
 
@@ -239,7 +239,7 @@ class program:
                     if not ks_flag:
                         sf.ErrorStop( 'For input variable "%s" in program "%s" with "SLHA" method, can not find required line with key "%s" in "%s %s" of the input file "%s".'%(jj[0], self._ProgName, jj[5:], jj[3], jj[4], self._InputFile[ii]) )
 
-    def checkInOutVar_replace(self, fileID, fileFlag):
+    def checkVar_replace(self, fileID, fileFlag):
             ## For 'Replace' method
             ## check the input vars that use 'Replace' method
 
@@ -322,23 +322,23 @@ class program:
         for ii in self._InFileID:
             ## For 'File' method 
             ## check the input vars that use 'File' method
-            file_flag=self.checkInOutVar_file(ii)
+            file_flag=self.checkVar_file(ii)
 
             ## For 'Replace' method
             ## check the input vars that use 'Replace' method
-            self.checkInOutVar_replace(ii, file_flag)
+            self.checkVar_replace(ii, file_flag)
             
             ## For 'Position' method
             ## check the input vars that use 'Position' method
-            self.checkInOutVar_position(ii, file_flag, "invar")
+            self.checkVar_position(ii, file_flag, "invar")
                          
             ## For 'Label' method
             ## check the input vars that use 'Label' method
-            self.checkInOutVar_label(ii, file_flag)
+            self.checkVar_label(ii, file_flag)
                                 
             ## For 'SLHA' method
             ## check the input vars that use 'SLHA' method
-            self.checkInOutVar_slha(ii, file_flag)
+            self.checkVar_slha(ii, file_flag)
 
     def setOutputFile(self, outputfile):
         outputfile=sf.string2nestlist(outputfile)
@@ -357,9 +357,13 @@ class program:
             if not ii[1] in self._OutFileID:
                 sf.ErrorStop( 'For output variable "%s" in program "%s", There is no output file with ID="%s".'%(ii[0],self._ProgName, ii[1]) )
             self.outvar[ii[0]] = sf.NaN
+            if not ii[2].upper() in ['FILE', 'POSITION', 'LABEL', 'SLHA']:
+                sf.ErrorStop( 'For output variable "%s" in program "%s", EasyScan_HEP not supporting method="%s" now.'%(ii[0],self._ProgName, ii[2]) )
+            self.outvar[ii[0]] = sf.NaN
         sf.Info('Output variable = ')
         for ii in self._OutFileID:
             self._OutputVar[ii] = [x for x in outputvar if (x[1] == ii) and (x[2].lower() != 'file')]
+
             ## For 'File' method
             self._OutFileVar[ii] = [x for x in outputvar if (x[1] == ii) and (x[2].lower() == 'file')]
             if len(self._OutFileVar[ii])>1:
@@ -370,6 +374,7 @@ class program:
                 if jj[3].upper() != 'SAVE' :
                     sf.ErrorStop( 'For output variable "%s" in program "%s" with "File" method, 4 items ( Name, FileID, "File", Method ) need to be provived. Note Method=save only supporting now.'%(jj[0],self._ProgName) )
                 sf.Info('  varID= %s \tfileID= %s \t"File"= %s     Method=%s'%(jj[0],jj[1],jj[2],jj[3]))
+
             ## For 'Position' method
             self._OutPosVar[ii]  = [x for x in outputvar if (x[1] == ii) and (x[2].lower() == 'position')]
             for jj in self._OutPosVar[ii]:
@@ -377,12 +382,14 @@ class program:
                     sf.ErrorStop( 'For output variable "%s" in program "%s" with "Position" method, 5 items ( Name ID,  Input file ID,  Method, Line number,  Column number ) need to be provived.'%(jj[0],self._ProgName) )
                 sf.Info('  varID= %s \tfileID= %s \tMethod= %s \tLine num= %s \tColumn num= %s'%(jj[0],jj[1],jj[2],jj[3],jj[4]))
         
+            ## For 'label' method
             self._OutLabelVar[ii]  = [x for x in outputvar if (x[1] == ii) and (x[2].lower() == 'label')]
             for jj in self._OutLabelVar[ii]:
                 if len(jj) != 5 :
                     sf.ErrorStop( 'For output variable "%s" in program "%s" with "Label" method, 5 items ( Name ID,  Input file ID,  Method, Label name,  Input variable column number ) need to be provived.'%(jj[0],self._ProgName) )
                 sf.Info('  varID= %s \tfileID= %s \tMethod= %s \tLabe=l %s \tColumn= %s'%(jj[0],jj[1],jj[2],jj[3],jj[4]))
 
+            ## For 'slha' method
             self._OutSLHAVar[ii] = [x for x in outputvar if (x[1] == ii) and (x[2].lower() == 'slha')]
             for jj in self._OutSLHAVar[ii]:
                 if len(jj) < 6 :
@@ -1310,6 +1317,9 @@ class plot():
         return contours
 
     def getPlot(self):
+        if len(self._Histogram) + len(self._Scatter) + len(self._Color) + len(self._Contour) == 0:
+            sf.Info('You have close ploting the result ... ')
+            return
         sf.Info('Start to plot the result ... ')
         FigNames=[]
         for ii in self._Histogram :

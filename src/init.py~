@@ -55,9 +55,9 @@ except IOError:
     sys.exit(1)
 
 
-## deine 'negetive infinity'
+## define 'negetive infinity'
 log_zero = -1e+100
-## deine 'not a number'
+## define 'not a number'
 NaN = float('NaN')
 ## Current path
 CurrentPath = os.getcwd()
@@ -117,7 +117,8 @@ def string2nestlist(s):
 ## "File" parameter readd 20180416 liang
 def WriteResultInf(InPar,OutPar,Path, ScanMethod,File):
     if ScanMethod == 'PLOT': return
-    if ScanMethod == 'READ': os.rename(os.path.join(Path,'ScanInf.txt'),os.path.join(Path,'ScanInf_old.txt'))
+    if ScanMethod == 'READ': return
+    #if ScanMethod == 'READ': os.rename(os.path.join(Path,'ScanInf.txt'),os.path.join(Path,'ScanInf_old.txt'))
     file_inf = open(os.path.join(Path,'ScanInf.txt'),'w')
     #unmark 20180416 liang
     file_inf.write(    '\t'.join([Path, File])     +'\n')

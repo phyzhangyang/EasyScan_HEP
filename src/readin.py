@@ -25,7 +25,13 @@ def ReadIn(Configfile,ES,Programs,CS,Ploter):
 
     ## If the scan method is 'plot', go directly to the 'plot' section
     ## Read the plot information
-    plot_items  = cf.options("plot")
+    plot_items = []
+    try: 
+        plot_items  = cf.options("plot")
+    except ConfigParser.NoSectionError:
+        if cf.get('scan', 'Scan method').upper() in ["PLOT"]:
+            sf.ErrorStop('ConfigParser.NoSectionError: No section: [plot] in the configure file.')
+        
     if 'histogram' in plot_items:
         Ploter.setHistogram(cf.get('plot', 'Histogram'))
     if 'scatter' in plot_items:
