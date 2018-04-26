@@ -108,7 +108,13 @@ def ReadIn(Configfile,ES,Programs,CS,Ploter):
            sf.Info('No Run flag.')
 
     ## Read the constraints
-    constraint_items  = cf.options("constraint")
+    # new 20180425 liang
+    constraint_items = []
+    try:
+        constraint_items  = cf.options("constraint")
+    except ConfigParser.NoSectionError:
+        if cf.get('scan', 'Scan method').upper() in ["MCMC", "MULTINEST"]:
+            sf.ErrorStop('ConfigParser.NoSectionError: No section: [constraint] in the configure file.')
     sf.Info('...............................................')
     sf.Info('...............................................')
     sf.Debug('constraint_items',constraint_items)

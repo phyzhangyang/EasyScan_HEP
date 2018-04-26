@@ -55,9 +55,9 @@ except IOError:
     sys.exit(1)
 
 
-## deine 'negtive infinity'
+## define 'negetive infinity'
 log_zero = -1e+100
-## deine 'not a number'
+## define 'not a number'
 NaN = float('NaN')
 ## Current path
 CurrentPath = os.getcwd()

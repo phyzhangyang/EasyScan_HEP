@@ -1087,10 +1087,14 @@ class constraint:
         for ii in var:
             if len(ii) in [3,4]:
                 if len(ii) == 3: ii.append('sym')
+
                 if not ii[3] in ['sym','lower','upper']:
                     sf.ErrorStop( 'For the "Gaussian" constraint on "%s", the "Type" can only be "upper"/"lower", not "%s".'%(ii[0],ii[3]) )
+
                 self.Gaussian.append(ii)
+
                 sf.Info('  varID= %s\tMean= %e\tDeviation= %e\tType= %s'%(ii[0],ii[1],ii[2],ii[3]))
+
             else:
                 sf.ErrorStop( 'The "Gaussian" constraint on "%s" need 3 or 4 items( ID, Mean, Deviation [, Type] ).'%(ii[0]) )
 
