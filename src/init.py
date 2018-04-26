@@ -117,7 +117,8 @@ def string2nestlist(s):
 ## "File" parameter readd 20180416 liang
 def WriteResultInf(InPar,OutPar,Path, ScanMethod,File):
     if ScanMethod == 'PLOT': return
-    if ScanMethod == 'READ': os.rename(os.path.join(Path,'ScanInf.txt'),os.path.join(Path,'ScanInf_old.txt'))
+    if ScanMethod == 'READ': return
+    #if ScanMethod == 'READ': os.rename(os.path.join(Path,'ScanInf.txt'),os.path.join(Path,'ScanInf_old.txt'))
     file_inf = open(os.path.join(Path,'ScanInf.txt'),'w')
     #unmark 20180416 liang
     file_inf.write(    '\t'.join([Path, File])     +'\n')
