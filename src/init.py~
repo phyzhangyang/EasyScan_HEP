@@ -55,7 +55,7 @@ except IOError:
     sys.exit(1)
 
 
-## deine 'negtive infinity'
+## deine 'negetive infinity'
 log_zero = -1e+100
 ## deine 'not a number'
 NaN = float('NaN')
@@ -176,7 +176,7 @@ def checkFileInList(List):
             float(item)
             newList.append(item)
         except ValueError:
-            if item.find('//') >= 0:
+            if item.find('/') >= 0:
                 files.append(item)
                 newList.append(item.split('/')[-1])
             else:

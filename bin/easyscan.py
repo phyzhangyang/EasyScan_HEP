@@ -17,7 +17,7 @@
 import os,sys,math
 sys.path.append(os.path.join(os.path.split(os.path.split(os.path.realpath(__file__))[0])[0], "src"))
 ## Internal modules.
-import init       as ip
+import init       as sf
 import mainfun    as mf
 import statfun    as stat
 import readin
@@ -41,7 +41,7 @@ elif ES.getScanMethod() == 'GRID':
 elif ES.getScanMethod() == 'READ':
     ResultFile = 'ReadData.txt'
 if ES.getScanMethod() != 'PLOT':
-    ip.WriteResultInf(ES.InPar,ES.OutPar,ES.getFileName(),ES.getScanMethod(), ResultFile)
+    sf.WriteResultInf(ES.InPar,ES.OutPar,ES.getFileName(),ES.getScanMethod(), ResultFile)
 
 # logarithm of likelihood function
 def LogLikelihood(cube, ndim, nparams):
@@ -63,7 +63,7 @@ def LogLikelihood(cube, ndim, nparams):
         else:
             Phy = Programs[ii].SetOutput(ES.AllPar)
         # if the point is unphysical, return log(0)
-        if not Phy : return ip.log_zero
+        if not Phy : return sf.log_zero
     # pass the output value to AllPar
     for i,name in enumerate(ES.OutPar) :
         cube[i+ndim]   = ES.AllPar[name]
@@ -82,7 +82,7 @@ def Prior(cube, ndim, nparams):
             max = math.log10(float(ES.InputPar[name][3]))
             cube[i] = 10.0**(cube[i]*(max - min) + min )
         else:
-            ip.ErrorStop( 'Not ready. Only "flat" and "log" prior can be used.' )
+            sf.ErrorStop( 'Not ready. Only "flat" and "log" prior can be used.' )
 
 ## Load corresponding scan method
 if ES.getScanMethod() == 'RANDOM':
@@ -173,7 +173,7 @@ elif ES.getScanMethod() == 'READ':
 ## recover the modified input file(s) for external programs
 if ES.getScanMethod() != 'PLOT':
     for ii in Programs: Programs[ii].Recover()
-#    ip.WriteResultInf(ES.InPar,ES.OutPar,ES.getFileName(),ResultFile,ES.getScanMethod())
+#    sf.WriteResultInf(ES.InPar,ES.OutPar,ES.getFileName(),ResultFile,ES.getScanMethod())
 
 
 """ Plot """

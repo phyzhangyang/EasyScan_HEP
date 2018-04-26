@@ -56,6 +56,8 @@ def readrun(LogLikelihood,Prior,n_dims,n_params,inpar,bin_num,n_print,outputfile
 
 def gridrun(LogLikelihood,Prior,n_dims,n_params,inpar,bin_num,n_print,outputfiles_basename,outputfiles_filename):
     f_out = open(os.path.join(outputfiles_basename,outputfiles_filename),'w')
+    #new 20180420 liang
+    f_out2 = open(os.path.join(outputfiles_basename,'All_'+outputfiles_filename),'w')
     
     ntotal = 1
     cube = []
@@ -101,10 +103,14 @@ def gridrun(LogLikelihood,Prior,n_dims,n_params,inpar,bin_num,n_print,outputfile
             print 'Accepted Num   = '+str(Naccept)
             print 'Total    Num   = '+str(Nrun+1)
 
+        f_out2.write('\t'.join([str(x) for x in cube])+'\t'+str(loglike)+'\n')
+        f_out2.flush()
 
 
 def randomrun(LogLikelihood,Prior,n_dims,n_params,n_live_points,n_print,outputfiles_basename,outputfiles_filename):
     f_out = open(os.path.join(outputfiles_basename,outputfiles_filename),'w')
+    #new 20180420 liang
+    f_out2 = open(os.path.join(outputfiles_basename,'All_'+outputfiles_filename),'w')
     
     cube = []
     for i in range(n_params): cube.append(0.0)
@@ -118,6 +124,8 @@ def randomrun(LogLikelihood,Prior,n_dims,n_params,n_live_points,n_print,outputfi
         
         Prior(cube, n_dims, n_params)
         loglike = LogLikelihood(cube, n_dims, n_params)
+        print loglike
+        raw_input()
         if loglike > sf.log_zero:
 
             #new 20180420 liang
@@ -141,6 +149,9 @@ def randomrun(LogLikelihood,Prior,n_dims,n_params,n_live_points,n_print,outputfi
             print '     loglike   = '+str(loglike)
             print 'Accepted Num   = '+str(Naccept)
             print 'Total    Num   = '+str(Nrun+1)
+
+        f_out2.write('\t'.join([str(x) for x in cube])+'\t'+str(loglike)+'\n')
+        f_out2.flush()
 
 
 def mcmcrun(LogLikelihood,Prior,n_dims,n_params,n_live_points,inpar,outpar,StepSize,AccepRate,FalgTune,InitVal,n_print,outputfiles_basename,outputfiles_filename):
