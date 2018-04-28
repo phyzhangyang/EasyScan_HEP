@@ -356,9 +356,8 @@ class program:
         for ii in outputvar:
             if not ii[1] in self._OutFileID:
                 sf.ErrorStop( 'For output variable "%s" in program "%s", There is no output file with ID="%s".'%(ii[0],self._ProgName, ii[1]) )
-            self.outvar[ii[0]] = sf.NaN
             if not ii[2].upper() in ['FILE', 'POSITION', 'LABEL', 'SLHA']:
-                sf.ErrorStop( 'For output variable "%s" in program "%s", EasyScan_HEP not supporting method="%s" now.'%(ii[0],self._ProgName, ii[2]) )
+                sf.ErrorStop( 'For output variable "%s" in program "%s", EasyScan_HEP not supporting method="%s" now!'%(ii[0],self._ProgName, ii[2]) )
             self.outvar[ii[0]] = sf.NaN
         sf.Info('Output variable = ')
         for ii in self._OutFileID:
@@ -726,8 +725,8 @@ Output: \n~~~~ %(outputvar)s'\
         sf.Info('Gaussian Constraint:')
         for ii in var:
             if len(ii) in [3,4]:
-                if len(ii) == 3: ii.append('sym')
-                if not ii[3] in ['sym','lower','upper']:
+                if len(ii) == 3: ii.append('symm')
+                if not ii[3] in ['symm','lower','upper']:
                     sf.ErrorStop( 'For the "Gaussian" constraint on "%s", the "Type" can only be "upper"/"lower", not "%s".'%(ii[0],ii[3]) )
                 sf.Info('  varID= %s\tMean= %e\tDeviation= %e\tType= %s'%(ii[0],ii[1],ii[2],ii[3]))
             else:
@@ -1033,6 +1032,9 @@ class EasyScanInput:
                 if jj not in self.AllPar.keys():
                     self.AllPar[jj] = prog[ii].boundvar[jj]
 
+        ## new 20180428 liang thanks to yuanfang
+        self.OutPar = sf.sortDic(self.OutPar)
+
         sf.Debug('All vars:   ',self.AllPar)
         sf.Debug('Input Pars: ',self.InPar)
         sf.Debug('Output Pars:',self.OutPar)
@@ -1083,34 +1085,42 @@ Input  :\n~~~~ %(inputvar)s'\
 
 class constraint:
     def __init__(self):
-        self.Gaussian=[]
-        self.Limit=[]
-        self.Loglike=[]
+        self._Gaussian=[]
+        self._Limit=[]
+        self._Loglike=[]
+        self.Chi2={}
     
     
     def setGaussian(self,var):
         var = sf.string2nestlist(var)
         sf.Info('Gaussian Constraint:')
+        self.Chi2['Chi2'] = sf.NaN 
         for ii in var:
-            if len(ii) in [3,4]:
-                if len(ii) == 3: ii.append('sym')
-
-                if not ii[3] in ['sym','lower','upper']:
-                    sf.ErrorStop( 'For the "Gaussian" constraint on "%s", the "Type" can only be "upper"/"lower", not "%s".'%(ii[0],ii[3]) )
-
-                self.Gaussian.append(ii)
-
-                sf.Info('  varID= %s\tMean= %e\tDeviation= %e\tType= %s'%(ii[0],ii[1],ii[2],ii[3]))
+            if len(ii) in [4,5]:
+                if not ii[3] in ['symm','lower','upper']:
+                    sf.ErrorStop( 'For the "Gaussian" constraint on "%s", the "Type" can only be "symm", "upper" or "lower", not "%s".'%(ii[0],ii[3]) )
+                ## new 20180428 liang
+                if len(ii) == 4: 
+                    jj = ii+['Gaussian_%s'%ii[0]]
+                else:
+                    jj = ii
+                self._Gaussian.append(jj)
+                self.Chi2[jj[4]] = sf.NaN 
+                
+                sf.Info('  varID= %s\tMean= %e\tDeviation= %e\tType= %s\tName= %s'%(jj[0],jj[1],jj[2],jj[3],jj[4]))
 
             else:
-                sf.ErrorStop( 'The "Gaussian" constraint on "%s" need 3 or 4 items( ID, Mean, Deviation [, Type] ).'%(ii[0]) )
+                sf.ErrorStop( 'The "Gaussian" constraint on "%s" need 4 or 5 items( ID, Mean, Deviation, Type [, Name] ).'%(ii[0]) )
+
+        ## new 20180428 liang
+        self.Chi2 = sf.sortDic(self.Chi2) 
 
     def setLimit(self,var):
         var = sf.string2nestlist(var)
         sf.Info('Upper/Lower limit:')
         for ii in var:
             if len(ii) == 4:
-                self.Limit.append(ii)
+                self._Limit.append(ii)
                 sf.Info('  varID(X)= %s\tvarID(Y)= %s\tConstraintFile= %s\tType= %s'%(ii[0],ii[1],ii[2],ii[3]))
         ## add check the ConstraintFile exist
         ## add check the ConstraintFile has two columns and >1 lines
@@ -1123,7 +1133,7 @@ class constraint:
         sf.Info('Log(likelihood):')
         for ii in var:
             if len(ii) == 1:
-                self.Loglike.append(ii)
+                self._Loglike.append(ii)
                 sf.Info('  varID= %s'%(ii[0]))
             else:
                 sf.ErrorStop( 'The "Log(likelihood)" constraint on "%s" only need 1 item, "var ID".'%(ii[0]) )
@@ -1135,8 +1145,8 @@ class constraint:
         ## add for "math ..." in [constrain]
         sf.parseMath(par)
 
-        for ii in self.Gaussian:
-            if   ii[3] == 'sym':
+        for ii in self._Gaussian:
+            if   ii[3] == 'symm':
                 ichisq =     (ii[1] - par[ii[0]])**2/ii[2]**2
             elif ii[3] == 'upper':
                 if ii[1] > par[ii[0]]:
@@ -1144,14 +1154,20 @@ class constraint:
             elif ii[3] == 'lower':
                 if ii[1] < par[ii[0]]:
                     ichisq = (ii[1] - par[ii[0]])**2/ii[2]**2
-            #print "chi("+ii[0]+")^2 = "+str(ichisq)
+
+            ## new 20180428 liang
+            self.Chi2[ii[4]]=ichisq
+
             chisq += ichisq
 
-        for ii in self.Limit:
+        for ii in self._Limit:
             sf.ErrorStop('Line limit constraint is not ready.')
-        for ii in self.Loglike:
+        for ii in self._Loglike:
             chisq += par[ii[0]]
 
+
+        ## new 20180428 liang
+        self.Chi2['Chi2'] = chisq
 
         return chisq
 

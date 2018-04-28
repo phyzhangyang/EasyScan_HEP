@@ -41,7 +41,7 @@ elif ES.getScanMethod() == 'GRID':
 elif ES.getScanMethod() == 'READ':
     ResultFile = 'ReadData.txt'
 if ES.getScanMethod() != 'PLOT':
-    sf.WriteResultInf(ES.InPar,ES.OutPar,ES.getFileName(),ES.getScanMethod(), ResultFile)
+    sf.WriteResultInf(ES.InPar,ES.OutPar,CS.Chi2,ES.getFileName(),ES.getScanMethod(), ResultFile)
 
 # logarithm of likelihood function
 def LogLikelihood(cube, ndim, nparams):
@@ -64,11 +64,18 @@ def LogLikelihood(cube, ndim, nparams):
             Phy = Programs[ii].SetOutput(ES.AllPar)
         # if the point is unphysical, return log(0)
         if not Phy : return sf.log_zero
-    # pass the output value to AllPar
+
+    # pass all output variables with values to "cube" for using in each scan method in "scanmanner.py"
     for i,name in enumerate(ES.OutPar) :
         cube[i+ndim]   = ES.AllPar[name]
 
-    return - CS.getChisq(ES.AllPar)/2.0
+    loglike = - CS.getChisq(ES.AllPar)/2.0
+
+    ## new 20180428 liang
+    for i,name in enumerate(CS.Chi2) :
+        cube[i+ndim+len(ES.OutPar)]   = CS.Chi2[name]
+
+    return loglike 
 
 
 def Prior(cube, ndim, nparams):
@@ -92,7 +99,7 @@ if ES.getScanMethod() == 'RANDOM':
         LogLikelihood        = LogLikelihood,
         Prior                = Prior,
         n_dims               = len(ES.InPar),
-        n_params             = len(ES.AllPar),
+        n_params             = len(ES.AllPar)+len(CS.Chi2),
         n_live_points        = ES.getPointNum(),
         n_print              = ES.getPrintNum(),
         outputfiles_basename = ES.getFileName(),
@@ -105,7 +112,7 @@ elif ES.getScanMethod() == 'MCMC':
         LogLikelihood        = LogLikelihood,
         Prior                = Prior,
         n_dims               = len(ES.InPar),
-        n_params             = len(ES.AllPar),
+        n_params             = len(ES.AllPar)+len(CS.Chi2),
         n_live_points        = ES.getPointNum(),
         inpar                = ES.InPar,
         outpar               = ES.OutPar,
@@ -124,7 +131,7 @@ elif ES.getScanMethod() == 'MULTINEST':
         LogLikelihood        = LogLikelihood,
         Prior                = Prior,
         n_dims               = len(ES.InPar),
-        n_params             = len(ES.AllPar),
+        n_params             = len(ES.AllPar)+len(CS.Chi2),
         seed                 = ES.getRandomSeed(),
         outputfiles_basename = ES.MNOutputFile,
         n_live_points        = ES.getPointNum(),
@@ -149,7 +156,7 @@ elif ES.getScanMethod() == 'GRID':
         LogLikelihood        = LogLikelihood,
         Prior                = Prior,
         n_dims               = len(ES.InPar),
-        n_params             = len(ES.AllPar),
+        n_params             = len(ES.AllPar)+len(CS.Chi2),
         inpar                = ES.InPar,
         bin_num              = ES.GridBin,
         n_print              = ES.getPrintNum(),
@@ -163,7 +170,7 @@ elif ES.getScanMethod() == 'READ':
             LogLikelihood        = LogLikelihood,
             Prior                = Prior,
             n_dims               = len(ES.InPar),
-            n_params             = len(ES.AllPar),
+            n_params             = len(ES.AllPar)+len(CS.Chi2),
             inpar                = ES.InPar,
             bin_num              = ES.GridBin,
             n_print              = ES.getPrintNum(),
@@ -173,7 +180,7 @@ elif ES.getScanMethod() == 'READ':
 ## recover the modified input file(s) for external programs
 if ES.getScanMethod() != 'PLOT':
     for ii in Programs: Programs[ii].Recover()
-#    sf.WriteResultInf(ES.InPar,ES.OutPar,ES.getFileName(),ResultFile,ES.getScanMethod())
+#    sf.WriteResultInf(ES.InPar,ES.OutPar,CS.Chi2,ES.getFileName(),ResultFile,ES.getScanMethod())
 
 
 """ Plot """

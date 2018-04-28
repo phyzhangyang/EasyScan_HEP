@@ -46,7 +46,7 @@ def readrun(LogLikelihood,Prior,n_dims,n_params,inpar,bin_num,n_print,outputfile
             cube, acceptFiles=sf.checkFileInList(cube)
 
             Naccept += 1
-            f_out.write('\t'.join([str(x) for x in cube])+'\t'+str(loglike)+'\n')
+            f_out.write('\t'.join([str(x) for x in cube])+'\n')
             f_out.flush()
 
             #new 20180420 liang
@@ -63,7 +63,7 @@ def readrun(LogLikelihood,Prior,n_dims,n_params,inpar,bin_num,n_print,outputfile
             print 'Accepted Num   = '+str(Naccept)
             print 'Total    Num   = '+str(Nrun+1)
 
-        f_out2.write('\t'.join([str(x) for x in cube])+'\t'+str(loglike)+'\n')
+        f_out2.write('\t'.join([str(x) for x in cube])+'\n')
         f_out2.flush()
 
 def gridrun(LogLikelihood,Prior,n_dims,n_params,inpar,bin_num,n_print,outputfiles_basename,outputfiles_filename):
@@ -98,7 +98,7 @@ def gridrun(LogLikelihood,Prior,n_dims,n_params,inpar,bin_num,n_print,outputfile
             cube, acceptFiles=sf.checkFileInList(cube)
 
             Naccept += 1
-            f_out.write('\t'.join([str(x) for x in cube])+'\t'+str(loglike)+'\n')
+            f_out.write('\t'.join([str(x) for x in cube])+'\n')
             f_out.flush()
 
             #new 20180420 liang
@@ -115,7 +115,7 @@ def gridrun(LogLikelihood,Prior,n_dims,n_params,inpar,bin_num,n_print,outputfile
             print 'Accepted Num   = '+str(Naccept)
             print 'Total    Num   = '+str(Nrun+1)
 
-        f_out2.write('\t'.join([str(x) for x in cube])+'\t'+str(loglike)+'\n')
+        f_out2.write('\t'.join([str(x) for x in cube])+'\n')
         f_out2.flush()
 
 
@@ -142,7 +142,7 @@ def randomrun(LogLikelihood,Prior,n_dims,n_params,n_live_points,n_print,outputfi
             cube, acceptFiles=sf.checkFileInList(cube)
 
             Naccept += 1
-            f_out.write('\t'.join([str(x) for x in cube])+'\t'+str(loglike)+'\n')
+            f_out.write('\t'.join([str(x) for x in cube])+'\n')
             f_out.flush()
 
             #new 20180420 liang
@@ -160,7 +160,7 @@ def randomrun(LogLikelihood,Prior,n_dims,n_params,n_live_points,n_print,outputfi
             print 'Accepted Num   = '+str(Naccept)
             print 'Total    Num   = '+str(Nrun+1)
 
-        f_out2.write('\t'.join([str(x) for x in cube])+'\t'+str(loglike)+'\n')
+        f_out2.write('\t'.join([str(x) for x in cube])+'\n')
         f_out2.flush()
 
 
@@ -239,15 +239,13 @@ def mcmcrun(LogLikelihood,Prior,n_dims,n_params,n_live_points,inpar,outpar,StepS
             if CurChisq > Chisq: 
                 Flag_accept = True
             else:
-                print random()
-                raw_input()
                 Flag_accept = random() < exp(CurChisq-Chisq) 
 
         if Flag_accept :
             #new 20180420 liang
             CurObs, acceptFiles=sf.checkFileInList(CurObs)
 
-            f_out.write('\t'.join([str(x) for x in CurObs])+'\t'+str(-2*CurChisq)+'\t'+str(mult)+'\n')
+            f_out.write('\t'.join([str(x) for x in CurObs])+'\t'+str(mult)+'\n')
             f_out.flush()
             CurChisq = Chisq
             for i in range(n_params): CurObs[i]   = cube[i]
@@ -290,7 +288,7 @@ def mcmcrun(LogLikelihood,Prior,n_dims,n_params,n_live_points,inpar,outpar,StepS
                 print 'StepZize factor= '+str(exp(kcovar))
 
         if RangeFlag and (Chisq < - 2.0 * sf.log_zero) :
-            f_out2.write('\t'.join([str(x) for x in CurObs])+'\t'+str(-2*CurChisq)+'\t'+str(mult)+'\n')
+            f_out2.write('\t'.join([str(x) for x in CurObs])+'\t'+str(mult)+'\n')
             f_out2.flush()
 
 
