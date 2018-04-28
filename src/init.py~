@@ -115,7 +115,7 @@ def string2nestlist(s):
     return s
 
 ## "File" parameter readd 20180416 liang
-def WriteResultInf(InPar,OutPar,Path, ScanMethod,File):
+def WriteResultInf(InPar,OutPar,Chi2,Path, ScanMethod,File):
     if ScanMethod == 'PLOT': return
     if ScanMethod == 'READ': return
     #if ScanMethod == 'READ': os.rename(os.path.join(Path,'ScanInf.txt'),os.path.join(Path,'ScanInf_old.txt'))
@@ -129,9 +129,12 @@ def WriteResultInf(InPar,OutPar,Path, ScanMethod,File):
     for name in OutPar :
         file_inf.write('\t'.join([name,str(i)])+'\n')
         i += 1
-    file_inf.write('\t'.join(['loglike',str(i)])+'\n')
+    ## new 20180428 liang
+    for name in Chi2:
+        file_inf.write('\t'.join([name,str(i)])+'\n')
+        i += 1
     if ScanMethod == 'MCMC':
-        file_inf.write('\t'.join(['mult',str(i+1)])+'\n')
+        file_inf.write('\t'.join(['mult',str(i+0)])+'\n')
     file_inf.close()
 
 def parseMath(par):
@@ -185,3 +188,9 @@ def checkFileInList(List):
 
     return newList, files
  
+## new 20180428 liang
+def sortDic(Dic):
+    from collections import OrderedDict
+    return OrderedDict(sorted(Dic.items(), key = lambda t: t[0]))
+
+       
