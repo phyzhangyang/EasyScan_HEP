@@ -129,11 +129,15 @@ def ReadIn(Configfile,ES,Programs,CS,Ploter):
         ## In order to add "math .." in "gaussian" to self.AllPar
         if Programs:
             Programs[ProgID[0]].setGaussian(cf.get('constraint', 'Gaussian'))
-
-    if 'limit' in constraint_items:
-        CS.setLimit(cf.get('constraint', 'Limit'))
-    if 'chi^2' in constraint_items:
-        CS.setLoglike(cf.get('constraint', 'chi^2'))
+    
+    ## marked 20180430 liang
+    #if 'limit' in constraint_items:
+    #    CS.setLimit(cf.get('constraint', 'Limit'))
+    ## new 20180430 liang
+    if 'freeformchi2' in constraint_items:
+        CS.setFreeFormChi2(cf.get('constraint', 'FreeFormChi2'))
+        if Programs:
+            Programs[ProgID[0]].setFreeFormChi2(cf.get('constraint', 'Gaussian'))
 
     #################################
     ## manage the vars into ES.AllPar
