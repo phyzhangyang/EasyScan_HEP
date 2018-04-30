@@ -40,6 +40,7 @@ class program:
         self.outvar = {}
         self.boundvar = {}
         self.cgauvar = {}
+        self.cffchi2var= {}
             
         self._Count   = 0
         self._runflag = 'True'
@@ -724,36 +725,50 @@ Output: \n~~~~ %(outputvar)s'\
         var = sf.string2nestlist(var)
         sf.Info('Gaussian Constraint:')
         for ii in var:
-            if len(ii) in [3,4]:
-                if len(ii) == 3: ii.append('symm')
+            if len(ii) in [4,5]:
                 if not ii[3] in ['symm','lower','upper']:
                     sf.ErrorStop( 'For the "Gaussian" constraint on "%s", the "Type" can only be "upper"/"lower", not "%s".'%(ii[0],ii[3]) )
-                sf.Info('  varID= %s\tMean= %e\tDeviation= %e\tType= %s'%(ii[0],ii[1],ii[2],ii[3]))
             else:
-                sf.ErrorStop( 'The "Gaussian" constraint on "%s" need 3 or 4 items( ID, Mean, Deviation [, Type] ).'%(ii[0]) )
+                sf.ErrorStop( 'The "Gaussian" constraint on "%s" need 4 or 5 items( VarID, Mean, Deviation, Type [, Name] ).'%(ii[0]) )
+
             self.cgauvar[ii[0]] = sf.NaN
+
+    ## new 20180430 liang
+    def setFreeFormChi2(self,var):
+        var = sf.string2nestlist(var)
+        sf.Info('FreeFormChi2:')
+        for ii in var:
+            if len(ii) in [1,2]:
+                pass
+            else:
+                sf.ErrorStop( 'The "FreeFormChi2" constraint on "%s" need 1 item or 2 items( VarID [, Name] ).'%(ii[0]) )
+
+            self.cffchi2var[ii[0]] = sf.NaN
 
     ## for "Bound" in [programX]
     def setBound(self, boundvar):
         ## boundvar is a string of all content in "Bound" in [programX] of configure file
         self._BoundVar=sf.string2nestlist(boundvar)
 
-        sf.Info('Bound = ')
+        sf.Info('Bound condition in program %s:'%self._ProgName)
         for ii in self._BoundVar:
             if len(ii) <3:
                 if ii[0] == '': ## Program can have zero input parameters
                     return
                 sf.ErrorStop( 'The "Bound" in program "%s" must have at least 3 items.'%self._ProgName )
-            if len(ii) == 3:
+            elif len(ii) == 3:
+                if ii[1] not in ["<=", ">=", ">", "<", "==", "!="]:
+                    sf.ErrorStop( 'The second item "%s" in "Bound" in program "%s" must be "<=", ">=", ">", "<", "==", "!=" or a real number at 3 items.'%(ii[1], self._ProgName) )
                 try:
-                    float(ii[1])
-                    sf.Info('  NameID= %s \tMinLimit= %s \tMaxLimit= %s'%(ii[0],ii[1],ii[2]))
+                    float(ii[2]) 
                 except: 
-                    if ii[1] not in ["<=", ">=", ">", "<", "==", "!="]:
-                        sf.ErrorStop( 'The second item "%s" in "Bound" in program "%s" must be "<=", ">=", ">", "<", "==", "!=" or a real number at 3 items.'%(ii[1], self._ProgName) )
-                    sf.Info('  NameID= %s \tOperator= %s \tLimit= %s'%(ii[0],ii[1],ii[2]))
+                    self.boundvar[ii[2]] = sf.NaN
+
                 self.boundvar[ii[0]] = sf.NaN
-            if len(ii) == 4:
+
+                sf.Info('    NameID= %s \tOperator= %s \tLimit= %s'%(ii[0],ii[1],ii[2]))
+
+            elif len(ii) in [4,5]:
                 if ii[2].lower() not in ["upper", "lower"]:
                     sf.ErrorStop( 'The third item "%s" in "Bound" in program "%s" must be "lower" or "upper" at 4 items.'%(ii[2], self._ProgName) )
                 if not (ii[3].startswith('/home') or ii[3].startswith('~')):
@@ -772,7 +787,19 @@ Output: \n~~~~ %(outputvar)s'\
                     sf.ErrorStop('Only one row or column in the limit file "%s" in "Bound" in program "%s".'%(ii[3],self._ProgName))
                 if numpy.shape(boundfile)[1] < 2:
                     sf.ErrorStop('Less than two columns in the limit file "%s" in "Bound" in program "%s".'%(ii[3],self._ProgName))
-                sf.Info('  NameID= %s \tNameID= %s \tBound= %s \tBoundFile= %s'%(ii[0],ii[1],ii[2],ii[3]))
+                sf.Info('    NameID= %s \tNameID= %s \tBound= %s \tBoundFile= %s'%(ii[0],ii[1],ii[2],ii[3]))
+
+
+                ## new 20180429 liang
+                if len(ii) == 4:
+                    jj = ii + ['Bound_%s_%s_%s'%(ii[0], ii[1], ii[2])]
+                else:
+                    jj = ii
+
+                self.boundvar[jj[4]] = sf.NaN
+
+            else: 
+                sf.ErrorStop( 'The "Bound" in program "%s" have at most 5 items.'%self._ProgName )
 
                 self.boundvar[ii[0]] = sf.NaN
                 self.boundvar[ii[1]] = sf.NaN
@@ -781,10 +808,37 @@ Output: \n~~~~ %(outputvar)s'\
     ## for "Bound" in [programX]
     ## ReadBound() have survived conditions in SetBound()
     def ReadBound(self,par):
+
         ## return if no bound
         ## If no bound, self._BoundVar = [['']], self._BoundVar[0][0]=''.
         if not self._BoundVar[0][0]:
             return True
+
+        ## new 20180429 liang
+        for ii in self._BoundVar:
+            if len(ii) in [4,5]:
+                if len(ii) == 4:
+                    jj = ii + ['Bound_%s_%s_%s'%(ii[0], ii[1], ii[2])]
+                else:
+                    jj = ii
+
+                if not (ii[3].startswith('/home') or ii[3].startswith('~')):
+                    ii[3]=os.path.join(sf.CurrentPath, ii[3])
+                boundfile = numpy.loadtxt(ii[3])
+                x=boundfile[:,0]
+                y=boundfile[:,1]
+                if par[ii[0]] < numpy.amin(x) or par[ii[0]] > numpy.amax(x):
+                    sf.WarningNoWati('"%s" less(greater) than min(max) of the first column in limit file "%s" with method "%s" in "Bound" in program "%s".'%(ii[0], ii[3], ii[2], self._ProgName))
+                    if ii[2].lower() == 'lower':
+                        yinter = -1E100
+                    else:
+                        yinter = 1E100
+                    sf.WarningNoWait('    So we set "%s=%e"'%(jj[4], yinter))
+                else:
+                    yinter = numpy.interp(par[ii[0]], x, y)
+                par[jj[4]] = yinter 
+                sf.Debug('"%s=%f" v.s. "%s=%f" compare to the %s limit "%s=%f" by interplotion in "Bound" for program %s'%(ii[0], par[ii[0]], ii[1], par[ii[1]], ii[2].lower(), ii[1], yinter, self._ProgName))
+
 
         ## add for "math ..." in "Bound" in [programX]
         sf.parseMath(par)
@@ -794,25 +848,11 @@ Output: \n~~~~ %(outputvar)s'\
             if len(ii)== 3:
                 sf.Debug('"%s=%f" compare to the limit "%s" in "Bound" for program %s'%(ii[0], par[ii[0]], ii[1:], self._ProgName))
                 try:
-                    float(ii[1])
+                    float(ii[2])
                 except:
-                    phy = phy and eval("%f%s%s"%(par[ii[0]], ii[1], ii[2]))   
+                    phy = phy and eval("%f%s%f"%(par[ii[0]], ii[1], par[ii[2]]))
                 else:
-                    phy = phy and par[ii[0]] >= float(ii[1]) and par[ii[0]] <= float(ii[2])
-            else:
-                if not (ii[3].startswith('/home') or ii[3].startswith('~'))     :
-                    ii[3]=os.path.join(sf.CurrentPath, ii[3])
-                boundfile = numpy.loadtxt(ii[3])
-                x=boundfile[:,0]
-                y=boundfile[:,1]
-                if par[ii[0]] < numpy.amin(x) or par[ii[0]] > numpy.amax(x):
-                    sf.ErrorStop('"%s" less(greater) than min(max) of the first column in limit file "%s" in "Bound" in program "%s".'%(ii[0], ii[3],self._ProgName))
-                yinter = numpy.interp(par[ii[0]], x, y)
-                sf.Debug('"%s=%f" v.s. "%s=%f" compare to the %s limit "%s=%f" by interplotion in "Bound" for program %s'%(ii[0], par[ii[0]], ii[1], par[ii[1]], ii[2].lower(), ii[1], yinter, self._ProgName))
-                if ii[2].lower() == "lower":
-                    phy = phy and par[ii[1]] >= yinter 
-                else:
-                    phy = phy and par[ii[1]] <= yinter
+                    phy = phy and eval("%f%s%s"%(par[ii[0]], ii[1], ii[2]))
 
         return phy 
 
@@ -1025,12 +1065,19 @@ class EasyScanInput:
             for jj in prog[ii].invar:
                 if jj not in self.AllPar.keys():
                     self.AllPar[jj] = prog[ii].invar[jj]
-            for jj in prog[ii].cgauvar:
-                if jj not in self.AllPar.keys():
-                    self.AllPar[jj] = prog[ii].cgauvar[jj]
+                    self.OutPar[jj] = prog[ii].invar[jj]
             for jj in prog[ii].boundvar:
                 if jj not in self.AllPar.keys():
                     self.AllPar[jj] = prog[ii].boundvar[jj]
+                    self.OutPar[jj] = prog[ii].boundvar[jj]
+            for jj in prog[ii].cgauvar:
+                if jj not in self.AllPar.keys():
+                    self.AllPar[jj] = prog[ii].cgauvar[jj]
+                    self.OutPar[jj] = prog[ii].cgauvar[jj]
+            for jj in prog[ii].cffchi2var:
+                if jj not in self.AllPar.keys():
+                    self.AllPar[jj] = prog[ii].cffchi2var[jj]
+                    self.OutPar[jj] = prog[ii].cffchi2var[jj]
 
         ## new 20180428 liang thanks to yuanfang
         self.OutPar = sf.sortDic(self.OutPar)
@@ -1083,18 +1130,20 @@ Input  :\n~~~~ %(inputvar)s'\
 %{'name':self._FileName,'ntot':self._PointNum, 'method':self._ScanMethod,
 'iseed':self._RandomSeed,'debug': self._DebugFlag,}
 
+############################################################
+#################   Constraint    Class   ##################
+############################################################
 class constraint:
     def __init__(self):
         self._Gaussian=[]
-        self._Limit=[]
-        self._Loglike=[]
+        #self._Limit=[]
+        self._FreeFormChi2=[]
         self.Chi2={}
-    
     
     def setGaussian(self,var):
         var = sf.string2nestlist(var)
-        sf.Info('Gaussian Constraint:')
         self.Chi2['Chi2'] = sf.NaN 
+        sf.Info('Gaussian Constraint:')
         for ii in var:
             if len(ii) in [4,5]:
                 if not ii[3] in ['symm','lower','upper']:
@@ -1107,7 +1156,7 @@ class constraint:
                 self._Gaussian.append(jj)
                 self.Chi2[jj[4]] = sf.NaN 
                 
-                sf.Info('  varID= %s\tMean= %e\tDeviation= %e\tType= %s\tName= %s'%(jj[0],jj[1],jj[2],jj[3],jj[4]))
+                sf.Info('    varID= %s\tMean= %e\tDeviation= %e\tType= %s\tName= %s'%(jj[0],jj[1],jj[2],jj[3],jj[4]))
 
             else:
                 sf.ErrorStop( 'The "Gaussian" constraint on "%s" need 4 or 5 items( ID, Mean, Deviation, Type [, Name] ).'%(ii[0]) )
@@ -1115,29 +1164,38 @@ class constraint:
         ## new 20180428 liang
         self.Chi2 = sf.sortDic(self.Chi2) 
 
-    def setLimit(self,var):
-        var = sf.string2nestlist(var)
-        sf.Info('Upper/Lower limit:')
-        for ii in var:
-            if len(ii) == 4:
-                self._Limit.append(ii)
-                sf.Info('  varID(X)= %s\tvarID(Y)= %s\tConstraintFile= %s\tType= %s'%(ii[0],ii[1],ii[2],ii[3]))
-        ## add check the ConstraintFile exist
-        ## add check the ConstraintFile has two columns and >1 lines
-        ## very useful, you can simply let a>b
-            else:
-                sf.ErrorStop( 'The "Limit" constraint on "(%s,%s)" need 4 items( X ID, Y ID, ConstraintFile, Type ).'%(ii[0],ii[1]) )
+## marked 20180430 liang
+#    def setLimit(self,var):
+#        var = sf.string2nestlist(var)
+#        sf.Info('Upper/Lower limit:')
+#        for ii in var:
+#            if len(ii) == 4:
+#                self._Limit.append(ii)
+#                sf.Info('  varID(X)= %s\tvarID(Y)= %s\tConstraintFile= %s\tType= %s'%(ii[0],ii[1],ii[2],ii[3]))
+#        ## add check the ConstraintFile exist
+#        ## add check the ConstraintFile has two columns and >1 lines
+#        ## very useful, you can simply let a>b
+#            else:
+#                sf.ErrorStop( 'The "Limit" constraint on "(%s,%s)" need 4 items( X ID, Y ID, ConstraintFile, Type ).'%(ii[0],ii[1]) )
 
-    def setLoglike(self,var):
+    ## new 20180430 liang
+    def setFreeFormChi2(self,var):
         var = sf.string2nestlist(var)
-        sf.Info('Log(likelihood):')
+        sf.Info('FreeFormChi2:')
         for ii in var:
-            if len(ii) == 1:
-                self._Loglike.append(ii)
-                sf.Info('  varID= %s'%(ii[0]))
-            else:
-                sf.ErrorStop( 'The "Log(likelihood)" constraint on "%s" only need 1 item, "var ID".'%(ii[0]) )
+            if len(ii) in [1,2]:
+                if len(ii) == 1:
+                    jj = ii + ['FreeFormChi2_%s'%ii[0]]
+                else:
+                    jj = ii
+                self._FreeFormChi2.append(jj)
+                sf.Info('    varID= %s\tName= %s'%(jj[0], jj[1]))
 
+                self.Chi2[jj[1]] = sf.NaN
+            else:
+                sf.ErrorStop( 'The "FreeFormChi2" constraint on "%s" need 1 item or 2 items( VarID [, Name] ).'%(ii[0]) )
+
+            self.Chi2 = sf.sortDic(self.Chi2)
 
     def getChisq(self,par):
         chisq = 0.0
@@ -1160,19 +1218,25 @@ class constraint:
 
             chisq += ichisq
 
-        for ii in self._Limit:
-            sf.ErrorStop('Line limit constraint is not ready.')
-        for ii in self._Loglike:
-            chisq += par[ii[0]]
+        ## marked 20180430 liang
+        #for ii in self._Limit:
+        #    sf.ErrorStop('Line limit constraint is not ready.')
+        for ii in self._FreeFormChi2:
+            ichisq = par[ii[0]]
 
+            self.Chi2[ii[1]]=ichisq
+
+            chisq += ichisq
 
         ## new 20180428 liang
         self.Chi2['Chi2'] = chisq
 
+        print self.Chi2; raw_input()
         return chisq
 
-
-
+############################################################
+#################   Plot    Class   ########################
+############################################################
 import matplotlib.pyplot as plt
 import numpy as np
 from matplotlib.mlab import griddata
@@ -1206,7 +1270,7 @@ class plot():
             if len(ii)==1 :
                 self._Histogram.append([ii[0],'Histogram_%s.png'%ii[0]])
             elif len(ii)==2 :
-                self._Histogram.append(ii)
+                self._Histogram.append([ii[0],'%s.png'%ii[1]])
 
             self._FigNames.append(self._Histogram[jj][1])
             jj+=1
@@ -1218,7 +1282,7 @@ class plot():
             if len(ii)==2 :
                 self._Scatter.append([ii[0],ii[1],'Scatter_%s_%s.png'%(ii[0],ii[1])])
             elif len(ii)==3 :
-                self._Scatter.append(ii)
+                self._Scatter.append([ii[0],ii[1],'%s.png'%ii[2]])
 
             self._FigNames.append(self._Scatter[jj][2])
             jj+=1
@@ -1230,7 +1294,7 @@ class plot():
             if len(ii)==3 :
                 self._Color.append([ii[0],ii[1],ii[2],'Color_%s_%s_%s.png'%(ii[0],ii[1],ii[2])])
             elif len(ii)==4 :
-                self._Color.append(ii)
+                self._Color.append([ii[0],ii[1],ii[2],'%s.png'%ii[3]])
 
             self._FigNames.append(self._Color[jj][3])
             jj+=1
@@ -1242,7 +1306,7 @@ class plot():
             if len(ii)==3 :
                 self._Contour.append([ii[0],ii[1],ii[2],'Contour_%s_%s_%s.png'%(ii[0],ii[1],ii[2])])
             elif len(ii)==4 :
-                self._Contour.append(ii)
+                self._Contour.append([ii[0],ii[1],ii[2],'%s.png'%ii[3]])
 
             self._FigNames.append(self._Contour[jj][3])
             jj+=1
