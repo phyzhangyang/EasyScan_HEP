@@ -70,13 +70,11 @@ def GotoWeb():
 
 def WarningWait(warinfo):
     logger.warning(ColorText(1,warinfo))
-    GotoWeb()
     print ColorText(1,'# Waiting 3 seconds for WARNING.')
     time.sleep(3)
 
 def WarningNoWait(warinfo):
     logger.warning(ColorText(1,warinfo))
-    GotoWeb()
 
 def ErrorStop(errinfo):
     logger.error( ColorText(1,errinfo) )
