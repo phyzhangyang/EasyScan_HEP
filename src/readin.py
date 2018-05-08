@@ -111,11 +111,16 @@ def ReadIn(Configfile,ES,Programs,CS,Ploter):
                 outputVarNames.append(subitem[0])
         sf.checkItemInList(outputVarNames)
         ## for "Bound" in [programX]
-        Programs[ii].setBound(cf.get(ii, 'Bound'))
+        ## This is not necessary for evry program -- Yang 05.08
+        try:
+            Programs[ii].setBound(cf.get(ii, 'Bound'))
+        except:
+            sf.Info('No Bound.')
+        
         try:
             Programs[ii].setRunFlag(cf.get(ii, 'Run flag'))
         except:
-           sf.Info('No Run flag.')
+            sf.Info('No Run flag.')
 
     ## Read the constraints
     # new 20180426 liang
