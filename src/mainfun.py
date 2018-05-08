@@ -811,6 +811,8 @@ Output: \n~~~~ %(outputvar)s'\
 
         ## return if no bound
         ## If no bound, self._BoundVar = [['']], self._BoundVar[0][0]=''.
+        if not self._BoundVar:
+            return True
         if not self._BoundVar[0][0]:
             return True
 
