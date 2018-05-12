@@ -542,7 +542,24 @@ class program:
               if invar[xxi] == invarNotModify[xxi]:
                  outlines.append( inlines[xxi] )
               else:
-                 outlines.append( "  ".join(invar[xxi])+"\n" )
+                 ## keep format unchanged 20180512
+                 patt=re.compile(r'[ \t,\n]+')
+                 joinList=patt.findall(inlines[xxi])
+                 #print joinList, invar[xxi]; raw_input()
+                 newList=[]
+                 if len(joinList) == len(invar[xxi]):
+                     for yyi in range(len(invar[xxi])):
+                         newList.append(invar[xxi][yyi]) 
+                         newList.append(joinList[yyi])
+                 elif len(joinList)-1 == len(invar[xxi]):
+                     for yyi in range(len(invar[xxi])):
+                         newList.append(joinList[yyi])
+                         newList.append(invar[xxi][yyi])
+                     newList.append(joinList[-1])
+                 else:
+                     sf.ErrorStop("Keep format unchanged Failed! Check src/mainfun.py Line 559.") 
+                 #outlines.append( "  ".join(invar[xxi])+"\n" )
+                 outlines.append( "".join(newList))
             open(self._InputFile[ii],'w').writelines(outlines)
 
     def RunProgram(self):
@@ -725,7 +742,9 @@ Output: \n~~~~ %(outputvar)s'\
         var = sf.string2nestlist(var)
         sf.Info('Gaussian Constraint:')
         for ii in var:
-            if len(ii) in [4,5]:
+            if len(ii) in [3]:
+                pass
+            elif len(ii) in [4,5]:
                 if not ii[3] in ['symm','lower','upper']:
                     sf.ErrorStop( 'For the "Gaussian" constraint on "%s", the "Type" can only be "upper"/"lower", not "%s".'%(ii[0],ii[3]) )
             else:
@@ -1145,7 +1164,13 @@ class constraint:
         self.Chi2['Chi2'] = sf.NaN 
         sf.Info('Gaussian Constraint:')
         for ii in var:
-            if len(ii) in [4,5]:
+            if len(ii) in [3]:
+                jj = ii+['symm','Gaussian_%s'%ii[0]]
+                self._Gaussian.append(jj)
+                self.Chi2[jj[4]] = sf.NaN 
+                
+                sf.Info('    varID= %s\tMean= %e\tDeviation= %e\tType= %s\tName= %s'%(jj[0],jj[1],jj[2],jj[3],jj[4]))
+            elif len(ii) in [4,5]:
                 if not ii[3] in ['symm','lower','upper']:
                     sf.ErrorStop( 'For the "Gaussian" constraint on "%s", the "Type" can only be "symm", "upper" or "lower", not "%s".'%(ii[0],ii[3]) )
                 ## new 20180428 liang
