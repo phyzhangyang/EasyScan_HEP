@@ -8,7 +8,7 @@
     An Easy-to-use tool providing a comfortable way connecting programs 
     to Scan the parameter space for high energy physics(HEP) models.
         
-    Author: Junjie Cao, Liangliang Shang, Jin Min Yang and Yang Zhang
+    Author: Liangliang Shang and Yang Zhang
     Web: http://easyscanhep.hepforge.org
                                                                      """
 ##########################################################################
@@ -94,12 +94,13 @@ def Prior(cube, ndim, nparams):
 ## Load corresponding scan method
 if ES.getScanMethod() == 'RANDOM':
     from scanmanner import randomrun
-#    ResultFile = 'RandomData.txt'
     randomrun(
         LogLikelihood        = LogLikelihood,
         Prior                = Prior,
         n_dims               = len(ES.InPar),
         n_params             = len(ES.AllPar)+len(CS.Chi2),
+        inpar                = ES.InPar,
+	outpar               = ES.OutPar,
         n_live_points        = ES.getPointNum(),
         n_print              = ES.getPrintNum(),
         outputfiles_basename = ES.getFileName(),
@@ -107,7 +108,6 @@ if ES.getScanMethod() == 'RANDOM':
 
 elif ES.getScanMethod() == 'MCMC':
     from scanmanner import mcmcrun
-#    ResultFile = 'MCMCData.txt'
     mcmcrun(
         LogLikelihood        = LogLikelihood,
         Prior                = Prior,
@@ -126,7 +126,6 @@ elif ES.getScanMethod() == 'MCMC':
 
 elif ES.getScanMethod() == 'MULTINEST':
     import pymultinest
-#    ResultFile = 'MultiNestData/ev.dat'
     pymultinest.run(
         LogLikelihood        = LogLikelihood,
         Prior                = Prior,
@@ -151,13 +150,13 @@ elif ES.getScanMethod() == 'MULTINEST':
 
 elif ES.getScanMethod() == 'GRID':
     from scanmanner import gridrun
-#    ResultFile = 'GridData.txt'
     gridrun(
         LogLikelihood        = LogLikelihood,
         Prior                = Prior,
         n_dims               = len(ES.InPar),
         n_params             = len(ES.AllPar)+len(CS.Chi2),
         inpar                = ES.InPar,
+	outpar               = ES.OutPar,
         bin_num              = ES.GridBin,
         n_print              = ES.getPrintNum(),
         outputfiles_basename = ES.getFileName(),
@@ -165,13 +164,13 @@ elif ES.getScanMethod() == 'GRID':
 
 elif ES.getScanMethod() == 'READ':
     from scanmanner import readrun
-#    ResultFile = 'ReadData.txt'
     readrun(
             LogLikelihood        = LogLikelihood,
             Prior                = Prior,
             n_dims               = len(ES.InPar),
             n_params             = len(ES.AllPar)+len(CS.Chi2),
             inpar                = ES.InPar,
+            outpar               = ES.OutPar,
             bin_num              = ES.GridBin,
             n_print              = ES.getPrintNum(),
             outputfiles_basename = ES.getFileName(),
