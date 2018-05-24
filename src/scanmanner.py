@@ -9,7 +9,7 @@ from math import exp
 ## Internal modules.
 import init as sf
 
-def readrun(LogLikelihood,Prior,n_dims,n_params,inpar,bin_num,n_print,outputfiles_basename,outputfiles_filename):
+def readrun(LogLikelihood,Prior,n_dims,n_params,inpar,outpar,bin_num,n_print,outputfiles_basename,outputfiles_filename):
     f_out = open(os.path.join(outputfiles_basename,outputfiles_filename),'w')
     #new 20180420 liang
     f_out2 = open(os.path.join(outputfiles_basename,'All_'+outputfiles_filename),'w')
@@ -55,10 +55,14 @@ def readrun(LogLikelihood,Prior,n_dims,n_params,inpar,bin_num,n_print,outputfile
                 SavePath = os.path.join(path, os.path.basename(File)+"."+str(Naccept))
                 shutil.copy(File, SavePath)
         
-        if (Nrun+1)%n_print == 0:
+        if Nrun%n_print == 0:
             print '------------ Num: %i ------------'%(Nrun+1)
-            print 'Input    par   = '+str(cube[0:n_dims])
-            print 'Output   par   = '+str(cube[n_dims:n_params])
+            for i,name in enumerate(inpar):
+                print 'Input  - %s = %s '%(name,cube[i])
+            print '.................................'
+            for i,name in enumerate(outpar):
+                print 'Output - %s = %s '%(name,cube[i+n_dims])
+            print '.................................'
             print '     loglike   = '+str(loglike)
             print 'Accepted Num   = '+str(Naccept)
             print 'Total    Num   = '+str(Nrun+1)
@@ -66,7 +70,7 @@ def readrun(LogLikelihood,Prior,n_dims,n_params,inpar,bin_num,n_print,outputfile
         f_out2.write('\t'.join([str(x) for x in cube])+'\n')
         f_out2.flush()
 
-def gridrun(LogLikelihood,Prior,n_dims,n_params,inpar,bin_num,n_print,outputfiles_basename,outputfiles_filename):
+def gridrun(LogLikelihood,Prior,n_dims,n_params,inpar,outpar,bin_num,n_print,outputfiles_basename,outputfiles_filename):
     f_out = open(os.path.join(outputfiles_basename,outputfiles_filename),'w')
     #new 20180420 liang
     f_out2 = open(os.path.join(outputfiles_basename,'All_'+outputfiles_filename),'w')
@@ -107,10 +111,14 @@ def gridrun(LogLikelihood,Prior,n_dims,n_params,inpar,bin_num,n_print,outputfile
                 SavePath = os.path.join(path, os.path.basename(File)+"."+str(Naccept))
                 shutil.copy(File, SavePath)
 
-        if (Nrun+1)%n_print == 0:
+        if Nrun%n_print == 0:
             print '------------ Num: %i ------------'%(Nrun+1)
-            print 'Input    par   = '+str(cube[0:n_dims])
-            print 'Output   par   = '+str(cube[n_dims:n_params])
+            for i,name in enumerate(inpar):
+                print 'Input  - %s = %s '%(name,cube[i])
+            print '.................................'
+            for i,name in enumerate(outpar):
+                print 'Output - %s = %s '%(name,cube[i+n_dims])
+            print '.................................'
             print '     loglike   = '+str(loglike)
             print 'Accepted Num   = '+str(Naccept)
             print 'Total    Num   = '+str(Nrun+1)
@@ -119,7 +127,7 @@ def gridrun(LogLikelihood,Prior,n_dims,n_params,inpar,bin_num,n_print,outputfile
         f_out2.flush()
 
 
-def randomrun(LogLikelihood,Prior,n_dims,n_params,n_live_points,n_print,outputfiles_basename,outputfiles_filename):
+def randomrun(LogLikelihood,Prior,n_dims,n_params,inpar,outpar,n_live_points,n_print,outputfiles_basename,outputfiles_filename):
     f_out = open(os.path.join(outputfiles_basename,outputfiles_filename),'w')
     #new 20180420 liang
     f_out2 = open(os.path.join(outputfiles_basename,'All_'+outputfiles_filename),'w')
@@ -152,10 +160,14 @@ def randomrun(LogLikelihood,Prior,n_dims,n_params,n_live_points,n_print,outputfi
                 shutil.copy(File, SavePath)
  
 
-        if (Nrun+1)%n_print == 0:
+        if Nrun%n_print == 0:
             print '------------ Num: %i ------------'%(Nrun+1)
-            print 'Input    par   = '+str(cube[0:n_dims])
-            print 'Output   par   = '+str(cube[n_dims:n_params])
+            for i,name in enumerate(inpar):
+                print 'Input  - %s = %s '%(name,cube[i])
+            print '.................................'
+            for i,name in enumerate(outpar):
+                print 'Output - %s = %s '%(name,cube[i+n_dims])
+            print '.................................'
             print '     loglike   = '+str(loglike)
             print 'Accepted Num   = '+str(Naccept)
             print 'Total    Num   = '+str(Nrun+1)
