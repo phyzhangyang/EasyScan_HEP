@@ -567,7 +567,8 @@ class program:
         timeout = 60*2   # if the program run more than 2 hour, it may be killed
         for cmd in self._Command:
           sf.Debug('Runing Program %s with command'%self._ProgName,cmd)
-          if True:
+          Use_os_system = True
+          if Use_os_system:
               ncwd = os.getcwd()
               os.chdir(cwd)
               os.system(cmd[0])
@@ -655,6 +656,7 @@ class program:
             for jj in self._OutPosVar[ii]:
                 try:
                     par[jj[0]] = float(ouvar[jj[3]-1][jj[4]-1])
+                    sf.Debug('Output - %s='%jj[0],par[jj[0]])
                 except:
                     sf.Info('Can not read the output var %s'%jj)
                     return False
@@ -670,6 +672,7 @@ class program:
                     ## new 20180425 liang
                     #par[jj[0]] = float(labeline[0].split()[jj[4]-1])
                     par[jj[0]] = float(re.split(r'[ \t,]+',labeline[0].strip())[jj[4]-1])
+                    sf.Debug('Output - %s='%jj[0],par[jj[0]])
                 except:
                     sf.Debug('Can not read the output var',jj[0])
                     return False
@@ -704,7 +707,7 @@ class program:
                                 par[jj[0]]=float(ouvar[kki][3])
                                 ks_flag  = True
                             break
-
+                sf.Debug('Output - %s='%jj[0],par[jj[0]])
                 if not ks_flag:
                     sf.Debug('Can not read the output var',jj)
                     return False
@@ -830,6 +833,8 @@ Output: \n~~~~ %(outputvar)s'\
 
         ## return if no bound
         ## If no bound, self._BoundVar = [['']], self._BoundVar[0][0]=''.
+        if not self._BoundVar:
+            return True
         if not self._BoundVar[0][0]:
             return True
 

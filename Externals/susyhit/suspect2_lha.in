@@ -67,7 +67,7 @@ Block MINPAR  # specific model input parameters
 #
 Block EXTPAR  # general MSSM input (! IF uncommented, values replace MINPAR ones)
          0     1.0E+03   # EWSB_scale          
-         1     ES_m1   # M_1                 
+         1     45.0   # M_1         
          2     3.0E+03   # M_2                 
          3     3.0E+03   # M_3                 
         11     4.5E+03   # A_t                 
@@ -76,9 +76,9 @@ Block EXTPAR  # general MSSM input (! IF uncommented, values replace MINPAR ones
         14     3.0E+03   # A_u                 
         15     3.0E+03   # A_d                 
         16     3.0E+03   # A_e                 
-        23     ES_mu   # mu(EWSB)            
+        23     450.0   # mu(EWSB)                 
         26     3.0E+03   # MA_pole                  
-        25     ES_tanb   # tanbeta(MZ)         
+        25     10.0   # tanbeta(MZ)                  
         31     3.0E+03   # M_eL                
         32     3.0E+03   # M_muL               
         33     3.0E+03   # M_tauL              
