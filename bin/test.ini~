@@ -1,0 +1,31 @@
+[scan]
+Result file name:  test
+Scan method:       MCMC
+Points number:     500
+#                  ID   Prior  Min    Max   Other 
+Input parameters:  x,   Flat,  -2.0,  2.5,  30,  1.0
+                   y,   Flat,  -2.0,  2.5,  30, -1.0
+Random seed: 100
+Interval of print: 1
+
+[program1]
+Program name:    checkInstall
+Execute command: ./test.py
+Command path:    ../Internals/install_test/
+Input file:      1, ../Internals/install_test/inp.dat
+#                varID   fileID  method    other
+Input variable:  x,      1,      Replace,  ES_x 
+                 y,      1,      Replace,  ES_y 
+Output file:     1, ../Internals/install_test/output.dat
+#                varID   fileID  method    other
+Output variable: z,      1,      Position, 1 , 1
+                 zFile,  1,      File,     Save
+Bound:
+
+[constraint]
+#                      mean    sigma
+Gaussian:        z,    1.0,    1.0
+
+
+[plot]
+color: x, y, z

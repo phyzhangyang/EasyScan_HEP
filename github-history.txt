@@ -1,0 +1,5 @@
+ git add src/*
+ git add bin/easyscan.py
+ git commit -m "In plot mode, constant digit and non-digit. And no path for file in output file. And screen output optimizing. And remove output file in [program] before it runs"
+ git branch 
+ git push origin issue#4 

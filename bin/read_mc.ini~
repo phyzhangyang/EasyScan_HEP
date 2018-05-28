@@ -1,0 +1,59 @@
+#china
+[scan]
+Result file name:  mu_n_1
+Points number:     200
+Scan method:       grid
+#                  ID     Prior  Min    MAX
+Input parametes:   mu,  flat,   -210,    -290 , 1
+                   m1,  flat,   20,     80, 1
+                   tanb,  flat,   20,   10,  1
+Random seed:       100
+Interval of print: 1
+
+
+[program1]
+Program name:    susyhit-1.6
+Execute command:  rm susyhit_slha.out
+                  ./run
+Command path:    ../Externals/susyhit/
+
+Input file:  1,  ../Externals/susyhit/suspect2_lha.in
+Input variable:  mu,   1, Replace,  ES_mu
+                 m1,   1, Replace,  ES_m1
+		 tanb, 1, Replace,  ES_tanb
+Output file: 1, ../Externals/susyhit/susyhit_slha.out
+             2, ../Externals/susyhit/BR.txt
+Output variable: mn2,  1 ,  SLHA,  BLOCK,   MASS,    1000023
+                 mn3,  1 ,  SLHA,  BLOCK,   MASS,    1000025
+                 mn4,  1 ,  SLHA,  BLOCK,   MASS,    1000035
+                 mc1,  1 ,  SLHA,  BLOCK,   MASS,    1000024
+                 mc2,  1 ,  SLHA,  BLOCK,   MASS,    1000037
+                 mll,  1 ,  SLHA,  BLOCK,   MASS,    1000011
+                 mlr,  1 ,  SLHA,  BLOCK,   MASS,    2000011
+                 mtau1,1 ,  SLHA,  BLOCK,   MASS,    1000015
+                 mtau2,1 ,  SLHA,  BLOCK,   MASS,    2000015
+                 mql,  1 ,  SLHA,  BLOCK,   MASS,    1000001
+                 mqr,  1 ,  SLHA,  BLOCK,   MASS,    2000001
+                 mb1,  1 ,  SLHA,  BLOCK,   MASS,    1000005
+                 mb2,  1 ,  SLHA,  BLOCK,   MASS,    2000005
+                 mt1,  1 ,  SLHA,  BLOCK,   MASS,    1000006
+                 mt2,  1 ,  SLHA,  BLOCK,   MASS,    2000006
+                 mgo,  1 ,  SLHA,  BLOCK,   MASS,    1000021
+                 mh1,  1 ,  SLHA,  BLOCK,   MASS,    25
+                 spec,  1,  File,        save
+                 BrC1,  2,  Position, 1, 1
+                 BrN2,  2,  Position, 1, 2
+                 BrN3,  2,  Position, 1, 3
+
+
+[constraint]
+Gaussian:        m1,    1.0,    2.0
+
+[plot]
+Scatter: mn2,mc1
+
+
+
+
+
+

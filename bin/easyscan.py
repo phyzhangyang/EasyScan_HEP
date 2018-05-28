@@ -118,7 +118,7 @@ elif ES.getScanMethod() == 'MCMC':
         outpar               = ES.OutPar,
         StepSize             = ES.getStepSize(),
         AccepRate            = ES.getAccepRate(),
-        FalgTune             = ES.getFalgTuneR(),
+        FlagTuneR            = ES.getFlagTuneR(),
         InitVal              = ES.getInitialValue(),
         n_print              = ES.getPrintNum(),
         outputfiles_basename = ES.getFileName(),

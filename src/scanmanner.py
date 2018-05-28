@@ -29,7 +29,11 @@ def readrun(LogLikelihood,Prior,n_dims,n_params,inpar,bin_num,n_print,outputfile
         break
 
     cube = []
-    for i in range(n_params): cube.append(0)
+    cubePre = []
+    # Initialise the cube
+    for i in range(n_params): 
+        cube.append(0.0)
+        cubePre.append(0.0)
 
     sf.Info('Begin read scan ...')
     
@@ -54,6 +58,13 @@ def readrun(LogLikelihood,Prior,n_dims,n_params,inpar,bin_num,n_print,outputfile
                 path = os.path.join(outputfiles_basename,"SavedFile")
                 SavePath = os.path.join(path, os.path.basename(File)+"."+str(Naccept))
                 shutil.copy(File, SavePath)
+
+        #new 20180519 liang
+        cubeProtect = list(cube)
+
+        if cubePre[n_dims:n_params] == cube[n_dims:n_params]:
+            for i in range(n_dims, n_params):
+                cube[i]=sf.NaN
         
         if (Nrun+1)%n_print == 0:
             print '------------ Num: %i ------------'%(Nrun+1)
@@ -66,6 +77,9 @@ def readrun(LogLikelihood,Prior,n_dims,n_params,inpar,bin_num,n_print,outputfile
         f_out2.write('\t'.join([str(x) for x in cube])+'\n')
         f_out2.flush()
 
+        cube = list(cubeProtect)
+        cubePre = list(cube)
+
 def gridrun(LogLikelihood,Prior,n_dims,n_params,inpar,bin_num,n_print,outputfiles_basename,outputfiles_filename):
     f_out = open(os.path.join(outputfiles_basename,outputfiles_filename),'w')
     #new 20180420 liang
@@ -73,12 +87,15 @@ def gridrun(LogLikelihood,Prior,n_dims,n_params,inpar,bin_num,n_print,outputfile
     
     ntotal = 1
     cube = []
+    cubePre = []
     interval = {}
     for i,name in enumerate(inpar):
         interval[name] = 1.0 / bin_num[name]
         bin_num[name] += 1
         ntotal     *= bin_num[name]
-    for i in range(n_params): cube.append(0)
+    for i in range(n_params): 
+        cube.append(0)
+        cubePre.append(0)
 
     sf.Info('Begin grid scan ...')
     
@@ -92,6 +109,7 @@ def gridrun(LogLikelihood,Prior,n_dims,n_params,inpar,bin_num,n_print,outputfile
         
         Prior(cube, n_dims, n_params)
         loglike = LogLikelihood(cube, n_dims, n_params)
+
         if loglike > sf.log_zero:
 
             #new 20180420 liang
@@ -107,6 +125,13 @@ def gridrun(LogLikelihood,Prior,n_dims,n_params,inpar,bin_num,n_print,outputfile
                 SavePath = os.path.join(path, os.path.basename(File)+"."+str(Naccept))
                 shutil.copy(File, SavePath)
 
+        #new 20180519 liang
+        cubeProtect = list(cube)
+
+        if cubePre[n_dims:n_params] == cube[n_dims:n_params]:
+            for i in range(n_dims, n_params):
+                cube[i]=sf.NaN
+
         if (Nrun+1)%n_print == 0:
             print '------------ Num: %i ------------'%(Nrun+1)
             print 'Input    par   = '+str(cube[0:n_dims])
@@ -118,6 +143,8 @@ def gridrun(LogLikelihood,Prior,n_dims,n_params,inpar,bin_num,n_print,outputfile
         f_out2.write('\t'.join([str(x) for x in cube])+'\n')
         f_out2.flush()
 
+        cube = list(cubeProtect)
+        cubePre = list(cube)
 
 def randomrun(LogLikelihood,Prior,n_dims,n_params,n_live_points,n_print,outputfiles_basename,outputfiles_filename):
     f_out = open(os.path.join(outputfiles_basename,outputfiles_filename),'w')
@@ -125,8 +152,11 @@ def randomrun(LogLikelihood,Prior,n_dims,n_params,n_live_points,n_print,outputfi
     f_out2 = open(os.path.join(outputfiles_basename,'All_'+outputfiles_filename),'w')
     
     cube = []
-    for i in range(n_params): cube.append(0.0)
+    cubePre = []
     # Initialise the cube
+    for i in range(n_params): 
+        cube.append(0.0)
+        cubePre.append(0.0)
 
     sf.Info('Begin random scan ...')
     Naccept = 0
@@ -150,7 +180,13 @@ def randomrun(LogLikelihood,Prior,n_dims,n_params,n_live_points,n_print,outputfi
                 path = os.path.join(outputfiles_basename,"SavedFile")
                 SavePath = os.path.join(path, os.path.basename(File)+"."+str(Naccept))
                 shutil.copy(File, SavePath)
- 
+
+        #new 20180519 liang
+        cubeProtect = list(cube)
+
+        if cubePre[n_dims:n_params] == cube[n_dims:n_params]:
+            for i in range(n_dims, n_params):
+                cube[i]=sf.NaN
 
         if (Nrun+1)%n_print == 0:
             print '------------ Num: %i ------------'%(Nrun+1)
@@ -163,8 +199,10 @@ def randomrun(LogLikelihood,Prior,n_dims,n_params,n_live_points,n_print,outputfi
         f_out2.write('\t'.join([str(x) for x in cube])+'\n')
         f_out2.flush()
 
+        cube = list(cubeProtect)
+        cubePre = list(cube)
 
-def mcmcrun(LogLikelihood,Prior,n_dims,n_params,n_live_points,inpar,outpar,StepSize,AccepRate,FalgTune,InitVal,n_print,outputfiles_basename,outputfiles_filename):
+def mcmcrun(LogLikelihood,Prior,n_dims,n_params,n_live_points,inpar,outpar,StepSize,AccepRate,FlagTuneR,InitVal,n_print,outputfiles_basename,outputfiles_filename):
     f_out = open(os.path.join(outputfiles_basename,outputfiles_filename),'w')
     f_out2 = open(os.path.join(outputfiles_basename,'All_'+outputfiles_filename),'w')
 
@@ -266,7 +304,7 @@ def mcmcrun(LogLikelihood,Prior,n_dims,n_params,n_live_points,inpar,outpar,StepS
 
         AccRat = float(Naccept)/float(Nrun)
 
-        if FalgTune and Nrun < 1000: kcovar = kcovar + 1.0/(float(Nrun)**0.7)*(AccRat - AccepRate)
+        if FlagTuneR and Nrun < 1000: kcovar = kcovar + 1.0/(float(Nrun)**0.7)*(AccRat - AccepRate)
         else: kcovar =1
 
         if Nrun%n_print == 0:
@@ -284,7 +322,7 @@ def mcmcrun(LogLikelihood,Prior,n_dims,n_params,n_live_points,inpar,outpar,StepS
             print 'Accepted Num  = '+str(Naccept)
             print 'Total    Num   = '+str(Nrun)
             print 'Accepted Ratio = '+str(AccRat)
-            if FalgTune :
+            if FlagTuneR :
                 print 'StepZize factor= '+str(exp(kcovar))
 
         if RangeFlag and (Chisq < - 2.0 * sf.log_zero) :

@@ -137,7 +137,7 @@ def ReadIn(Configfile,ES,Programs,CS,Ploter):
     if 'freeformchi2' in constraint_items:
         CS.setFreeFormChi2(cf.get('constraint', 'FreeFormChi2'))
         if Programs:
-            Programs[ProgID[0]].setFreeFormChi2(cf.get('constraint', 'Gaussian'))
+            Programs[ProgID[0]].setFreeFormChi2(cf.get('constraint', 'FreeFormChi2'))
 
     #################################
     ## manage the vars into ES.AllPar

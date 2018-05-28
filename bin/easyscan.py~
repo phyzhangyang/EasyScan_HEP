@@ -72,7 +72,9 @@ def LogLikelihood(cube, ndim, nparams):
     loglike = - CS.getChisq(ES.AllPar)/2.0
 
     ## new 20180428 liang
+    print CS.Chi2
     for i,name in enumerate(CS.Chi2) :
+        print i,name; raw_input()
         cube[i+ndim+len(ES.OutPar)]   = CS.Chi2[name]
 
     return loglike 
@@ -107,7 +109,6 @@ if ES.getScanMethod() == 'RANDOM':
 
 elif ES.getScanMethod() == 'MCMC':
     from scanmanner import mcmcrun
-    print len(ES.AllPar),len(CS.Chi2)
 #    ResultFile = 'MCMCData.txt'
     mcmcrun(
         LogLikelihood        = LogLikelihood,
@@ -119,7 +120,7 @@ elif ES.getScanMethod() == 'MCMC':
         outpar               = ES.OutPar,
         StepSize             = ES.getStepSize(),
         AccepRate            = ES.getAccepRate(),
-        FalgTune             = ES.getFalgTuneR(),
+        FlagTuneR            = ES.getFlagTuneR(),
         InitVal              = ES.getInitialValue(),
         n_print              = ES.getPrintNum(),
         outputfiles_basename = ES.getFileName(),
