@@ -757,7 +757,7 @@ Output: \n~~~~ %(outputvar)s'\
         var = sf.string2nestlist(var)
         sf.Info('FreeFormChi2:')
         for ii in var:
-            if len(ii) in [1,2]:
+            if (len(ii)==1 and ii[0] ) or len(ii)==2:
                 pass
             else:
                 sf.ErrorStop( 'The "FreeFormChi2" constraint on "%s" need 1 item or 2 items( VarID [, Name] ).'%(ii[0]) )
@@ -884,7 +884,7 @@ class EasyScanInput:
         self._RandomSeed = -1
         self._PrintNum   = 10
         self._AccepRate  = 0.25
-        self._FalgTuneR  = False
+        self._FlagTuneR  = False
 
         self.InputPar = {}
         
@@ -991,7 +991,7 @@ class EasyScanInput:
         if AccepRate >= 1 or AccepRate <= 0:
             sf.ErrorStop('The acceptance rate must be in [0,1]. The suggest value is 0.5 for d<=2, 0.25 otherwise.')
         self._AccepRate = AccepRate
-        self._FalgTuneR = True
+        self._FlagTuneR = True
         sf.Info('Acceptance rate   = %s'%self._AccepRate)
 
     def setPrintNum(self, nprint):
@@ -1123,8 +1123,8 @@ class EasyScanInput:
     def getInitialValue(self):
         return self.MCMCiv
 
-    def getFalgTuneR(self):
-        return self._FalgTuneR
+    def getFlagTuneR(self):
+        return self._FlagTuneR
     def getAccepRate(self):
         return self._AccepRate
 
@@ -1157,11 +1157,10 @@ class constraint:
         self._Gaussian=[]
         #self._Limit=[]
         self._FreeFormChi2=[]
-        self.Chi2={}
+        self.Chi2={'Chi2':sf.NaN}
     
     def setGaussian(self,var):
         var = sf.string2nestlist(var)
-        self.Chi2['Chi2'] = sf.NaN 
         sf.Info('Gaussian Constraint:')
         for ii in var:
             if len(ii) in [3]:
@@ -1189,26 +1188,12 @@ class constraint:
         ## new 20180428 liang
         self.Chi2 = sf.sortDic(self.Chi2) 
 
-## marked 20180430 liang
-#    def setLimit(self,var):
-#        var = sf.string2nestlist(var)
-#        sf.Info('Upper/Lower limit:')
-#        for ii in var:
-#            if len(ii) == 4:
-#                self._Limit.append(ii)
-#                sf.Info('  varID(X)= %s\tvarID(Y)= %s\tConstraintFile= %s\tType= %s'%(ii[0],ii[1],ii[2],ii[3]))
-#        ## add check the ConstraintFile exist
-#        ## add check the ConstraintFile has two columns and >1 lines
-#        ## very useful, you can simply let a>b
-#            else:
-#                sf.ErrorStop( 'The "Limit" constraint on "(%s,%s)" need 4 items( X ID, Y ID, ConstraintFile, Type ).'%(ii[0],ii[1]) )
-
     ## new 20180430 liang
     def setFreeFormChi2(self,var):
         var = sf.string2nestlist(var)
         sf.Info('FreeFormChi2:')
         for ii in var:
-            if len(ii) in [1,2]:
+            if (len(ii)==1 and ii[0] ) or len(ii)==2:
                 if len(ii) == 1:
                     jj = ii + ['FreeFormChi2_%s'%ii[0]]
                 else:
@@ -1243,9 +1228,7 @@ class constraint:
 
             chisq += ichisq
 
-        ## marked 20180430 liang
-        #for ii in self._Limit:
-        #    sf.ErrorStop('Line limit constraint is not ready.')
+        ## new 20180430 liang
         for ii in self._FreeFormChi2:
             ichisq = par[ii[0]]
 
@@ -1255,6 +1238,7 @@ class constraint:
 
         ## new 20180428 liang
         self.Chi2['Chi2'] = chisq
+
 
         return chisq
 
@@ -1350,7 +1334,7 @@ class plot():
             plot_line = map(str,plot_line.split())
             var["+".join(plot_line[:-1])] = int(plot_line[-1])
     
-        self._path = os.path.join(path[0],'Figures')
+        self._path = os.path.join(path[0],'Figure')
         if not os.path.exists(self._path):
             os.mkdir(self._path)
         else:
