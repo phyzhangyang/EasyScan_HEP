@@ -1,0 +1,92 @@
+2018-06-01T18:00:13 - easyscan.main - INFO
+[1;32;2m Scan method       = GRID[0m
+2018-06-01T18:00:19 - easyscan.main - INFO
+[1;32;2m ...............................................[0m
+2018-06-01T18:00:19 - easyscan.main - INFO
+[1;32;2m ...............................................[0m
+2018-06-01T18:00:19 - easyscan.main - INFO
+[1;32;2m Result file name  = /home/yzha0133/work/wanglei2/EasyScan_HEP/bin/mcl1-100[0m
+2018-06-01T18:00:19 - easyscan.main - INFO
+[1;32;2m Random seed       = 100[0m
+2018-06-01T18:00:19 - easyscan.main - INFO
+[1;32;2m "Random seed = 100" in the input configure file, using only in Random, MCMC or Multinest mode.[0m
+2018-06-01T18:00:19 - easyscan.main - INFO
+[1;32;2m Interval of print = 1[0m
+2018-06-01T18:00:19 - easyscan.main - INFO
+[1;32;2m Input parameters   =  [0m
+2018-06-01T18:00:19 - easyscan.main - INFO
+[1;32;2m ...............................................[0m
+2018-06-01T18:00:19 - easyscan.main - INFO
+[1;32;2m ...............................................[0m
+2018-06-01T18:00:19 - easyscan.main - INFO
+[1;32;2m Program name    = Get_spectrum[0m
+2018-06-01T18:00:19 - easyscan.main - INFO
+[1;32;2m Execute command = [['python ./../EasyScan_HEP/Internals/read_one_line.py mcl1-100.dat one.txt line_num.dat'], ['./a.out']][0m
+2018-06-01T18:00:19 - easyscan.main - INFO
+[1;32;2m Command path    = /home/yzha0133/work/wanglei2/EasyScan_HEP/bin/../../muon_g_2_data/[0m
+2018-06-01T18:00:19 - easyscan.main - INFO
+[1;32;2m Input file      = [0m
+2018-06-01T18:00:19 - easyscan.main - INFO
+[1;32;2m   fileID= 1 	File= /home/yzha0133/work/wanglei2/EasyScan_HEP/bin/../../muon_g_2_data/line_num.dat[0m
+2018-06-01T18:00:19 - easyscan.main - INFO
+[1;32;2m Input variable = [0m
+2018-06-01T18:00:19 - easyscan.main - INFO
+[1;32;2m   varID= num 	 fileID= 1 	 Method= Position 	 Line num= 1 	 Column num= 1[0m
+2018-06-01T18:00:19 - easyscan.main - DEBUG
+[1;35;2m Position len(invar): 1[0m
+2018-06-01T18:00:19 - easyscan.main - DEBUG
+[1;35;2m Position line num: 1[0m
+2018-06-01T18:00:19 - easyscan.main - DEBUG
+[1;35;2m Position len(invar[line num]): 1[0m
+2018-06-01T18:00:19 - easyscan.main - DEBUG
+[1;35;2m Position Column number: 1[0m
+2018-06-01T18:00:19 - easyscan.main - DEBUG
+[1;35;2m OutFileID: [1][0m
+2018-06-01T18:00:19 - easyscan.main - INFO
+[1;32;2m Output file     = [0m
+2018-06-01T18:00:19 - easyscan.main - INFO
+[1;32;2m   ID= 1 	File= /home/yzha0133/work/wanglei2/EasyScan_HEP/bin/../../muon_g_2_data/outputdata/param_card.dat[0m
+2018-06-01T18:00:19 - easyscan.main - INFO
+[1;32;2m Output variable = [0m
+2018-06-01T18:00:19 - easyscan.main - INFO
+[1;32;2m   varID= spec 	fileID= 1 	"File"= File     Method=save[0m
+2018-06-01T18:00:19 - easyscan.main - INFO
+[1;32;2m No Bound.[0m
+2018-06-01T18:00:19 - easyscan.main - INFO
+[1;32;2m No Run flag.[0m
+2018-06-01T18:00:19 - easyscan.main - INFO
+[1;32;2m ...............................................[0m
+2018-06-01T18:00:19 - easyscan.main - INFO
+[1;32;2m ...............................................[0m
+2018-06-01T18:00:19 - easyscan.main - DEBUG
+[1;35;2m constraint_items: [][0m
+2018-06-01T18:00:19 - easyscan.main - DEBUG
+[1;35;2m Programe ID: program1[0m
+2018-06-01T18:00:19 - easyscan.main - DEBUG
+[1;35;2m Corresponding output vars: {'spec': nan}[0m
+2018-06-01T18:00:19 - easyscan.main - DEBUG
+[1;35;2m All vars:   : {'num': nan, 'spec': nan}[0m
+2018-06-01T18:00:19 - easyscan.main - DEBUG
+[1;35;2m Input Pars: : {'num': nan}[0m
+2018-06-01T18:00:19 - easyscan.main - DEBUG
+[1;35;2m Output Pars:: OrderedDict([('spec', nan)])[0m
+2018-06-01T18:00:19 - easyscan.main - INFO
+[1;32;2m Begin grid scan ...[0m
+2018-06-01T18:00:19 - easyscan.main - DEBUG
+[1;35;2m Runing Program Get_spectrum with command: ['python ./../EasyScan_HEP/Internals/read_one_line.py mcl1-100.dat one.txt line_num.dat'][0m
+2018-06-01T18:00:19 - easyscan.main - DEBUG
+[1;35;2m Runing Program Get_spectrum with command: ['./a.out'][0m
+2018-06-01T18:00:19 - easyscan.main - DEBUG
+[1;35;2m Runing Program Get_spectrum with command: ['python ./../EasyScan_HEP/Internals/read_one_line.py mcl1-100.dat one.txt line_num.dat'][0m
+2018-06-01T18:00:19 - easyscan.main - DEBUG
+[1;35;2m Runing Program Get_spectrum with command: ['./a.out'][0m
+2018-06-01T18:00:19 - easyscan.main - DEBUG
+[1;35;2m Skip parameter spec[0m
+2018-06-01T18:00:19 - easyscan.main - DEBUG
+[1;35;2m Skip parameter spec[0m
+2018-06-01T18:00:19 - easyscan.main - DEBUG
+[1;35;2m Skip parameter spec[0m
+2018-06-01T18:00:19 - easyscan.main - DEBUG
+[1;35;2m Skip parameter spec[0m
+2018-06-01T18:00:19 - easyscan.main - INFO
+[1;32;2m You have close ploting the result ... [0m

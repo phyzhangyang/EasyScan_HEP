@@ -70,7 +70,8 @@ def LogLikelihood(cube, ndim, nparams):
         cube[i+ndim]   = ES.AllPar[name]
 
     loglike = - CS.getChisq(ES.AllPar)/2.0
-
+    
+    if (len(CS.Chi2)==1): return loglike
     ## new 20180428 liang
     for i,name in enumerate(CS.Chi2) :
         cube[i+ndim+len(ES.OutPar)]   = CS.Chi2[name]
@@ -100,7 +101,7 @@ if ES.getScanMethod() == 'RANDOM':
         n_dims               = len(ES.InPar),
         n_params             = len(ES.AllPar)+len(CS.Chi2),
         inpar                = ES.InPar,
-	outpar               = ES.OutPar,
+        outpar               = ES.OutPar,
         n_live_points        = ES.getPointNum(),
         n_print              = ES.getPrintNum(),
         outputfiles_basename = ES.getFileName(),
@@ -156,7 +157,7 @@ elif ES.getScanMethod() == 'GRID':
         n_dims               = len(ES.InPar),
         n_params             = len(ES.AllPar)+len(CS.Chi2),
         inpar                = ES.InPar,
-	outpar               = ES.OutPar,
+        outpar               = ES.OutPar,
         bin_num              = ES.GridBin,
         n_print              = ES.getPrintNum(),
         outputfiles_basename = ES.getFileName(),
