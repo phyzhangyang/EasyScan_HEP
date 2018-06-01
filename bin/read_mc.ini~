@@ -18,9 +18,6 @@ Output file:     1, ../../muon_g_2_data/outputdata/param_card.dat
 Output variable: spec,    1,  File,  save
 
 [constraint]
-
-
-
 [plot]
 
 
