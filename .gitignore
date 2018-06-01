@@ -1,4 +1,5 @@
 Externals/
 *~
+*.pyc
 *EASYSCAN.LOG
 bin/*
