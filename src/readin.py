@@ -47,12 +47,11 @@ def ReadIn(Configfile,ES,Programs,CS,Ploter):
     ## Back to Read the basic scan parameters
     try:
         ES.setPointNum(cf.getint('scan', 'Number of points'))
-	if cf.get('scan', 'Scan method').upper() in ["GRID"]:
+        if cf.get('scan', 'Scan method').upper() in ["GRID"]:
             sf.WarningNoWait('"Number of points" in the input configure file is not used in "GRID" scan mode.')
     except ConfigParser.NoOptionError:
-	if cf.get('scan', 'Scan method').upper() in ["GRID"]:
-            pass
-        sf.WarningWait('Can not find "Number of points" in the input configure file, it will take the default value, 100.')
+        if cf.get('scan', 'Scan method').upper() not in ["GRID"]:
+            sf.WarningWait('Can not find "Number of points" in the input configure file, it will take the default value, 100.')
     except ValueError:
         sf.ErrorStop('The "Number of points" in the input configure file must be an integer.')
 
