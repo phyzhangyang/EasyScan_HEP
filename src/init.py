@@ -185,7 +185,7 @@ def checkFileInList(List):
 
     return newList, files
  
-## TODO I don't understand this
+## TODO I don't understand this   ---Yang
 def sortDic(Dic):
     return OrderedDict(sorted(Dic.items(), key = lambda t: t[0]))
 
