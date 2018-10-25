@@ -71,7 +71,7 @@ def LogLikelihood(cube, ndim, nparams):
 
     loglike = - CS.getChisq(ES.AllPar)/2.0
     
-    if (len(CS.Chi2)==1): return loglike
+    if (len(CS.Chi2)==1) return loglike
     ## new 20180428 liang
     for i,name in enumerate(CS.Chi2) :
         cube[i+ndim+len(ES.OutPar)]   = CS.Chi2[name]

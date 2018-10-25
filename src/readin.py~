@@ -50,8 +50,10 @@ def ReadIn(Configfile,ES,Programs,CS,Ploter):
         if cf.get('scan', 'Scan method').upper() in ["GRID"]:
             sf.WarningNoWait('"Number of points" in the input configure file is not used in "GRID" scan mode.')
     except ConfigParser.NoOptionError:
-        if cf.get('scan', 'Scan method').upper() not in ["GRID"]:
-            sf.WarningWait('Can not find "Number of points" in the input configure file, it will take the default value, 100.')
+        if cf.get('scan', 'Scan method').upper() in ["GRID"]:
+            print "pass"
+            pass
+        sf.WarningWait('Can not find "Number of points" in the input configure file, it will take the default value, 100.')
     except ValueError:
         sf.ErrorStop('The "Number of points" in the input configure file must be an integer.')
 

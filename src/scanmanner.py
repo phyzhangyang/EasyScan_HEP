@@ -3,16 +3,17 @@
 ####################################################################
 
 ## External modules.
-import os,sys
+import os,sys,shutil
 from random import random,gauss
 from math import exp
 ## Internal modules.
 import init as sf
 
-def readrun(LogLikelihood,Prior,n_dims,n_params,inpar,bin_num,n_print,outputfiles_basename,outputfiles_filename):
-    #print "readrun() in scanmanner.py 01llllllll"
-    #print outputfiles_basename,outputfiles_filename
+def readrun(LogLikelihood,Prior,n_dims,n_params,inpar,outpar,bin_num,n_print,outputfiles_basename,outputfiles_filename):
     f_out = open(os.path.join(outputfiles_basename,outputfiles_filename),'w')
+    #new 20180420 liang
+    f_out2 = open(os.path.join(outputfiles_basename,'All_'+outputfiles_filename),'w')
+
     import mainfun as mf
     Ploter = mf.plot()
     Ploter.setPlotPar(outputfiles_basename)
@@ -40,22 +41,39 @@ def readrun(LogLikelihood,Prior,n_dims,n_params,inpar,bin_num,n_print,outputfile
             cube[i] = Ploter._data[name][iner]
         
         loglike = LogLikelihood(cube, n_dims, n_params)
-        #if loglike > sf.log_zero:
-        if True:
+        if loglike > sf.log_zero:
+            #new 20180420 liang
+            cube, acceptFiles=sf.checkFileInList(cube)
+
             Naccept += 1
-            f_out.write('\t'.join([str(x) for x in cube])+'\t'+str(loglike)+'\n')
+            f_out.write('\t'.join([str(x) for x in cube])+'\n')
             f_out.flush()
+
+            #new 20180420 liang
+            for File in acceptFiles:
+                path = os.path.join(outputfiles_basename,"SavedFile")
+                SavePath = os.path.join(path, os.path.basename(File)+"."+str(Naccept))
+                shutil.copy(File, SavePath)
         
-        if (Nrun+1)%n_print == 0:
+        if Nrun%n_print == 0:
             print '------------ Num: %i ------------'%(Nrun+1)
-            print 'Input    par   = '+str(cube[0:n_dims])
-            print 'Output   par   = '+str(cube[n_dims:n_params])
+            for i,name in enumerate(inpar):
+                print 'Input  - %s = %s '%(name,cube[i])
+            print '.................................'
+            for i,name in enumerate(outpar):
+                print 'Output - %s = %s '%(name,cube[i+n_dims])
+            print '.................................'
             print '     loglike   = '+str(loglike)
             print 'Accepted Num   = '+str(Naccept)
             print 'Total    Num   = '+str(Nrun+1)
 
-def gridrun(LogLikelihood,Prior,n_dims,n_params,inpar,bin_num,n_print,outputfiles_basename,outputfiles_filename):
+        f_out2.write('\t'.join([str(x) for x in cube])+'\n')
+        f_out2.flush()
+
+def gridrun(LogLikelihood,Prior,n_dims,n_params,inpar,outpar,bin_num,n_print,outputfiles_basename,outputfiles_filename):
     f_out = open(os.path.join(outputfiles_basename,outputfiles_filename),'w')
+    #new 20180420 liang
+    f_out2 = open(os.path.join(outputfiles_basename,'All_'+outputfiles_filename),'w')
     
     ntotal = 1
     cube = []
@@ -70,7 +88,7 @@ def gridrun(LogLikelihood,Prior,n_dims,n_params,inpar,bin_num,n_print,outputfile
     
     Naccept = 0
 
-    for Nrun in range(ntotal):
+    for Nrun in xrange(ntotal):
         iner = 1
         for i,name in enumerate(inpar):
             cube[i] = ( int(Nrun/iner) )%bin_num[name] * interval[name]
@@ -79,22 +97,40 @@ def gridrun(LogLikelihood,Prior,n_dims,n_params,inpar,bin_num,n_print,outputfile
         Prior(cube, n_dims, n_params)
         loglike = LogLikelihood(cube, n_dims, n_params)
         if loglike > sf.log_zero:
+
+            #new 20180420 liang
+            cube, acceptFiles=sf.checkFileInList(cube)
+
             Naccept += 1
-            f_out.write('\t'.join([str(x) for x in cube])+'\t'+str(loglike)+'\n')
+            f_out.write('\t'.join([str(x) for x in cube])+'\n')
             f_out.flush()
 
-        if (Nrun+1)%n_print == 0:
+            #new 20180420 liang
+            for File in acceptFiles:
+                path = os.path.join(outputfiles_basename,"SavedFile")
+                SavePath = os.path.join(path, os.path.basename(File)+"."+str(Naccept))
+                shutil.copy(File, SavePath)
+
+        if Nrun%n_print == 0:
             print '------------ Num: %i ------------'%(Nrun+1)
-            print 'Input    par   = '+str(cube[0:n_dims])
-            print 'Output   par   = '+str(cube[n_dims:n_params])
+            for i,name in enumerate(inpar):
+                print 'Input  - %s = %s '%(name,cube[i])
+            print '.................................'
+            for i,name in enumerate(outpar):
+                print 'Output - %s = %s '%(name,cube[i+n_dims])
+            print '.................................'
             print '     loglike   = '+str(loglike)
             print 'Accepted Num   = '+str(Naccept)
             print 'Total    Num   = '+str(Nrun+1)
 
+        f_out2.write('\t'.join([str(x) for x in cube])+'\n')
+        f_out2.flush()
 
 
-def randomrun(LogLikelihood,Prior,n_dims,n_params,n_live_points,n_print,outputfiles_basename,outputfiles_filename):
+def randomrun(LogLikelihood,Prior,n_dims,n_params,inpar,outpar,n_live_points,n_print,outputfiles_basename,outputfiles_filename):
     f_out = open(os.path.join(outputfiles_basename,outputfiles_filename),'w')
+    #new 20180420 liang
+    f_out2 = open(os.path.join(outputfiles_basename,'All_'+outputfiles_filename),'w')
     
     cube = []
     for i in range(n_params): cube.append(0.0)
@@ -109,16 +145,35 @@ def randomrun(LogLikelihood,Prior,n_dims,n_params,n_live_points,n_print,outputfi
         Prior(cube, n_dims, n_params)
         loglike = LogLikelihood(cube, n_dims, n_params)
         if loglike > sf.log_zero:
+
+            #new 20180420 liang
+            cube, acceptFiles=sf.checkFileInList(cube)
+
             Naccept += 1
-            f_out.write('\t'.join([str(x) for x in cube])+'\t'+str(loglike)+'\n')
+            f_out.write('\t'.join([str(x) for x in cube])+'\n')
             f_out.flush()
-        if (Nrun+1)%n_print == 0:
+
+            #new 20180420 liang
+            for File in acceptFiles:
+                path = os.path.join(outputfiles_basename,"SavedFile")
+                SavePath = os.path.join(path, os.path.basename(File)+"."+str(Naccept))
+                shutil.copy(File, SavePath)
+ 
+
+        if Nrun%n_print == 0:
             print '------------ Num: %i ------------'%(Nrun+1)
-            print 'Input    par   = '+str(cube[0:n_dims])
-            print 'Output   par   = '+str(cube[n_dims:n_params])
+            for i,name in enumerate(inpar):
+                print 'Input  - %s = %s '%(name,cube[i])
+            print '.................................'
+            for i,name in enumerate(outpar):
+                print 'Output - %s = %s '%(name,cube[i+n_dims])
+            print '.................................'
             print '     loglike   = '+str(loglike)
             print 'Accepted Num   = '+str(Naccept)
             print 'Total    Num   = '+str(Nrun+1)
+
+        f_out2.write('\t'.join([str(x) for x in cube])+'\n')
+        f_out2.flush()
 
 
 def mcmcrun(LogLikelihood,Prior,n_dims,n_params,n_live_points,inpar,outpar,StepSize,AccepRate,FalgTune,InitVal,n_print,outputfiles_basename,outputfiles_filename):
@@ -199,7 +254,10 @@ def mcmcrun(LogLikelihood,Prior,n_dims,n_params,n_live_points,inpar,outpar,StepS
                 Flag_accept = random() < exp(CurChisq-Chisq) 
 
         if Flag_accept :
-            f_out.write('\t'.join([str(x) for x in CurObs])+'\t'+str(-2*CurChisq)+'\t'+str(mult)+'\n')
+            #new 20180420 liang
+            CurObs, acceptFiles=sf.checkFileInList(CurObs)
+
+            f_out.write('\t'.join([str(x) for x in CurObs])+'\t'+str(mult)+'\n')
             f_out.flush()
             CurChisq = Chisq
             for i in range(n_params): CurObs[i]   = cube[i]
@@ -208,6 +266,13 @@ def mcmcrun(LogLikelihood,Prior,n_dims,n_params,n_live_points,inpar,outpar,StepS
             if Chisq < MinChisq : MinChisq = Chisq
             Naccept += 1
             mult = 1
+
+            #new 20180420 liang
+            for File in acceptFiles:
+                path = os.path.join(outputfiles_basename,"SavedFile")
+                SavePath = os.path.join(path, os.path.basename(File)+"."+str(Naccept))
+                shutil.copy(File, SavePath)
+
         else:
             mult +=1
 
@@ -235,7 +300,7 @@ def mcmcrun(LogLikelihood,Prior,n_dims,n_params,n_live_points,inpar,outpar,StepS
                 print 'StepZize factor= '+str(exp(kcovar))
 
         if RangeFlag and (Chisq < - 2.0 * sf.log_zero) :
-            f_out2.write('\t'.join([str(x) for x in CurObs])+'\t'+str(-2*CurChisq)+'\t'+str(mult)+'\n')
+            f_out2.write('\t'.join([str(x) for x in CurObs])+'\t'+str(mult)+'\n')
             f_out2.flush()
 
 
