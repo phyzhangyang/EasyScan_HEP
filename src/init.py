@@ -10,6 +10,7 @@ import optparse
 import logging
 import logging.config
 import time
+from collections import OrderedDict
 
 print '\033[1;36;2m'
 print '''
@@ -54,7 +55,6 @@ except IOError:
     logger.error('Configfile not exist')
     sys.exit(1)
 
-
 ## define 'negetive infinity'
 log_zero = -1e+100
 ## define 'not a number'
@@ -62,36 +62,31 @@ NaN = float('NaN')
 ## Current path
 CurrentPath = os.getcwd()
 
+## define screen print functions
 def ColorText(i,text,j=1):
     return '\033[%i;3%i;2m %s\033[0m' %(j,i,text)
-
 def GotoWeb():
     print ColorText(1,'# Goto ') + ColorText(1,'http://easyscanhep.hepforge.org',4) + ColorText(1,' for detail.')
-
 def WarningWait(warinfo):
     logger.warning(ColorText(1,warinfo))
     print ColorText(1,'# Waiting 3 seconds for WARNING.')
     time.sleep(3)
-
 def WarningNoWait(warinfo):
     logger.warning(ColorText(1,warinfo))
-
 def ErrorStop(errinfo):
     logger.error( ColorText(1,errinfo) )
     GotoWeb()
     print ColorText(1,'# Exiting with ERROR.')
     sys.exit(1)
-
 def Info(debinfo):
     logger.info( ColorText(2,debinfo) )
-
 def Debug(debinfo,debvalue=''):
     if debvalue=='':
         logger.debug( ColorText(5, str(debinfo) ) )
     else:
         logger.debug( ColorText(5, str(debinfo)+': '+str(debvalue) ) )
 
-
+## transform str into int and float
 def autotype(s):
     if type(s) is not str:
         return s
@@ -102,17 +97,19 @@ def autotype(s):
     except ValueError:
         return s
 
+## transform str into list
 def string2list(s):
     s = [ autotype(ss.strip()) for ss in s.split('\n') ]
     return s
 
-## used for parsing string of input variable and output variable in configure file to list of list of items.
+## parse string of input variable and output variable in configure file to list of items.
 def string2nestlist(s):
     s = map( lambda x: x.split(','), s.split('\n') )
     s = [[autotype(x.strip()) for x in ss] for ss in s]
     return s
 
 ## "File" parameter readd 20180416 liang
+# TODO why 'READ' is return
 def WriteResultInf(InPar,OutPar,Chi2,Path, ScanMethod,File):
     if ScanMethod == 'PLOT': return
     if ScanMethod == 'READ': return
@@ -135,11 +132,12 @@ def WriteResultInf(InPar,OutPar,Chi2,Path, ScanMethod,File):
         file_inf.write('\t'.join(['mult',str(i+0)])+'\n')
     file_inf.close()
 
+## evaluate a math string
 def parseMath(par):
-    ## Thanks to authors at the web page http://lybniz2.sourceforge.net/safeeval.html
-
+# TODO no need to use math in ini. Perform this function to every variable
+    # Thanks to authors at the web page http://lybniz2.sourceforge.net/safeeval.html
     from math import *
-    ## make a list of safe functions
+    # make a list of safe functions
     safe_list = ['math','acos', 'asin', 'atan', 'atan2', 'ceil', 'cos', 'cosh',
                  'degrees', 'e', 'exp', 'fabs', 'floor', 'fmod', 'frexp', 'hypot',
                  'ldexp', 'log', 'log10', 'modf', 'pi', 'pow', 'radians', 'sin',
@@ -162,14 +160,15 @@ def parseMath(par):
              cal = eval(expr, safe_dict)
              par[key] = cal
 
-#new 20180419 liang
+## check reduplicative variable name
 def checkItemInList(List):
     for item in List:
         counter = List.count(item)
         if counter>1:
             ErrorStop('Figure name / output variable name "%s" duplicating %i times! Please correct in [plot] / [programX] in your input file!!'%(item, counter))
         
-#new 20180420 liang
+## delete path in the name of files
+# TODO don't save file name
 def checkFileInList(List):
     newList=[]
     files=[]
@@ -186,9 +185,8 @@ def checkFileInList(List):
 
     return newList, files
  
-## new 20180428 liang
+## TODO I don't understand this
 def sortDic(Dic):
-    from collections import OrderedDict
     return OrderedDict(sorted(Dic.items(), key = lambda t: t[0]))
 
        
