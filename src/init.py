@@ -55,14 +55,13 @@ except IOError:
     sys.exit(1)
 
 
-## deine 'negtive infinity'
+## define 'negetive infinity'
 log_zero = -1e+100
-## deine 'not a number'
+## define 'not a number'
 NaN = float('NaN')
 ## Current path
 CurrentPath = os.getcwd()
 
-# use
 def ColorText(i,text,j=1):
     return '\033[%i;3%i;2m %s\033[0m' %(j,i,text)
 
@@ -71,13 +70,11 @@ def GotoWeb():
 
 def WarningWait(warinfo):
     logger.warning(ColorText(1,warinfo))
-    GotoWeb()
     print ColorText(1,'# Waiting 3 seconds for WARNING.')
     time.sleep(3)
 
 def WarningNoWait(warinfo):
     logger.warning(ColorText(1,warinfo))
-    GotoWeb()
 
 def ErrorStop(errinfo):
     logger.error( ColorText(1,errinfo) )
@@ -109,16 +106,20 @@ def string2list(s):
     s = [ autotype(ss.strip()) for ss in s.split('\n') ]
     return s
 
+## used for parsing string of input variable and output variable in configure file to list of list of items.
 def string2nestlist(s):
     s = map( lambda x: x.split(','), s.split('\n') )
     s = [[autotype(x.strip()) for x in ss] for ss in s]
     return s
 
-def WriteResultInf(InPar,OutPar,Path,ScanMethod):
+## "File" parameter readd 20180416 liang
+def WriteResultInf(InPar,OutPar,Chi2,Path, ScanMethod,File):
     if ScanMethod == 'PLOT': return
-    if ScanMethod == 'READ': os.rename(os.path.join(Path,'ScanInf.txt'),os.path.join(Path,'ScanInf_old.txt'))
+    if ScanMethod == 'READ': return
+    #if ScanMethod == 'READ': os.rename(os.path.join(Path,'ScanInf.txt'),os.path.join(Path,'ScanInf_old.txt'))
     file_inf = open(os.path.join(Path,'ScanInf.txt'),'w')
-    # file_inf.write(    '\t'.join([Path, File])     +'\n')
+    #unmark 20180416 liang
+    file_inf.write(    '\t'.join([Path, File])     +'\n')
     i   = 0
     for name in InPar:
         file_inf.write('\t'.join([name,str(i)])+'\n')
@@ -126,7 +127,68 @@ def WriteResultInf(InPar,OutPar,Path,ScanMethod):
     for name in OutPar :
         file_inf.write('\t'.join([name,str(i)])+'\n')
         i += 1
-    file_inf.write('\t'.join(['loglike',str(i)])+'\n')
+    ## new 20180428 liang
+    for name in Chi2:
+        file_inf.write('\t'.join([name,str(i)])+'\n')
+        i += 1
     if ScanMethod == 'MCMC':
-        file_inf.write('\t'.join(['mult',str(i+1)])+'\n')
+        file_inf.write('\t'.join(['mult',str(i+0)])+'\n')
     file_inf.close()
+
+def parseMath(par):
+    ## Thanks to authors at the web page http://lybniz2.sourceforge.net/safeeval.html
+
+    from math import *
+    ## make a list of safe functions
+    safe_list = ['math','acos', 'asin', 'atan', 'atan2', 'ceil', 'cos', 'cosh',
+                 'degrees', 'e', 'exp', 'fabs', 'floor', 'fmod', 'frexp', 'hypot',
+                 'ldexp', 'log', 'log10', 'modf', 'pi', 'pow', 'radians', 'sin',
+                 'sinh', 'sqrt', 'tan', 'tanh']
+
+    ## use the list to filter the local namespace
+    safe_dict = dict([ (k, locals().get(k, None)) for k in safe_list ])
+    ## add any needed builtins back in.
+    safe_dict['abs'] = abs
+
+    safe_dict.update(par)
+    safe_dict.update({"__builtins__": None})
+
+    for key,value in par.items():
+        flag = key.split()[0]
+        expr = ''.join(key.split()[1:])
+        expr = ','.join(expr.split(':'))
+
+        if flag.upper() == "MATH":
+             cal = eval(expr, safe_dict)
+             par[key] = cal
+
+#new 20180419 liang
+def checkItemInList(List):
+    for item in List:
+        counter = List.count(item)
+        if counter>1:
+            ErrorStop('Figure name / output variable name "%s" duplicating %i times! Please correct in [plot] / [programX] in your input file!!'%(item, counter))
+        
+#new 20180420 liang
+def checkFileInList(List):
+    newList=[]
+    files=[]
+    for item in List:
+        try:
+            float(item)
+            newList.append(item)
+        except ValueError:
+            if item.find('/') >= 0:
+                files.append(item)
+                newList.append(item.split('/')[-1])
+            else:
+                newList.append(item)
+
+    return newList, files
+ 
+## new 20180428 liang
+def sortDic(Dic):
+    from collections import OrderedDict
+    return OrderedDict(sorted(Dic.items(), key = lambda t: t[0]))
+
+       

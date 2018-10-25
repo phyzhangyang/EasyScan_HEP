@@ -1,0 +1,3 @@
+/home/yzha0133/work/wanglei2/EasyScan_HEP/bin/mcl1-100	GridData.txt
+num	0
+spec	1

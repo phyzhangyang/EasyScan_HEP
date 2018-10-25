@@ -8,7 +8,7 @@
     An Easy-to-use tool providing a comfortable way connecting programs 
     to Scan the parameter space for high energy physics(HEP) models.
         
-    Author: Junjie Cao, Liangliang Shang, Jin Min Yang and Yang Zhang
+    Author: Liangliang Shang and Yang Zhang
     Web: http://easyscanhep.hepforge.org
                                                                      """
 ##########################################################################
@@ -17,21 +17,31 @@
 import os,sys,math
 sys.path.append(os.path.join(os.path.split(os.path.split(os.path.realpath(__file__))[0])[0], "src"))
 ## Internal modules.
-import init       as ip
+import init       as sf
 import mainfun    as mf
 import statfun    as stat
 import readin
 
 # define basic class object
 ES       = mf.EasyScanInput()
-Programs ={}
+Programs = {}
 CS       = mf.constraint()
 Ploter   = mf.plot()
 ProgID   = readin.ReadIn(sys.argv[1],ES,Programs,CS,Ploter)
 
-
+## new 20180416 liang
+if ES.getScanMethod() == 'RANDOM':
+    ResultFile = 'RandomData.txt'
+elif ES.getScanMethod() == 'MCMC':
+    ResultFile = 'MCMCData.txt'
+elif ES.getScanMethod() == 'MULTINEST':
+    ResultFile = 'MultiNestData/ev.dat'
+elif ES.getScanMethod() == 'GRID':
+    ResultFile = 'GridData.txt'
+elif ES.getScanMethod() == 'READ':
+    ResultFile = 'ReadData.txt'
 if ES.getScanMethod() != 'PLOT':
-    ip.WriteResultInf(ES.InPar,ES.OutPar,ES.getFileName(),ES.getScanMethod())
+    sf.WriteResultInf(ES.InPar,ES.OutPar,CS.Chi2,ES.getFileName(),ES.getScanMethod(), ResultFile)
 
 # logarithm of likelihood function
 def LogLikelihood(cube, ndim, nparams):
@@ -40,20 +50,33 @@ def LogLikelihood(cube, ndim, nparams):
         ES.InPar [name]=cube[i]
         ES.AllPar[name]=cube[i]
     # Run each programs
+    # ES.AllPar is a dictionary involving variables and their values of scanning parameters and output variables. 
     for ii in ProgID:
         if Programs[ii].getRunFlag(ES.AllPar):
             Programs[ii].WriteInputFile(ES.AllPar)
+            # new 20180416 liang
+            Programs[ii].RemoveOutputFile()
             Programs[ii].RunProgram()
             Phy = Programs[ii].ReadOutputFile(ES.AllPar,ES.getFileName())
+            if Phy:
+                Phy = Programs[ii].ReadBound(ES.AllPar)
         else:
             Phy = Programs[ii].SetOutput(ES.AllPar)
         # if the point is unphysical, return log(0)
-        if not Phy : return ip.log_zero
-    # pass the output value to AllPar
+        if not Phy : return sf.log_zero
+
+    # pass all output variables with values to "cube" for using in each scan method in "scanmanner.py"
     for i,name in enumerate(ES.OutPar) :
         cube[i+ndim]   = ES.AllPar[name]
 
-    return - CS.getChisq(ES.AllPar)/2.0
+    loglike = - CS.getChisq(ES.AllPar)/2.0
+    
+    if (len(CS.Chi2)==1): return loglike
+    ## new 20180428 liang
+    for i,name in enumerate(CS.Chi2) :
+        cube[i+ndim+len(ES.OutPar)]   = CS.Chi2[name]
+
+    return loglike 
 
 
 def Prior(cube, ndim, nparams):
@@ -67,17 +90,18 @@ def Prior(cube, ndim, nparams):
             max = math.log10(float(ES.InputPar[name][3]))
             cube[i] = 10.0**(cube[i]*(max - min) + min )
         else:
-            ip.ErrorStop( 'Not ready. Only "flat" and "log" prior can be used.' )
+            sf.ErrorStop( 'Not ready. Only "flat" and "log" prior can be used.' )
 
 ## Load corresponding scan method
 if ES.getScanMethod() == 'RANDOM':
     from scanmanner import randomrun
-    ResultFile = 'RandomData.txt'
     randomrun(
         LogLikelihood        = LogLikelihood,
         Prior                = Prior,
         n_dims               = len(ES.InPar),
-        n_params             = len(ES.AllPar),
+        n_params             = len(ES.AllPar)+len(CS.Chi2),
+        inpar                = ES.InPar,
+        outpar               = ES.OutPar,
         n_live_points        = ES.getPointNum(),
         n_print              = ES.getPrintNum(),
         outputfiles_basename = ES.getFileName(),
@@ -85,12 +109,11 @@ if ES.getScanMethod() == 'RANDOM':
 
 elif ES.getScanMethod() == 'MCMC':
     from scanmanner import mcmcrun
-    ResultFile = 'MCMCData.txt'
     mcmcrun(
         LogLikelihood        = LogLikelihood,
         Prior                = Prior,
         n_dims               = len(ES.InPar),
-        n_params             = len(ES.AllPar),
+        n_params             = len(ES.AllPar)+len(CS.Chi2),
         n_live_points        = ES.getPointNum(),
         inpar                = ES.InPar,
         outpar               = ES.OutPar,
@@ -104,12 +127,11 @@ elif ES.getScanMethod() == 'MCMC':
 
 elif ES.getScanMethod() == 'MULTINEST':
     import pymultinest
-    ResultFile = 'MultiNestData/ev.dat'
     pymultinest.run(
         LogLikelihood        = LogLikelihood,
         Prior                = Prior,
         n_dims               = len(ES.InPar),
-        n_params             = len(ES.AllPar),
+        n_params             = len(ES.AllPar)+len(CS.Chi2),
         seed                 = ES.getRandomSeed(),
         outputfiles_basename = ES.MNOutputFile,
         n_live_points        = ES.getPointNum(),
@@ -129,13 +151,13 @@ elif ES.getScanMethod() == 'MULTINEST':
 
 elif ES.getScanMethod() == 'GRID':
     from scanmanner import gridrun
-    ResultFile = 'GridData.txt'
     gridrun(
         LogLikelihood        = LogLikelihood,
         Prior                = Prior,
         n_dims               = len(ES.InPar),
-        n_params             = len(ES.AllPar),
+        n_params             = len(ES.AllPar)+len(CS.Chi2),
         inpar                = ES.InPar,
+        outpar               = ES.OutPar,
         bin_num              = ES.GridBin,
         n_print              = ES.getPrintNum(),
         outputfiles_basename = ES.getFileName(),
@@ -143,13 +165,13 @@ elif ES.getScanMethod() == 'GRID':
 
 elif ES.getScanMethod() == 'READ':
     from scanmanner import readrun
-    ResultFile = 'ReadData.txt'
     readrun(
             LogLikelihood        = LogLikelihood,
             Prior                = Prior,
             n_dims               = len(ES.InPar),
-            n_params             = len(ES.AllPar),
+            n_params             = len(ES.AllPar)+len(CS.Chi2),
             inpar                = ES.InPar,
+            outpar               = ES.OutPar,
             bin_num              = ES.GridBin,
             n_print              = ES.getPrintNum(),
             outputfiles_basename = ES.getFileName(),
@@ -158,7 +180,7 @@ elif ES.getScanMethod() == 'READ':
 ## recover the modified input file(s) for external programs
 if ES.getScanMethod() != 'PLOT':
     for ii in Programs: Programs[ii].Recover()
-#    ip.WriteResultInf(ES.InPar,ES.OutPar,ES.getFileName(),ResultFile,ES.getScanMethod())
+#    sf.WriteResultInf(ES.InPar,ES.OutPar,CS.Chi2,ES.getFileName(),ResultFile,ES.getScanMethod())
 
 
 """ Plot """
