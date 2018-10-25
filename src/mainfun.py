@@ -1,4 +1,7 @@
-#!/usr/bin/env python
+####################################################################
+#    Read in the input configure file
+####################################################################
+
 import os,sys
 import re,shutil
 import subprocess
@@ -8,8 +11,11 @@ import numpy
 import time
 import math
 
-import init  as sf
+import init as sf
 
+#-------------------------------------------------------------------
+#    Class program: contral External programs
+#-------------------------------------------------------------------
 class program:
     def __init__(self):
         self._ProgName  =''
@@ -47,7 +53,6 @@ class program:
 
     def setProgName(self, name):
         self._ProgName=name
-        sf.Info('...............................................')
         sf.Info('...............................................')
         sf.Info('Program name    = %s'% self._ProgName)
     def setCommand(self, command):
@@ -939,7 +944,6 @@ class EasyScanInput:
                 self.MNOutputFile = os.path.join(self._FileName, "MultiNestData/")
                 os.mkdir(self.MNOutputFile)
             sf.Info('...............................................')
-            sf.Info('...............................................')
             sf.Info('Result file name  = %s'%self._FileName)
         else:
             if not os.path.exists(self._FileName):
@@ -967,7 +971,6 @@ class EasyScanInput:
                         break
                     else:
                         sf.Info("Wrong input! Please type in one of ('c', 's')")
-            sf.Info('...............................................')
             sf.Info('...............................................')
             sf.Info('Result file name  = %s'%self._FileName)
 
@@ -1032,6 +1035,7 @@ class EasyScanInput:
                     sf.ErrorStop( 'For the scan method you choosed, the items of each input parameter should include at least 4 items ( ID, Prior distribution, Minimum, Maximum ). But the paramter [%s] missed %i of them.'%(ii[0],4-lenii) )
                 elif lenii > 4 and (self._ScanMethod in ['RANDOM', 'MULTINEST']):
                     sf.WarningWait( 'For the scan method you choosed, only 4 items ( ID, Prior distribution, Minimum, Maximum ) are needed for each input parameter. But the parameter [%s] has %i items. The last %i will be ignored.'%(ii[0],lenii,lenii-4) )
+                    sf.Info('  ID= %s\tPrior= %s\tMin= %f\tMax= %f'%(ii[0],ii[1],ii[2],ii[3]))
                     continue
                 elif self._ScanMethod == 'GRID':
                     if   lenii == 4 :
@@ -1041,6 +1045,7 @@ class EasyScanInput:
                         self.GridBin[ii[0]]=ii[4]
                     else :
                         sf.WarningWait('For the scan method you choosed, only 5 items ( ID, Prior distribution, Minimum, Maximum, Bins number ) are needed for each input parameter. But the parameter [%s] has %i items. The last %i will be ignored.'%(ii[0],lenii,lenii-5) )
+                    sf.Info('  ID= %s\tPrior= %s\tMin= %f\tMax= %f'%(ii[0],ii[1],ii[2],ii[3]))
                     continue
                 elif self._ScanMethod == 'MCMC':
                     if   lenii < 6 :
@@ -1055,8 +1060,8 @@ class EasyScanInput:
                             self.MCMCiv[ii[0]] = (math.log10(ii[5])-math.log10(ii[2]))/(math.log10(ii[3]) - math.log10(ii[2]))
                     else :
                         sf.WarningWait('For the scan method you choosed, only 6 items ( ID, Prior distribution, Minimum, Maximum, Step width, Initial value) are needed for each input parameter. But the parameter [%s] has %i items. The last %i will be ignored.'%(ii[0],lenii,5-lenii) )
+                    sf.Info('  ID= %s\tPrior= %s\tMin= %f\tMax= %f'%(ii[0],ii[1],ii[2],ii[3]))
                     continue
-                sf.Info('  ID= %s\tPrior= %s\tMin= %f\tMax= %f'%(ii[0],ii[1],ii[2],ii[3]))
 
             if self._ScanMethod == 'OnePoint':
                 if lenii < 2 :
