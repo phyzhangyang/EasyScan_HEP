@@ -920,7 +920,7 @@ class EasyScanInput:
         if self._ScanMethod not in ['READ','PLOT']:
             # deal with the satuation that the result file path already exists.
             if os.path.exists(self._FileName):
-                print(("* The Result file [%s] already exists." % name ))
+                sf.Info(("* The Result file [%s] already exists." % name ))
                 while True:
                     c = input("Choose: (r)replace, (b)backup, (s)stop\n")
                     if c == "r":
@@ -936,7 +936,7 @@ class EasyScanInput:
                     elif c == "s":
                         exit(1)
                     else:
-                        print("Wrong input! Please type in one of ('r','b','s')")
+                        sf.Info("Wrong input! Please type in one of ('r','b','s')")
             # generate the result file path
             os.mkdir(self._FileName)
             os.mkdir(os.path.join(self._FileName,'SavedFile'))
@@ -961,7 +961,7 @@ class EasyScanInput:
                         os.system(r"find %s -type f -name '*' | xargs rm" %os.path.join(self._FileName,'SavedFile'))
                         break
                     elif c == "d":
-                        print("Not ready, please choose another way.")
+                        sf.Info("Not ready, please choose another way.")
                         exit(1)
                         if not (os.path.exists(sf.CurrentPath+"/Backup")):
                             os.mkdir(sf.CurrentPath+"/Backup")
