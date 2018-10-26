@@ -569,9 +569,11 @@ class program:
 
     def RunProgram(self):
         cwd=self._ComPath
+        # TODO Let user set the time limit
         timeout = 60*2   # if the program run more than 2 hour, it may be killed
         for cmd in self._Command:
           sf.Debug('Runing Program %s with command'%self._ProgName,cmd)
+          # TODO Let user make the choice
           Use_os_system = True
           if Use_os_system:
               ncwd = os.getcwd()
@@ -1073,7 +1075,6 @@ class EasyScanInput:
     # not used for now
     def setProgID(self,progID):
         self._ProgID = progID
-        print(progID)
     
     def setProgram(self,prog):
         self._Prog = prog
@@ -1137,14 +1138,6 @@ class EasyScanInput:
         return self._FalgTuneR
     def getAccepRate(self):
         return self._AccepRate
-
-    def ScreenPrint(self,par,loglike):
-        self._Count +=1
-        if self._Count%self._PrintNum == 0:
-            print('------------ Num: %i ------------'%self._Count)
-            for ii in par:
-                print(ii+' : '+ str(par[ii]))
-            print('LogLike = '+str(loglike))
     
     
     def __str__(self):
