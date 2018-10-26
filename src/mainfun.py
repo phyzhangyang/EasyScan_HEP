@@ -208,7 +208,7 @@ class program:
                     blk = str(jj[4]).split()
                     blk_flag = False
                     #ks  = str(jj[5]).split()
-                    ks  = map(str, jj[5:])
+                    ks  = list(map(str, jj[5:]))
                     ks_flag  = False
                     for kk in invar:
                         if kk[0].startswith('#'): continue
@@ -518,7 +518,7 @@ class program:
                 blk = str(jj[4]).split()
                 blk_flag = False
                 #ks  = str(jj[5]).split()
-                ks  = map(str, jj[5:])
+                ks  = list(map(str, jj[5:]))
                 ks_flag  = False
                 for kki, kk in enumerate( invar ):
                     if kk[0].startswith('#'): continue
@@ -593,7 +593,7 @@ class program:
                          sf.WarningWait("Program %s has run more than 1 hour, It will be kiled ")
                          try:
                              p.terminate()
-                         except Exception,e:
+                         except Exception as e:
                              return
                          return
                 (out, err) = p.communicate()
@@ -920,9 +920,9 @@ class EasyScanInput:
         if self._ScanMethod not in ['READ','PLOT']:
             # deal with the satuation that the result file path already exists.
             if os.path.exists(self._FileName):
-                print("* The Result file [%s] already exists." % name )
+                print(("* The Result file [%s] already exists." % name ))
                 while True:
-                    c = raw_input("Choose: (r)replace, (b)backup, (s)stop\n")
+                    c = input("Choose: (r)replace, (b)backup, (s)stop\n")
                     if c == "r":
                          os.system(r"rm -r %s" %self._FileName)
                          break
@@ -954,14 +954,14 @@ class EasyScanInput:
             if self._ScanMethod == 'READ':
                 sf.Info("* Now you are in READ mode. About files in \n* %s\n*, do you want to  would be delete." % os.path.join(self._FileName, "SavedFile") )
                 while True:
-                    c = raw_input("Choose: (d)delete, (b)backup, (s)stop\n")
+                    c = input("Choose: (d)delete, (b)backup, (s)stop\n")
                     if c == "s":
                         exit(1)
                     elif c == "d":
                         os.system(r"find %s -type f -name '*' | xargs rm" %os.path.join(self._FileName,'SavedFile'))
                         break
                     elif c == "d":
-                        print "Not ready, please choose another way."
+                        print("Not ready, please choose another way.")
                         exit(1)
                         if not (os.path.exists(sf.CurrentPath+"/Backup")):
                             os.mkdir(sf.CurrentPath+"/Backup")
@@ -1073,7 +1073,7 @@ class EasyScanInput:
     # not used for now
     def setProgID(self,progID):
         self._ProgID = progID
-        print progID
+        print(progID)
     
     def setProgram(self,prog):
         self._Prog = prog
@@ -1092,19 +1092,19 @@ class EasyScanInput:
 
             ## add "math .." in "Input variable"/"Bound"/"gaussian" to self.AllPar to avoid duplication
             for jj in prog[ii].invar:
-                if jj not in self.AllPar.keys():
+                if jj not in list(self.AllPar.keys()):
                     self.AllPar[jj] = prog[ii].invar[jj]
                     self.OutPar[jj] = prog[ii].invar[jj]
             for jj in prog[ii].boundvar:
-                if jj not in self.AllPar.keys():
+                if jj not in list(self.AllPar.keys()):
                     self.AllPar[jj] = prog[ii].boundvar[jj]
                     self.OutPar[jj] = prog[ii].boundvar[jj]
             for jj in prog[ii].cgauvar:
-                if jj not in self.AllPar.keys():
+                if jj not in list(self.AllPar.keys()):
                     self.AllPar[jj] = prog[ii].cgauvar[jj]
                     self.OutPar[jj] = prog[ii].cgauvar[jj]
             for jj in prog[ii].cffchi2var:
-                if jj not in self.AllPar.keys():
+                if jj not in list(self.AllPar.keys()):
                     self.AllPar[jj] = prog[ii].cffchi2var[jj]
                     self.OutPar[jj] = prog[ii].cffchi2var[jj]
 
@@ -1141,10 +1141,10 @@ class EasyScanInput:
     def ScreenPrint(self,par,loglike):
         self._Count +=1
         if self._Count%self._PrintNum == 0:
-            print '------------ Num: %i ------------'%self._Count
+            print('------------ Num: %i ------------'%self._Count)
             for ii in par:
-                print ii+' : '+ str(par[ii])
-            print 'LogLike = '+str(loglike)
+                print(ii+' : '+ str(par[ii]))
+            print('LogLike = '+str(loglike))
     
     
     def __str__(self):
@@ -1351,13 +1351,13 @@ class plot():
         # self._data =  np.loadtxt(path)
         
         f_data = open(os.path.join(path,'ScanInf.txt'),'r')
-        path   = map(str,f_data.readline().split())
+        path   = list(map(str,f_data.readline().split()))
         var    = {}
         while True:
             plot_line = f_data.readline()
             if not plot_line :
                 break
-            plot_line = map(str,plot_line.split())
+            plot_line = list(map(str,plot_line.split()))
             var["+".join(plot_line[:-1])] = int(plot_line[-1])
     
         self._path = os.path.join(path[0],'Figures')
@@ -1375,7 +1375,7 @@ class plot():
             line = f_data.readline()
             if not line :
                 break
-            line_par = map(str,line.split())
+            line_par = list(map(str,line.split()))
             for ii in var:
                 try:
                     self._data[ii].append(float( line_par[var[ii]] ))
@@ -1391,7 +1391,7 @@ class plot():
             line = f_dataAllTry.readline()
             if not line :
                 break
-            line_par = map(str,line.split())
+            line_par = list(map(str,line.split()))
             for ii in var:
                 try:
                     self._dataAllTry[ii].append(float( line_par[var[ii]] ))
@@ -1407,7 +1407,7 @@ class plot():
                     sf.ErrorStop("One sample (e.g., see parameter %s) only, can not creat plot for it. Please correct in [plot] in your input file!"%par[jj])
                     return False 
                 try:
-                    map(float, self._data[par[jj]])
+                    list(map(float, self._data[par[jj]]))
                 except ValueError:
                     sf.WarningNoWait("The parameter %s not a number, can not creat plot for it."%par[jj])
                     return False 

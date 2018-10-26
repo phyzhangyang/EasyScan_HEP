@@ -11,17 +11,18 @@ import logging
 import logging.config
 import time
 from collections import OrderedDict
-
-print '\033[1;36;2m'
-print '''
+from math import *
+    
+print('\033[1;36;2m')
+print('''
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 ____ ____ ____ _   _ ____ ____ ____ _  _ _  _ ____ ___
 |___ |__| [__   \_/  [__  |    |__| |\ | |__| |___ |__]
 |___ |  | ___]   |   ___] |___ |  | | \| |  | |___ |
 
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-'''
-print '\033[0m'
+''')
+print('\033[0m')
 
 ## Add debug option
 usage = "usage: %prog [options] [FILE] "
@@ -49,7 +50,7 @@ try:
     open(sys.argv[1],'r')
 except IndexError:
     logger.error('No configfile for the script easyscan')
-    print 'Usage: ./easyscan configfile'
+    print('Usage: ./easyscan configfile')
     sys.exit(1)
 except IOError:
     logger.error('Configfile not exist')
@@ -66,17 +67,17 @@ CurrentPath = os.getcwd()
 def ColorText(i,text,j=1):
     return '\033[%i;3%i;2m %s\033[0m' %(j,i,text)
 def GotoWeb():
-    print ColorText(1,'# Goto ') + ColorText(1,'http://easyscanhep.hepforge.org',4) + ColorText(1,' for detail.')
+    print(ColorText(1,'# Goto ') + ColorText(1,'http://easyscanhep.hepforge.org',4) + ColorText(1,' for detail.'))
 def WarningWait(warinfo):
     logger.warning(ColorText(1,warinfo))
-    print ColorText(1,'# Waiting 3 seconds for WARNING.')
+    print(ColorText(1,'# Waiting 3 seconds for WARNING.'))
     time.sleep(3)
 def WarningNoWait(warinfo):
     logger.warning(ColorText(1,warinfo))
 def ErrorStop(errinfo):
     logger.error( ColorText(1,errinfo) )
     GotoWeb()
-    print ColorText(1,'# Exiting with ERROR.')
+    print(ColorText(1,'# Exiting with ERROR.'))
     sys.exit(1)
 def Info(debinfo):
     logger.info( ColorText(2,debinfo) )
@@ -104,7 +105,7 @@ def string2list(s):
 
 ## parse string of input variable and output variable in configure file to list of items.
 def string2nestlist(s):
-    s = map( lambda x: x.split(','), s.split('\n') )
+    s = [x.split(',') for x in s.split('\n')]
     s = [[autotype(x.strip()) for x in ss] for ss in s]
     return s
 
@@ -136,22 +137,21 @@ def WriteResultInf(InPar,OutPar,Chi2,Path, ScanMethod,File):
 def parseMath(par):
 # TODO no need to use math in ini. Perform this function to every variable
     # Thanks to authors at the web page http://lybniz2.sourceforge.net/safeeval.html
-    from math import *
     # make a list of safe functions
     safe_list = ['math','acos', 'asin', 'atan', 'atan2', 'ceil', 'cos', 'cosh',
                  'degrees', 'e', 'exp', 'fabs', 'floor', 'fmod', 'frexp', 'hypot',
                  'ldexp', 'log', 'log10', 'modf', 'pi', 'pow', 'radians', 'sin',
                  'sinh', 'sqrt', 'tan', 'tanh']
 
-    ## use the list to filter the local namespace
+    # use the list to filter the local namespace
     safe_dict = dict([ (k, locals().get(k, None)) for k in safe_list ])
-    ## add any needed builtins back in.
+    # add any needed builtins back in.
     safe_dict['abs'] = abs
 
     safe_dict.update(par)
     safe_dict.update({"__builtins__": None})
 
-    for key,value in par.items():
+    for key,value in list(par.items()):
         flag = key.split()[0]
         expr = ''.join(key.split()[1:])
         expr = ','.join(expr.split(':'))
@@ -187,6 +187,6 @@ def checkFileInList(List):
  
 ## TODO I don't understand this   ---Yang
 def sortDic(Dic):
-    return OrderedDict(sorted(Dic.items(), key = lambda t: t[0]))
+    return OrderedDict(sorted(list(Dic.items()), key = lambda t: t[0]))
 
        

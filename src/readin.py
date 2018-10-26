@@ -5,22 +5,22 @@
 # External modules.
 import mainfun as mf
 import init  as sf
-import ConfigParser
+import configparser
 
 
 def ReadIn(Configfile,ES,Programs,CS,Ploter):
-    cf=ConfigParser.ConfigParser()
+    cf=configparser.ConfigParser()
     cf.read(Configfile)
 
     ## Read the basic scan parameters
     try:
         ES.setScanMethod(cf.get('scan', 'Scan method'))
-    except ConfigParser.NoOptionError:
+    except configparser.NoOptionError:
         sf.WarningWait('Can not find "Scan method" in the input configure file, it will take the default value, "Random".')
 
     try:
         ES.setFileName(cf.get('scan', 'Result file name'))
-    except ConfigParser.NoOptionError:
+    except configparser.NoOptionError:
         sf.ErrorStop('Please provide "Result file name" in the input configure file.')
 
     ## If the scan method is 'plot', go directly to the 'plot' section
@@ -28,9 +28,9 @@ def ReadIn(Configfile,ES,Programs,CS,Ploter):
     plot_items = []
     try: 
         plot_items  = cf.options("plot")
-    except ConfigParser.NoSectionError:
+    except configparser.NoSectionError:
         if cf.get('scan', 'Scan method').upper() in ["PLOT"]:
-            sf.ErrorStop('ConfigParser.NoSectionError: No section: [plot] in the configure file.')
+            sf.ErrorStop('configparser.NoSectionError: No section: [plot] in the configure file.')
         
     if 'histogram' in plot_items:
         Ploter.setHistogram(cf.get('plot', 'Histogram'))
@@ -49,7 +49,7 @@ def ReadIn(Configfile,ES,Programs,CS,Ploter):
         ES.setPointNum(cf.getint('scan', 'Number of points'))
         if cf.get('scan', 'Scan method').upper() in ["GRID"]:
             sf.WarningNoWait('"Number of points" in the input configure file is not used in "GRID" scan mode.')
-    except ConfigParser.NoOptionError:
+    except configparser.NoOptionError:
         if cf.get('scan', 'Scan method').upper() not in ["GRID"]:
             sf.WarningWait('Can not find "Number of points" in the input configure file, it will take the default value, 100.')
     except ValueError:
@@ -58,7 +58,7 @@ def ReadIn(Configfile,ES,Programs,CS,Ploter):
     try:
         ES.setRandomSeed(cf.getint('scan', 'Random seed'))
         sf.Info('"Random seed = %d" in the input configure file, using only in Random, MCMC or Multinest mode.'%cf.getint('scan', 'Random seed'))
-    except ConfigParser.NoOptionError:
+    except configparser.NoOptionError:
         #new 20180425 liang
         if cf.get('scan', 'Scan method').upper() in ["RANDOM","MCMC", "MULTINEST"]:
            sf.WarningWait('Can not find "Random seed" in the input configure file, it will take current system time as ramdom seed.')
@@ -68,24 +68,27 @@ def ReadIn(Configfile,ES,Programs,CS,Ploter):
 
     try:
         ES.setPrintNum(cf.getint('scan', 'Interval of print'))
-    except ConfigParser.NoOptionError:
+    except configparser.NoOptionError:
         sf.WarningNoWait('Can not find "Interval of print" in the input configure file, it will take the default value, 1.')
     except ValueError:
         sf.WarningNoWait('The "Interval of print" in the input configure file must be an integer, it will take the default value, 1.')
 
     try:
         ES.setInputPar(cf.get('scan', 'Input parameters'))
-    except ConfigParser.NoOptionError:
+    except configparser.NoOptionError:
         sf.ErrorStop('Can not find "Input parameters" in the input configure file.')
 
     try:
         ES.setAccepRate (cf.get('scan', 'Acceptance rate'))
-    except ConfigParser.NoOptionError:
+    except configparser.NoOptionError:
         pass
 
-    ## Read the program(s) setting
-    ProgID=filter(lambda x: x.startswith('program'), cf.sections())
-    ProgID.sort(key=lambda x: int(filter(str.isdigit, x)) )
+    ## sort programs by ID
+    ProgID = [x for x in cf.sections() if x.startswith('program')]
+    for ii in ProgID:
+        if not str.isdigit(ii[7:]):
+            sf.ErrorStop('The section name of %s is wrong'%ii)
+    ProgID = sorted(ProgID, key=lambda x: int( x[7:] ) )
 
     # new 20180419 liang
     outputVarNames=[]   
@@ -126,9 +129,9 @@ def ReadIn(Configfile,ES,Programs,CS,Ploter):
     constraint_items = []
     try:
         constraint_items  = cf.options("constraint")
-    except ConfigParser.NoSectionError:
+    except configparser.NoSectionError:
         if cf.get('scan', 'Scan method').upper() in ["MCMC", "MULTINEST"]:
-            sf.ErrorStop('ConfigParser.NoSectionError: No section: [constraint] in the configure file.')
+            sf.ErrorStop('configparser.NoSectionError: No section: [constraint] in the configure file.')
     sf.Info('...............................................')
     sf.Info('...............................................')
     sf.Debug('constraint_items',constraint_items)
