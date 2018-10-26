@@ -56,16 +56,16 @@ def readrun(LogLikelihood,Prior,n_dims,n_params,inpar,outpar,bin_num,n_print,out
                 shutil.copy(File, SavePath)
         
         if Nrun%n_print == 0:
-            print('------------ Num: %i ------------'%(Nrun+1))
+            sf.Info('------------ Num: %i ------------'%(Nrun+1))
             for i,name in enumerate(inpar):
-                print('Input  - %s = %s '%(name,cube[i]))
-            print('.................................')
+                sf.Info('Input  - %s = %s '%(name,cube[i]))
+            sf.Info('.................................')
             for i,name in enumerate(outpar):
-                print('Output - %s = %s '%(name,cube[i+n_dims]))
-            print('.................................')
-            print('     loglike   = '+str(loglike))
-            print('Accepted Num   = '+str(Naccept))
-            print('Total    Num   = '+str(Nrun+1))
+                sf.Info('Output - %s = %s '%(name,cube[i+n_dims]))
+            sf.Info('.................................')
+            sf.Info('     loglike   = '+str(loglike))
+            sf.Info('Accepted Num   = '+str(Naccept))
+            sf.Info('Total    Num   = '+str(Nrun+1))
 
         f_out2.write('\t'.join([str(x) for x in cube])+'\n')
         f_out2.flush()
@@ -112,16 +112,16 @@ def gridrun(LogLikelihood,Prior,n_dims,n_params,inpar,outpar,bin_num,n_print,out
                 shutil.copy(File, SavePath)
 
         if Nrun%n_print == 0:
-            print('------------ Num: %i ------------'%(Nrun+1))
+            sf.Info('------------ Num: %i ------------'%(Nrun+1))
             for i,name in enumerate(inpar):
-                print('Input  - %s = %s '%(name,cube[i]))
-            print('.................................')
+                sf.Info('Input  - %s = %s '%(name,cube[i]))
+            sf.Info('.................................')
             for i,name in enumerate(outpar):
-                print('Output - %s = %s '%(name,cube[i+n_dims]))
-            print('.................................')
-            print('     loglike   = '+str(loglike))
-            print('Accepted Num   = '+str(Naccept))
-            print('Total    Num   = '+str(Nrun+1))
+                sf.Info('Output - %s = %s '%(name,cube[i+n_dims]))
+            sf.Info('.................................')
+            sf.Info('     loglike   = '+str(loglike))
+            sf.Info('Accepted Num   = '+str(Naccept))
+            sf.Info('Total    Num   = '+str(Nrun+1))
 
         f_out2.write('\t'.join([str(x) for x in cube])+'\n')
         f_out2.flush()
@@ -161,16 +161,16 @@ def randomrun(LogLikelihood,Prior,n_dims,n_params,inpar,outpar,n_live_points,n_p
  
 
         if Nrun%n_print == 0:
-            print('------------ Num: %i ------------'%(Nrun+1))
+            sf.Info('------------ Num: %i ------------'%(Nrun+1))
             for i,name in enumerate(inpar):
-                print('Input  - %s = %s '%(name,cube[i]))
-            print('.................................')
+                sf.Info('Input  - %s = %s '%(name,cube[i]))
+            sf.Info('.................................')
             for i,name in enumerate(outpar):
-                print('Output - %s = %s '%(name,cube[i+n_dims]))
-            print('.................................')
-            print('     loglike   = '+str(loglike))
-            print('Accepted Num   = '+str(Naccept))
-            print('Total    Num   = '+str(Nrun+1))
+                sf.Info('Output - %s = %s '%(name,cube[i+n_dims]))
+            sf.Info('.................................')
+            sf.Info('     loglike   = '+str(loglike))
+            sf.Info('Accepted Num   = '+str(Naccept))
+            sf.Info('Total    Num   = '+str(Nrun+1))
 
         f_out2.write('\t'.join([str(x) for x in cube])+'\n')
         f_out2.flush()
@@ -210,13 +210,13 @@ def mcmcrun(LogLikelihood,Prior,n_dims,n_params,n_live_points,inpar,outpar,StepS
     CurObs=[]
     CurChisq = - 2.0 * loglike
     for i in range(n_params): CurObs.append( cube[i] )
-    print('------------ Start Point ------------')
+    sf.Info('------------ Start Point ------------')
     for i,name in enumerate(inpar):
-       print('Input  - %s = %s '%(name,cube[i]))
+       sf.Info('Input  - %s = %s '%(name,cube[i]))
     for i,name in enumerate(outpar):
-       print('Output - %s = %s '%(name,cube[i+n_dims]))
-    print('.................................')
-    print('Current  Chi^2 = '+str(CurChisq))
+       sf.Info('Output - %s = %s '%(name,cube[i+n_dims]))
+    sf.Info('.................................')
+    sf.Info('Current  Chi^2 = '+str(CurChisq))
 
     # Initialize the MCMC parameters
     MinChisq = CurChisq
@@ -282,22 +282,22 @@ def mcmcrun(LogLikelihood,Prior,n_dims,n_params,n_live_points,inpar,outpar,StepS
         else: kcovar =1
 
         if Nrun%n_print == 0:
-            print('------------ Num: %i ------------'%Nrun)
+            sf.Info('------------ Num: %i ------------'%Nrun)
             for i,name in enumerate(inpar):
-                print('Input  - %s = %s '%(name,cube[i]))
+                sf.Info('Input  - %s = %s '%(name,cube[i]))
             if (Chisq < - 2.0 * sf.log_zero) and RangeFlag:
-                print('.................................')
+                sf.Info('.................................')
                 for i,name in enumerate(outpar):
-                    print('Output - %s = %s '%(name,cube[i+n_dims]))
-                print('.................................')
-                print('Test     Chi^2 = '+str(Chisq))
-            print('Current  Chi^2 = '+str(CurChisq))
-            print('Mimimum  Chi^2 = '+str(MinChisq))
-            print('Accepted Num  = '+str(Naccept))
-            print('Total    Num   = '+str(Nrun))
-            print('Accepted Ratio = '+str(AccRat))
+                    sf.Info('Output - %s = %s '%(name,cube[i+n_dims]))
+                sf.Info('.................................')
+                sf.Info('Test     Chi^2 = '+str(Chisq))
+            sf.Info('Current  Chi^2 = '+str(CurChisq))
+            sf.Info('Mimimum  Chi^2 = '+str(MinChisq))
+            sf.Info('Accepted Num  = '+str(Naccept))
+            sf.Info('Total    Num   = '+str(Nrun))
+            sf.Info('Accepted Ratio = '+str(AccRat))
             if FalgTune :
-                print('StepZize factor= '+str(exp(kcovar)))
+                sf.Info('StepZize factor= '+str(exp(kcovar)))
 
         if RangeFlag and (Chisq < - 2.0 * sf.log_zero) :
             f_out2.write('\t'.join([str(x) for x in CurObs])+'\t'+str(mult)+'\n')
