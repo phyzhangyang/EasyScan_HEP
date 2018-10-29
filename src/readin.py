@@ -59,7 +59,6 @@ def ReadIn(Configfile,ES,Programs,CS,Ploter):
         ES.setRandomSeed(cf.getint('scan', 'Random seed'))
         sf.Info('"Random seed = %d" in the input configure file, using only in Random, MCMC or Multinest mode.'%cf.getint('scan', 'Random seed'))
     except configparser.NoOptionError:
-        #new 20180425 liang
         if cf.get('scan', 'Scan method').upper() in ["RANDOM","MCMC", "MULTINEST"]:
            sf.WarningWait('Can not find "Random seed" in the input configure file, it will take current system time as ramdom seed.')
     except ValueError:
