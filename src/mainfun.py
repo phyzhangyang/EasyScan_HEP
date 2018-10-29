@@ -1050,8 +1050,8 @@ class EasyScanInput:
                             self.GridBin[ii[0]]=20
                             sf.WarningWait('As the scan method "Grid", the bins number of the parameter [%s] should be positive, which will be set to default value, %i, in this run.'%(ii[0],self.GridBin[ii[0]]) )
                             continue
-                        if not ii[4].is_integer():
-                            sf.WarningNoWait('As the scan method "Grid", the bins number of the parameter [%s] shoule be integer, which will be set to int(%i)=%i in this run.'%(ii[0],ii[4],int(ii[4])) )
+                        if type(ii[4]) != int and (not ii[4].is_integer()):
+                            sf.WarningNoWait('As the scan method "Grid", the bins number of the parameter [%s] shoule be integer, which will be set to int(%f)=%i in this run.'%(ii[0],ii[4],int(ii[4])) )
                         self.GridBin[ii[0]]=int(ii[4])
                     else :
                         sf.WarningWait('For the scan method you choosed, only 5 items ( ID, Prior distribution, Minimum, Maximum, Bins number ) are needed for each input parameter. But the parameter [%s] has %i items. The last %i will be ignored.'%(ii[0],lenii,lenii-5) )
