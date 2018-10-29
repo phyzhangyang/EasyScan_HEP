@@ -211,6 +211,7 @@ class program:
                     ks  = list(map(str, jj[5:]))
                     ks_flag  = False
                     for kk in invar:
+                        if len(kk)==0: continue
                         if kk[0].startswith('#'): continue
 
                         if blk_flag:
@@ -692,6 +693,7 @@ class program:
                 ks  = str(jj[5]).split()
                 ks_flag  = False
                 for kki, kk in enumerate( ouvar ):
+                    if len(kk)==0: continue
                     if kk[0].startswith('#'): continue
                     if blk_flag:
                         if kk[0].upper() in ['BLOCK','DECAY']:
