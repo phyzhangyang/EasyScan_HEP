@@ -134,31 +134,23 @@ def WriteResultInf(InPar,OutPar,Chi2,Path, ScanMethod,File):
     file_inf.close()
 
 ## evaluate a math string
+# make a list of safe functions
+# Thanks to authors at the web page http://lybniz2.sourceforge.net/safeeval.html
+safe_list = ['math','acos', 'asin', 'atan', 'atan2', 'ceil', 'cos', 'cosh',
+             'degrees', 'e', 'exp', 'fabs', 'floor', 'fmod', 'frexp', 'hypot',
+             'ldexp', 'log', 'log10', 'modf', 'pi', 'pow', 'radians', 'sin',
+             'sinh', 'sqrt', 'tan', 'tanh']
+# use the list to filter the local namespace
+safe_dict = dict([ (k, locals().get(k, None)) for k in safe_list ])
+# add any needed builtins back in.
+safe_dict['abs'] = abs
 def parseMath(par):
-# TODO no need to use math in ini. Perform this function to every variable
-    # Thanks to authors at the web page http://lybniz2.sourceforge.net/safeeval.html
-    # make a list of safe functions
-    safe_list = ['math','acos', 'asin', 'atan', 'atan2', 'ceil', 'cos', 'cosh',
-                 'degrees', 'e', 'exp', 'fabs', 'floor', 'fmod', 'frexp', 'hypot',
-                 'ldexp', 'log', 'log10', 'modf', 'pi', 'pow', 'radians', 'sin',
-                 'sinh', 'sqrt', 'tan', 'tanh']
-
-    # use the list to filter the local namespace
-    safe_dict = dict([ (k, locals().get(k, None)) for k in safe_list ])
-    # add any needed builtins back in.
-    safe_dict['abs'] = abs
-
     safe_dict.update(par)
     safe_dict.update({"__builtins__": None})
-
     for key,value in list(par.items()):
-        flag = key.split()[0]
-        expr = ''.join(key.split()[1:])
+        expr = ''.join(key.split())
         expr = ','.join(expr.split(':'))
-
-        if flag.upper() == "MATH":
-             cal = eval(expr, safe_dict)
-             par[key] = cal
+        par[key] = eval(expr, safe_dict)
 
 ## check reduplicative variable name
 def checkItemInList(List):
