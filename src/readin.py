@@ -13,6 +13,9 @@ def ReadIn(Configfile,ES,Programs,CS,Ploter):
     cf.read(Configfile)
 
     ## Read the basic scan parameters
+    if not ('scan' in cf.sections()) :
+        sf.ErrorStop('The input configure file "%s" must include "scan" section.'%Configfile)
+    
     try:
         ES.setScanMethod(cf.get('scan', 'Scan method'))
     except configparser.NoOptionError:
@@ -84,6 +87,8 @@ def ReadIn(Configfile,ES,Programs,CS,Ploter):
 
     ## sort programs by ID
     ProgID = [x for x in cf.sections() if x.startswith('program')]
+    if len(ProgID)==0 :
+        sf.ErrorStop('The input configure file "%s" must include at least one "program" section.'%Configfile)
     for ii in ProgID:
         if not str.isdigit(ii[7:]):
             sf.ErrorStop('The section name of %s is wrong'%ii)
