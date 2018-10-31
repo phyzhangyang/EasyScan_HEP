@@ -123,6 +123,10 @@ def ReadIn(Configfile,ES,Programs,CS,Ploter):
         except:
             sf.Info('Use "os.system" execute commands.')
         try:
+            Programs[ii].setOutputClean(cf.get(ii, 'Output clean'))
+        except:
+            sf.Info('Delete the output file of %s before execute it. '%ii)
+        try:
             Programs[ii].setBound(cf.get(ii, 'Bound'))
         except:
             sf.Info('No Bound.')

@@ -51,6 +51,8 @@ class program:
         self._Count   = 0
         self._executor = True
 
+        self._outputclean = True
+
     def setProgName(self, name):
         self._ProgName=name
         sf.Info('...............................................')
@@ -408,13 +410,26 @@ class program:
         if executor.lower() == 'os.system':
             self._executor = True
             sf.Info('Use "%s" execute commands.'%executor)
-        elif executor.lower() == 'subprocess.popen()':
+        elif executor.lower() == 'subprocess.popen':
             self._executor = False
             sf.Info('Use "%s" execute commands.'%executor)
         else:
-            sf.WarningNoWait('The command executor for program "%s" should be either "os.system" or "subprocess.popen()", not "%s".'%(self._ProgName,executor))
+            sf.Info('The command executor for program "%s" should be either "os.system" or "subprocess.popen", not "%s".'%(self._ProgName,executor))
             self._executor = True
             sf.WarningNoWait('Use "os.system" execute commands.')
+
+    def setOutputClean(self, outputclean):
+        if outputclean.lower()  in ['yes','y','t','true']:
+            self._outputclean = True
+            sf.Info('Delete the output file of program "%s" before execute it. '%self._ProgName)
+        elif outputclean.lower()  in ['no','n','f','false']:
+            self._outputclean = False
+            sf.Info('Keep the output file of program "%s" before execute it. '%self._ProgName)      
+        else:
+            sf.WarningNoWait('The item "Output clean" for program "%s" should be either "Yes" or "No", not "%s".'%(self._ProgName,outputclean))
+            self._outputclean = True
+            sf.Info('Delete the output file of program "%s" before execute it. '%self._ProgName)
+
 
     def getProgName(self):
         return self._ProgName
@@ -573,13 +588,16 @@ class program:
 
     def RunProgram(self):
         cwd=self._ComPath
+        # remove output file
+        if self._outputclean:
+            for ii in self._OutFileID:
+                if os.path.exists(self._OutputFile[ii]): os.remove(self._OutputFile[ii])
         # TODO Let user set the time limit
         timeout = 60*2   # if the program run more than 2 hour, it may be killed
         for cmd in self._Command:
           sf.Debug('Runing Program %s with command'%self._ProgName,cmd)
-          # TODO Let user make the choice
-          Use_os_system = True
-          if Use_os_system:
+
+          if self._executor:
               ncwd = os.getcwd()
               os.chdir(cwd)
               os.system(cmd[0])
