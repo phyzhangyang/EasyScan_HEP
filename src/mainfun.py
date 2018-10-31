@@ -49,7 +49,7 @@ class program:
         self.cffchi2var= {}
             
         self._Count   = 0
-        self._runflag = 'True'
+        self._executor = 'True'
 
     def setProgName(self, name):
         self._ProgName=name
@@ -404,9 +404,9 @@ class program:
                     sf.ErrorStop( 'For input variable "%s" in program "%s" with "SLHA" method, the 4th item must be "BLOCK" or "DECAY". If you can to used other formats, please contact with the authors.'%(jj[0],self._ProgName) )
                 sf.Info('  varID= %s \tfileID= %s \tMethod= %s \tB/D= %s \tName= %s \tKeys= %s'%(jj[0],jj[1],jj[2],jj[3],jj[4],jj[5]))
             
-    def setRunFlag(self, name):
-        self._runflag = name
-        sf.Info('Run this program if '+name)
+    def setExecutor(self, executor):
+        self._executor = executor
+        sf.Info('Use "%s" execute commands.'%executor)
 
     def getProgName(self):
         return self._ProgName
@@ -422,11 +422,6 @@ class program:
         return self._OutputFile
     def getOutputVar(self):
         return self._OutputVar
-    def getRunFlag(self,par):
-        try:
-          return eval(self._runflag)
-        except:
-          sf.ErrorStop('The Run Flag "'+self._runflag+'" is wrong for program '+ self._ProgName)
 
     def WriteInputFile(self,par):
         if self._InFileID ==['']:
@@ -721,12 +716,6 @@ class program:
                     sf.Debug('Can not read the output var',jj)
                     return False
 
-        return True
-
-    def SetOutput(self,par):
-        for ii in self._OutFileID:
-            for jj in self._OutputVar[ii]:
-                par[jj[0]] = float("nan")
         return True
 
     def Recover(self):

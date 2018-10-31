@@ -111,22 +111,21 @@ def ReadIn(Configfile,ES,Programs,CS,Ploter):
         Programs[ii].setInputVar(cf.get(ii, 'Input variable'))
         Programs[ii].setOutputFile(cf.get(ii, 'Output file'))
         Programs[ii].setOutputVar(cf.get(ii, 'Output variable'))
+        
         ##new 20180419 liang
         for key, item in Programs[ii]._OutputVar.items():
             for subitem in item:
                 outputVarNames.append(subitem[0])
         sf.checkItemInList(outputVarNames)
-        ## for "Bound" in [programX]
-        ## This is not necessary for evry program -- Yang 05.08
+        ## Optional commands
+        try:
+            Programs[ii].setExecutor(cf.get(ii, 'Command executor'))
+        except:
+            sf.Info('Use "os.system" execute commands.')
         try:
             Programs[ii].setBound(cf.get(ii, 'Bound'))
         except:
             sf.Info('No Bound.')
-        
-        try:
-            Programs[ii].setRunFlag(cf.get(ii, 'Run flag'))
-        except:
-            sf.Info('No Run flag.')
 
     ## Read the constraints
     # new 20180426 liang
