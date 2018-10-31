@@ -49,7 +49,7 @@ class program:
         self.cffchi2var= {}
             
         self._Count   = 0
-        self._executor = 'True'
+        self._executor = True
 
     def setProgName(self, name):
         self._ProgName=name
@@ -405,8 +405,16 @@ class program:
                 sf.Info('  varID= %s \tfileID= %s \tMethod= %s \tB/D= %s \tName= %s \tKeys= %s'%(jj[0],jj[1],jj[2],jj[3],jj[4],jj[5]))
             
     def setExecutor(self, executor):
-        self._executor = executor
-        sf.Info('Use "%s" execute commands.'%executor)
+        if executor.lower() == 'os.system':
+            self._executor = True
+            sf.Info('Use "%s" execute commands.'%executor)
+        elif executor.lower() == 'subprocess.popen()':
+            self._executor = False
+            sf.Info('Use "%s" execute commands.'%executor)
+        else:
+            sf.WarningNoWait('The command executor for program "%s" should be either "os.system" or "subprocess.popen()", not "%s".'%(self._ProgName,executor))
+            self._executor = True
+            sf.WarningNoWait('Use "os.system" execute commands.')
 
     def getProgName(self):
         return self._ProgName
