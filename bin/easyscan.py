@@ -52,16 +52,12 @@ def LogLikelihood(cube, ndim, nparams):
     # Run each programs
     # ES.AllPar is a dictionary involving variables and their values of scanning parameters and output variables. 
     for ii in ProgID:
-        if Programs[ii].getRunFlag(ES.AllPar):
-            Programs[ii].WriteInputFile(ES.AllPar)
-            # new 20180416 liang
-            Programs[ii].RemoveOutputFile()
-            Programs[ii].RunProgram()
-            Phy = Programs[ii].ReadOutputFile(ES.AllPar,ES.getFileName())
-            if Phy:
+        Programs[ii].WriteInputFile(ES.AllPar)
+        Programs[ii].RemoveOutputFile()
+        Programs[ii].RunProgram()
+        Phy = Programs[ii].ReadOutputFile(ES.AllPar,ES.getFileName())
+        if Phy:
                 Phy = Programs[ii].ReadBound(ES.AllPar)
-        else:
-            Phy = Programs[ii].SetOutput(ES.AllPar)
         # if the point is unphysical, return log(0)
         if not Phy : return sf.log_zero
 
