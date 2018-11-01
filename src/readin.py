@@ -130,7 +130,14 @@ def ReadIn(Configfile,ES,Programs,CS,Ploter):
             Programs[ii].setBound(cf.get(ii, 'Bound'))
         except:
             sf.Info('No Bound.')
-
+        try:
+            Programs[ii].setTimeLimit(cf.getfloat(ii, 'Time limit')) # this should be called after "setExecutor"
+        except: 
+            if not Programs[ii]._executor:
+                sf.Info('Time limit = %i minutes.'%Programs[ii]._timelimit)
+            else:
+                sf.Info('No time limit.')
+        
     ## Read the constraints
     # new 20180426 liang
     constraint_items = []

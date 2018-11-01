@@ -52,6 +52,7 @@ class program:
         self._executor = True
 
         self._outputclean = True
+        self._timelimit = 60
 
     def setProgName(self, name):
         self._ProgName=name
@@ -430,6 +431,16 @@ class program:
             self._outputclean = True
             sf.Info('Delete the output file of program "%s" before execute it. '%self._ProgName)
 
+    def setTimeLimit(self, timelimit):
+        if self._executor:
+            sf.WarningWait('There is no time limit if "Command executor"="os.system"')
+        elif timelimit<1:
+            sf.WarningWait('The time limit for program "%s" should be larger than 1 minutes')
+            sf.WarningNoWait('Time limit = %i minutes.'%self._timelimit)
+        else:
+            self._timelimit = timelimit
+            sf.Info('Time limit = %i minutes.'%self._timelimit)
+
 
     def getProgName(self):
         return self._ProgName
@@ -613,7 +624,7 @@ class program:
                      time.sleep(0.1)
                      now = time.time()
                      timepassed = int((now-start)/60)
-                     if timepassed > timeout:
+                     if timepassed > self._timelimit:
                          sf.WarningWait("Program %s has run more than 1 hour, It will be kiled ")
                          try:
                              p.terminate()
