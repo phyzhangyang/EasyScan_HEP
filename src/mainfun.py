@@ -760,20 +760,6 @@ class program:
             if (ii!= '') and os.path.isfile(self._InputFile[ii]+".ESbackup"):
                 os.system("mv %s.ESbackup %s" %(self._InputFile[ii],self._InputFile[ii]))
 
-    def __str__(self):
-        return '\
-## [program] #############################################################\n\
-Name    : %(name)s\n\
-Command :\n~~~~ %(command)s\n\
-Command Path:\n~~~~ %(cpath)s\n\
-Input File: \n~~~~ %(inputfile)s\n\
-Input: \n~~~~ %(inputvar)s\n\
-Output File: \n~~~~ %(outputfile)s\n\
-Output: \n~~~~ %(outputvar)s'\
-%{'name':self._ProgName, 'command':self._Command, 'cpath':self._ComPath,
-'inputfile': self._InputFile, 'inputvar': self._InputVar,
-'outputfile': self._OutputFile, 'outputvar': self._OutputVar}
-
     ## new function to use "math .." in [constrain]
     ## in order to add new variable in self.AllPar
     def setGaussian(self,var):
