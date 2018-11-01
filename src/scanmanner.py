@@ -1,5 +1,5 @@
 ####################################################################
-#    Funtions used for differeny scan methods.
+#    Funtions used for differeny scan methods.                     #
 ####################################################################
 
 ## External modules.

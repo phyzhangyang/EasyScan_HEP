@@ -8,27 +8,28 @@
     An Easy-to-use tool providing a comfortable way connecting programs 
     to Scan the parameter space for high energy physics(HEP) models.
         
-    Author: Liangliang Shang and Yang Zhang
+    Author: Yang Zhang and Liangliang Shang
     Web: http://easyscanhep.hepforge.org
                                                                      """
 ##########################################################################
 
 ## External modules.
-import os,sys,math
+import os,sys
 sys.path.append(os.path.join(os.path.split(os.path.split(os.path.realpath(__file__))[0])[0], "src"))
 ## Internal modules.
-import init       as sf
-import readin
+import init     as sf
+import statfun
+from readin     import ReadIn
 from scaninput  import SCANINPUT
 from constraint import CONSTRAINT
-from ploter import PLOTER
+from ploter     import PLOTER
 
 # define basic class object
 ES       = SCANINPUT()
 Programs = {}
 CS       = CONSTRAINT()
 Ploter   = PLOTER()
-ProgID   = readin.ReadIn(sys.argv[1],ES,Programs,CS,Ploter)
+ProgID   = ReadIn(sys.argv[1],ES,Programs,CS,Ploter)
 
 ## new 20180416 liang
 if ES.getScanMethod() == 'RANDOM':
@@ -73,19 +74,9 @@ def LogLikelihood(cube, ndim, nparams):
 
     return loglike 
 
-
+# prior function
 def Prior(cube, ndim, nparams):
-    for i,name in enumerate(ES.InPar):
-        if ES.InputPar[name][1].lower() == 'flat':
-            min = float(ES.InputPar[name][2])
-            max = float(ES.InputPar[name][3])
-            cube[i] = cube[i] * (max - min) + min
-        elif ES.InputPar[name][1].lower() == 'log':
-            min = math.log10(float(ES.InputPar[name][2]))
-            max = math.log10(float(ES.InputPar[name][3]))
-            cube[i] = 10.0**(cube[i]*(max - min) + min )
-        else:
-            sf.ErrorStop( 'Not ready. Only "flat" and "log" prior can be used.' )
+    for i,name in enumerate(ES.InPar): cube[i] = statfun.prior(cube[i],ES.InputPar[name])
 
 ## Load corresponding scan method
 if ES.getScanMethod() == 'RANDOM':
@@ -175,8 +166,6 @@ elif ES.getScanMethod() == 'READ':
 ## recover the modified input file(s) for external programs
 if ES.getScanMethod() != 'PLOT':
     for ii in Programs: Programs[ii].Recover()
-#    sf.WriteResultInf(ES.InPar,ES.OutPar,CS.Chi2,ES.getFileName(),ResultFile,ES.getScanMethod())
-
 
 """ Plot """
 Ploter.setPlotPar(ES.getFileName())
