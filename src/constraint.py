@@ -1,5 +1,5 @@
 ####################################################################
-#    Class PROGRAM: contral External programs                      #
+#    Class CONSTRAINT: contral CONSTRAINT                          #
 ####################################################################
 # External modules
 # Internal modules

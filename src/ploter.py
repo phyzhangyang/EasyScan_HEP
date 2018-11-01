@@ -1,25 +1,19 @@
 ####################################################################
-#    Read in the input configure file
+#    Class PLOT: contral plot                                      #
 ####################################################################
-
-import os,sys
-import re,shutil
-import subprocess
-import linecache
-import random
-import numpy
-import time
-import math
-
+# External modules
+import os
+import matplotlib.pyplot as plt
+import numpy as np
+from matplotlib.mlab import griddata
+# Internal modules
 import init as sf
 
 
 ############################################################
 #################   Plot    Class   ########################
 ############################################################
-import matplotlib.pyplot as plt
-import numpy as np
-from matplotlib.mlab import griddata
+
 
 histconf={'bins':50, 'normed':False, 'facecolor':'green', 'alpha':0.7}
 scatterconf={'s':50, 'marker':'o', 'edgecolors':'None', 'alpha':0.8}
@@ -29,8 +23,7 @@ figconf={'figsize':(12,7), 'dpi':80}
 labelconf={'fontsize':20}
 legendconf={'fontsize':20}
 
-
-class plot():
+class PLOTER():
     def __init__(self):
         self._Histogram=[]
         self._Scatter=[]
