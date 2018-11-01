@@ -15,7 +15,6 @@ def ReadIn(Configfile,ES,Programs,CS,Ploter):
     ## Read the basic scan parameters
     if not ('scan' in cf.sections()) :
         sf.ErrorStop('The input configure file "%s" must include "scan" section.'%Configfile)
-    
     try:
         ES.setScanMethod(cf.get('scan', 'Scan method'))
     except configparser.NoOptionError:
