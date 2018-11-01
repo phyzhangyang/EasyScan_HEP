@@ -21,12 +21,13 @@ import init       as sf
 import mainfun    as mf
 import statfun    as stat
 import readin
-from scaninput import SCANINPUT
+from scaninput  import SCANINPUT
+from constraint import CONSTRAINT
 
 # define basic class object
 ES       = SCANINPUT()
 Programs = {}
-CS       = mf.constraint()
+CS       = CONSTRAINT()
 Ploter   = mf.plot()
 ProgID   = readin.ReadIn(sys.argv[1],ES,Programs,CS,Ploter)
 
