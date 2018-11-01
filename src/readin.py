@@ -3,7 +3,7 @@
 ####################################################################
 # Internal modules
 from program import PROGRAM
-from init import Info, Debug, ErrorStop, WarningWait, WarningNoWait
+import init as sf
 # External modules
 import configparser
 
@@ -12,7 +12,7 @@ def checkItemInList(List):
     for item in List:
         counter = List.count(item)
         if counter>1:
-            ErrorStop('Figure name / output variable name "%s" duplicating %i times! Please correct in [plot] / [programX] in your input file!!'%(item, counter))
+            sf.ErrorStop('Figure name / output variable name "%s" duplicating %i times! Please correct in [plot] / [programX] in your input file!!'%(item, counter))
 
 
 def ReadIn(Configfile,ES,Programs,CS,Ploter):
@@ -21,16 +21,16 @@ def ReadIn(Configfile,ES,Programs,CS,Ploter):
 
     ## Read the basic scan parameters
     if not ('scan' in cf.sections()) :
-        ErrorStop('The input configure file "%s" must include "scan" section.'%Configfile)
+        sf.ErrorStop('The input configure file "%s" must include "scan" section.'%Configfile)
     try:
         ES.setScanMethod(cf.get('scan', 'Scan method'))
     except configparser.NoOptionError:
-        WarningWait('Can not find "Scan method" in the input configure file, it will take the default value, "Random".')
+        sf.WarningWait('Can not find "Scan method" in the input configure file, it will take the default value, "Random".')
 
     try:
         ES.setFileName(cf.get('scan', 'Result file name'))
     except configparser.NoOptionError:
-        ErrorStop('Please provide "Result file name" in the input configure file.')
+        sf.ErrorStop('Please provide "Result file name" in the input configure file.')
 
     ## If the scan method is 'plot', go directly to the 'plot' section
     ## Read the plot information
@@ -39,7 +39,7 @@ def ReadIn(Configfile,ES,Programs,CS,Ploter):
         plot_items  = cf.options("plot")
     except configparser.NoSectionError:
         if cf.get('scan', 'Scan method').upper() in ["PLOT"]:
-            ErrorStop('configparser.NoSectionError: No section: [plot] in the configure file.')
+            sf.ErrorStop('configparser.NoSectionError: No section: [plot] in the configure file.')
         
     if 'histogram' in plot_items:
         Ploter.setHistogram(cf.get('plot', 'Histogram'))
@@ -57,34 +57,34 @@ def ReadIn(Configfile,ES,Programs,CS,Ploter):
     try:
         ES.setPointNum(cf.getint('scan', 'Number of points'))
         if cf.get('scan', 'Scan method').upper() in ["GRID"]:
-            WarningNoWait('"Number of points" in the input configure file is not used in "GRID" scan mode.')
+            sf.WarningNoWait('"Number of points" in the input configure file is not used in "GRID" scan mode.')
     except configparser.NoOptionError:
         if cf.get('scan', 'Scan method').upper() not in ["GRID"]:
-            WarningWait('Can not find "Number of points" in the input configure file, it will take the default value, 100.')
+            sf.WarningWait('Can not find "Number of points" in the input configure file, it will take the default value, 100.')
     except ValueError:
-        ErrorStop('The "Number of points" in the input configure file must be an integer.')
+        sf.ErrorStop('The "Number of points" in the input configure file must be an integer.')
 
     try:
         ES.setRandomSeed(cf.getint('scan', 'Random seed'))
-        Info('"Random seed = %d" in the input configure file, using only in Random, MCMC or Multinest mode.'%cf.getint('scan', 'Random seed'))
+        sf.Info('"Random seed = %d" in the input configure file, using only in Random, MCMC or Multinest mode.'%cf.getint('scan', 'Random seed'))
     except configparser.NoOptionError:
         if cf.get('scan', 'Scan method').upper() in ["RANDOM","MCMC", "MULTINEST"]:
-           Info('Can not find "Random seed" in the input configure file, it will take current system time as ramdom seed.')
+           sf.Info('Can not find "Random seed" in the input configure file, it will take current system time as ramdom seed.')
     except ValueError:
-        ErrorStop('The "Random seed" in the input configure file must be an integer.')
+        sf.ErrorStop('The "Random seed" in the input configure file must be an integer.')
 
 
     try:
         ES.setPrintNum(cf.getint('scan', 'Interval of print'))
     except configparser.NoOptionError:
-        WarningNoWait('Can not find "Interval of print" in the input configure file, it will take the default value, 1.')
+        sf.WarningNoWait('Can not find "Interval of print" in the input configure file, it will take the default value, 1.')
     except ValueError:
-        WarningNoWait('The "Interval of print" in the input configure file must be an integer, it will take the default value, 1.')
+        sf.WarningNoWait('The "Interval of print" in the input configure file must be an integer, it will take the default value, 1.')
 
     try:
         ES.setInputPar(cf.get('scan', 'Input parameters'))
     except configparser.NoOptionError:
-        ErrorStop('Can not find "Input parameters" in the input configure file.')
+        sf.ErrorStop('Can not find "Input parameters" in the input configure file.')
 
     try:
         ES.setAccepRate (cf.get('scan', 'Acceptance rate'))
@@ -94,10 +94,10 @@ def ReadIn(Configfile,ES,Programs,CS,Ploter):
     ## sort programs by ID
     ProgID = [x for x in cf.sections() if x.startswith('program')]
     if len(ProgID)==0 :
-        ErrorStop('The input configure file "%s" must include at least one "program" section.'%Configfile)
+        sf.ErrorStop('The input configure file "%s" must include at least one "program" section.'%Configfile)
     for ii in ProgID:
         if not str.isdigit(ii[7:]):
-            ErrorStop('The section name of %s is wrong'%ii)
+            sf.ErrorStop('The section name of %s is wrong'%ii)
     ProgID = sorted(ProgID, key=lambda x: int( x[7:] ) )
 
     # new 20180419 liang
@@ -108,7 +108,7 @@ def ReadIn(Configfile,ES,Programs,CS,Ploter):
         fullitems = ['program name', 'execute command', 'command path', 'input file', 'input variable', 'output file', 'output variable']
         for jj in fullitems:
             if not jj in items:
-                ErrorStop('For "%s", item "%s" missed.'%(ii,jj))
+                sf.ErrorStop('For "%s", item "%s" missed.'%(ii,jj))
         Programs[ii] = PROGRAM()
         Programs[ii].setProgName(cf.get(ii, 'Program name'))
         Programs[ii].setCommand(cf.get(ii, 'Execute command'))
@@ -127,22 +127,22 @@ def ReadIn(Configfile,ES,Programs,CS,Ploter):
         try:
             Programs[ii].setExecutor(cf.get(ii, 'Command executor'))
         except:
-            Info('Use "os.system" execute commands.')
+            sf.Info('Use "os.system" execute commands.')
         try:
             Programs[ii].setOutputClean(cf.get(ii, 'Output clean'))
         except:
-            Info('Delete the output file of %s before execute it. '%ii)
+            sf.Info('Delete the output file of %s before execute it. '%ii)
         try:
             Programs[ii].setBound(cf.get(ii, 'Bound'))
         except:
-            Info('No Bound.')
+            sf.Info('No Bound.')
         try:
             Programs[ii].setTimeLimit(cf.getfloat(ii, 'Time limit')) # this should be called after "setExecutor"
         except: 
             if not Programs[ii]._executor:
-                Info('Time limit = %i minutes.'%Programs[ii]._timelimit)
+                sf.Info('Time limit = %i minutes.'%Programs[ii]._timelimit)
             else:
-                Info('No time limit.')
+                sf.Info('No time limit.')
         
     ## Read the constraints
     # new 20180426 liang
@@ -151,10 +151,10 @@ def ReadIn(Configfile,ES,Programs,CS,Ploter):
         constraint_items  = cf.options("constraint")
     except configparser.NoSectionError:
         if cf.get('scan', 'Scan method').upper() in ["MCMC", "MULTINEST"]:
-            ErrorStop('configparser.NoSectionError: No section: [constraint] in the configure file.')
-    Info('...............................................')
-    Info('...............................................')
-    Debug('constraint_items',constraint_items)
+            sf.ErrorStop('configparser.NoSectionError: No section: [constraint] in the configure file.')
+    sf.Info('...............................................')
+    sf.Info('...............................................')
+    sf.Debug('constraint_items',constraint_items)
     if 'gaussian' in constraint_items:
         CS.setGaussian(cf.get('constraint', 'Gaussian'))
         ## In order to add "math .." in "gaussian" to self.AllPar

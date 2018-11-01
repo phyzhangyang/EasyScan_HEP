@@ -1,7 +1,6 @@
 ####################################################################
 #    Class CONSTRAINT: contral CONSTRAINT                          #
 ####################################################################
-# External modules
 # Internal modules
 import init as sf
 
