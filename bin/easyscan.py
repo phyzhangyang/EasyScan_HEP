@@ -18,17 +18,16 @@ import os,sys,math
 sys.path.append(os.path.join(os.path.split(os.path.split(os.path.realpath(__file__))[0])[0], "src"))
 ## Internal modules.
 import init       as sf
-import mainfun    as mf
-import statfun    as stat
 import readin
 from scaninput  import SCANINPUT
 from constraint import CONSTRAINT
+from ploter import PLOTER
 
 # define basic class object
 ES       = SCANINPUT()
 Programs = {}
 CS       = CONSTRAINT()
-Ploter   = mf.plot()
+Ploter   = PLOTER()
 ProgID   = readin.ReadIn(sys.argv[1],ES,Programs,CS,Ploter)
 
 ## new 20180416 liang
