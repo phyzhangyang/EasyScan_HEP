@@ -21,9 +21,10 @@ import init       as sf
 import mainfun    as mf
 import statfun    as stat
 import readin
+from scaninput import SCANINPUT
 
 # define basic class object
-ES       = mf.EasyScanInput()
+ES       = SCANINPUT()
 Programs = {}
 CS       = mf.constraint()
 Ploter   = mf.plot()

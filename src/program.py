@@ -1,13 +1,13 @@
 ####################################################################
 #    Class PROGRAM: contral External programs                      #
 ####################################################################
-
+# External modules
 import os,sys
 import re,shutil
 import subprocess
 import numpy
 import time
-
+# Internal modules
 import init as sf
 
 class PROGRAM:
