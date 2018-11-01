@@ -151,13 +151,6 @@ def parseMath(par):
         expr = ''.join(key.split())
         expr = ','.join(expr.split(':'))
         par[key] = eval(expr, safe_dict)
-
-## check reduplicative variable name
-def checkItemInList(List):
-    for item in List:
-        counter = List.count(item)
-        if counter>1:
-            ErrorStop('Figure name / output variable name "%s" duplicating %i times! Please correct in [plot] / [programX] in your input file!!'%(item, counter))
         
 ## delete path in the name of files
 # TODO don't save file name
