@@ -169,7 +169,9 @@ def checkFileInList(List):
                 newList.append(item)
 
     return newList, files
- 
+
+
+
 ## TODO I don't understand this   ---Yang
 def sortDic(Dic):
     return OrderedDict(sorted(list(Dic.items()), key = lambda t: t[0]))
