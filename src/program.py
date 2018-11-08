@@ -672,12 +672,6 @@ class PROGRAM:
                 return False
             ## For 'File' method
             for jj in self._OutFileVar[ii]:
-                ##marked 20180420 liang
-                #if jj[3].lower() == 'save' :
-                #    self._Count += 1
-                #    path = os.path.join(path,"SavedFile")
-                #    SavePath = os.path.join(path, os.path.basename(self._OutputFile[ii]))+"."+str(self._Count)
-                #    shutil.copy(self._OutputFile[ii],SavePath)
                 par[jj[0]] = self._OutputFile[ii]
         
             if len(self._OutPosVar[ii])+ len(self._OutLabelVar[ii]) + len(self._OutSLHAVar[ii])>0 :

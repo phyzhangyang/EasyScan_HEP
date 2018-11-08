@@ -164,7 +164,7 @@ elif ES.getScanMethod() == 'READ':
             outputfiles_filename = ResultFile )
 
 ## recover the modified input file(s) for external programs
-if ES.getScanMethod() != 'PLOT':
+if ES.getScanMethod() != 'PLOT': 
     for ii in Programs: Programs[ii].Recover()
 
 """ Plot """
