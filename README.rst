@@ -22,4 +22,4 @@ For Linus users, \eg Ubuntu 16.04, dependencies may be installed via
 Key idea
 --------
 
-Make the scan of HEP models easier
+Make the scan easier
