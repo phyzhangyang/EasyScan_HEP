@@ -4,7 +4,7 @@ EasyScan_HEP
 
 :EasyScan_HEP: A collection of tools to scan the parameter space of high energy phyics model that are in best agreement with experimental data.
 :Author: EasyScan_HEP collaboration
-:Organiser: Yanghang
+:Organiser: Yang Zhang
 :Version: 0.1.0
 :GitHub: https://github.com/phyzhangyang/EasyScan_HEP
 :Documentation: https://arxiv.org/pdf/190X.XXXXX.pdf
