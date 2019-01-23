@@ -19,7 +19,7 @@ histconf={'bins':50, 'normed':False, 'facecolor':'green', 'alpha':0.7}
 scatterconf={'s':50, 'marker':'o', 'edgecolors':'None', 'alpha':0.8}
 colorconf={'s':40, 'edgecolors':'None',
              'cmap':plt.get_cmap('Reds')}
-figconf={'figsize':(12,7), 'dpi':80}
+figconf={'figsize':(7,7), 'dpi':80}
 labelconf={'fontsize':20}
 legendconf={'fontsize':20}
 
