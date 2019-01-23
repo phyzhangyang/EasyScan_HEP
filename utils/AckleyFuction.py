@@ -1,6 +1,5 @@
 #!/usr/bin/env python
 # Ackley function
-# Used by the bin/example.ini
 # Yang, 2019.01.23
 from numpy import loadtxt, sqrt, exp, cos, pi
 
