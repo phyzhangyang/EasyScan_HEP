@@ -3,4 +3,5 @@ bin/*
 *~
 *.pyc
 *EASYSCAN.LOG
-
+example*/*
+utils/*_output.dat
