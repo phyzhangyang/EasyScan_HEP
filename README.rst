@@ -7,6 +7,7 @@ EasyScan_HEP
 :Organiser: Yang Zhang
 :Version: 0.1.0
 :GitHub: https://github.com/phyzhangyang/EasyScan_HEP
+:Website: https://easyscanhep.hepforge.org
 :Documentation: https://arxiv.org/pdf/190X.XXXXX.pdf
 
 
@@ -18,8 +19,3 @@ For Linus users, \eg Ubuntu 16.04, dependencies may be installed via
 .. code:: bash
     sudo apt-get install python-numpy python-scipy python-pandas python-matplotlib
 
-
-Key idea
---------
-
-Make the scan of HEP models easier.
