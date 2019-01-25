@@ -18,8 +18,3 @@ For Linus users, \eg Ubuntu 16.04, dependencies may be installed via
 .. code:: bash
     sudo apt-get install python-numpy python-scipy python-pandas python-matplotlib
 
-
-Key idea
---------
-
-Make the scan of HEP models easier.
