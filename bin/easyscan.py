@@ -5,8 +5,7 @@
        |___ |__| [__   \_/  [__  |    |__| |\ | |__| |___ |__]
        |___ |  | ___]   |   ___] |___ |  | | \| |  | |___ |
 
-    An Easy-to-use tool providing a comfortable way connecting programs 
-    to Scan the parameter space for high energy physics(HEP) models.
+    A tool for easily connecting programs to scan physics models.
         
     Author: Yang Zhang and Liangliang Shang
     Web: http://easyscanhep.hepforge.org
@@ -37,7 +36,7 @@ if ES.getScanMethod() == 'RANDOM':
 elif ES.getScanMethod() == 'MCMC':
     ResultFile = 'MCMCData.txt'
 elif ES.getScanMethod() == 'MULTINEST':
-    ResultFile = 'MultiNestData/ev.dat'
+    ResultFile = 'MultiNestData/.txt'
 elif ES.getScanMethod() == 'GRID':
     ResultFile = 'GridData.txt'
 elif ES.getScanMethod() == 'READ':
@@ -113,6 +112,7 @@ elif ES.getScanMethod() == 'MCMC':
 
 elif ES.getScanMethod() == 'MULTINEST':
     import pymultinest
+    # https://johannesbuchner.github.io/PyMultiNest/_modules/pymultinest/run.html
     pymultinest.run(
         LogLikelihood        = LogLikelihood,
         Prior                = Prior,
@@ -121,18 +121,8 @@ elif ES.getScanMethod() == 'MULTINEST':
         seed                 = ES.getRandomSeed(),
         outputfiles_basename = ES.MNOutputFile,
         n_live_points        = ES.getPointNum(),
-        n_clustering_params        = 2,
-        wrapped_params             = None,
-        multimodal                 = True,
-        const_efficiency_mode      = False,
-        evidence_tolerance         = 1.0,
-        sampling_efficiency        = 2.0,
-        n_iter_before_update       = 1,
-        null_log_evidence          = -1e+90,
-        max_modes                  = 5,
         verbose                    = True,
         resume                     = False, #!!!!!!!!!
-        context                    = 0,
         importance_nested_sampling = True)
 
 elif ES.getScanMethod() == 'GRID':
