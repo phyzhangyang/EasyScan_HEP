@@ -7,6 +7,7 @@ EasyScan_HEP
 :Organiser: Yang Zhang
 :Version: 0.1.0
 :GitHub: https://github.com/phyzhangyang/EasyScan_HEP
+:Website: https://easyscanhep.hepforge.org
 :Documentation: https://arxiv.org/pdf/190X.XXXXX.pdf
 
 
