@@ -119,6 +119,11 @@ def WriteResultInf(InPar,OutPar,Chi2,Path, ScanMethod,File):
     #unmark 20180416 liang
     file_inf.write(    '\t'.join([Path, File])     +'\n')
     i   = 0
+    if ScanMethod == 'MULTINEST':
+        file_inf.write('\t'.join(['Chi2_',str(i+0)])+'\n')
+        i += 1
+        file_inf.write('\t'.join(['weight',str(i+0)])+'\n')
+        i += 1
     for name in InPar:
         file_inf.write('\t'.join([name,str(i)])+'\n')
         i += 1
@@ -130,7 +135,7 @@ def WriteResultInf(InPar,OutPar,Chi2,Path, ScanMethod,File):
         file_inf.write('\t'.join([name,str(i)])+'\n')
         i += 1
     if ScanMethod == 'MCMC':
-        file_inf.write('\t'.join(['mult',str(i+0)])+'\n')
+        file_inf.write('\t'.join(['mult',str(i)])+'\n')
     file_inf.close()
 
 ## evaluate a math string

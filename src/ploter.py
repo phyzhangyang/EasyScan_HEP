@@ -120,21 +120,21 @@ class PLOTER():
                 except:
                     sf.Debug('Skip parameter %s'%ii)
 
-        ##new 20180418 liang
-        for ii in var:
-            self._dataAllTry[ii] = []
+#        ##new 20180418 liang
+#        for ii in var:
+#            self._dataAllTry[ii] = []
 
-        f_dataAllTry = open(os.path.join(path[0],'All_%s'%path[1]), 'r')
-        while True:
-            line = f_dataAllTry.readline()
-            if not line :
-                break
-            line_par = list(map(str,line.split()))
-            for ii in var:
-                try:
-                    self._dataAllTry[ii].append(float( line_par[var[ii]] ))
-                except:
-                    sf.Debug('Skip parameter %s'%ii)
+#        f_dataAllTry = open(os.path.join(path[0],'All_%s'%path[1]), 'r')
+#        while True:
+#            line = f_dataAllTry.readline()
+#            if not line :
+#                break
+#            line_par = list(map(str,line.split()))
+#            for ii in var:
+#                try:
+#                    self._dataAllTry[ii].append(float( line_par[var[ii]] ))
+#                except:
+#                    sf.Debug('Skip parameter %s'%ii)
 
     def checkPar(self,par,num):                
             for jj in range(num):
