@@ -5,3 +5,5 @@ bin/*
 *EASYSCAN.LOG
 example*/*
 utils/*_output.dat
+utils/susyhit/
+utils/micromegas/
