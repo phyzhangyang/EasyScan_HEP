@@ -46,15 +46,16 @@ def ReadIn(Configfile,ES,Programs,CS,Ploter):
 
     ## Back to Read the basic scan parameters
     try:
-        ES.setPointNum(cf.getint('scan', 'Number of points'))
+        #ES.setPointNum(cf.getint('scan', 'Number of points'))
+        ES.setPointNum(cf.getint('scan', 'Points number'))
 	if cf.get('scan', 'Scan method').upper() in ["GRID"]:
-            sf.WarningNoWait('"Number of points" in the input configure file is not used in "GRID" scan mode.')
+            sf.WarningNoWait('"Points number" in the input configure file is not used in "GRID" scan mode.')
     except ConfigParser.NoOptionError:
 	if cf.get('scan', 'Scan method').upper() in ["GRID"]:
             pass
-        sf.WarningWait('Can not find "Number of points" in the input configure file, it will take the default value, 100.')
+        sf.WarningWait('Can not find "Points number" in the input configure file, it will take the default value, 100.')
     except ValueError:
-        sf.ErrorStop('The "Number of points" in the input configure file must be an integer.')
+        sf.ErrorStop('The "Points number" in the input configure file must be an integer.')
 
     try:
         ES.setRandomSeed(cf.getint('scan', 'Random seed'))
@@ -126,16 +127,20 @@ def ReadIn(Configfile,ES,Programs,CS,Ploter):
     # new 20180426 liang
     constraint_items = []
     try:
+        # auto get lowered items by cf.options("constraint")
         constraint_items  = cf.options("constraint")
+        if len(constraint_items) == 0:
+            sf.ErrorStop('No item in the section [constraint] in the configure file!\n* For "GRID", "RANDOM" or "READ" scan mode, items could be calculated but not guide scanning. For "MCMC" and "MULTINEST" scan mode, items are calculated and guide scanning.')
     except ConfigParser.NoSectionError:
-        if cf.get('scan', 'Scan method').upper() in ["MCMC", "MULTINEST"]:
-            sf.ErrorStop('ConfigParser.NoSectionError: No section: [constraint] in the configure file.')
+        #if cf.get('scan', 'Scan method').upper() in ["MCMC", "MULTINEST"]:
+        sf.ErrorStop('ConfigParser.NoSectionError: No section: [constraint] in the configure file.')
+            
     sf.Info('...............................................')
     sf.Info('...............................................')
     sf.Debug('constraint_items',constraint_items)
     if 'gaussian' in constraint_items:
         CS.setGaussian(cf.get('constraint', 'Gaussian'))
-        ## In order to add "math .." in "gaussian" to self.AllPar
+        ## In order to add "math .." in "Gaussian" to self.AllPar
         if Programs:
             Programs[ProgID[0]].setGaussian(cf.get('constraint', 'Gaussian'))
     
@@ -143,11 +148,13 @@ def ReadIn(Configfile,ES,Programs,CS,Ploter):
     #if 'limit' in constraint_items:
     #    CS.setLimit(cf.get('constraint', 'Limit'))
     ## new 20180430 liang
-    if 'freeformchi2' in constraint_items:
+    elif 'freeformchi2' in constraint_items:
         CS.setFreeFormChi2(cf.get('constraint', 'FreeFormChi2'))
         if Programs:
             Programs[ProgID[0]].setFreeFormChi2(cf.get('constraint', 'FreeFormChi2'))
 
+    else:
+        sf.ErrorStop('Only support "GAUSSIAN" and "FREEFORMCHI2" in [constraint] in the configure file.')
     #################################
     ## manage the vars into ES.AllPar
     #    ES.setProgID(ProgID)
