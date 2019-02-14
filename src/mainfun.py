@@ -917,7 +917,7 @@ class EasyScanInput:
             if os.path.exists(self._FileName):
                 print("* The Result file [%s] already exists." % name )
                 while True:
-                    c = raw_input("Choose: (r)replace, (b)backup, (s)stop\n")
+                    c = raw_input("Choose: (r)eplace, (b)ackup, (s)top\n")
                     if c == "r":
                          os.system(r"rm -r %s" %self._FileName)
                          break
@@ -944,26 +944,33 @@ class EasyScanInput:
         else:
             if not os.path.exists(self._FileName):
                 sf.ErrorStop("The result file %s doesn't exist."%self._FileName)
-            if not os.path.exists(os.path.join(self._FileName,'ScanInf.txt')):
-                sf.ErrorStop("The info filr %s/ScanInf.txt doesn't exist. Please Check the input."%self._FileName)
+
+            if self._ScanMethod in ['READ'] and not os.path.exists(os.path.join(self._FileName,'ScanInfINPUT.txt')):
+                sf.ErrorStop("The information file %s/ScanInfINPUT.txt doesn't exist. Please copy ScanInf.txt as ScanInfINPUT.txt and check the first line in ScanInfINPUT.txt carefully."%self._FileName)
                     
-            if self._ScanMethod == 'READ':
-                sf.Info("* Now you are in READ mode. About files in \n* %s\n*, do you want to  would be delete." % os.path.join(self._FileName, "SavedFile") )
+            if self._ScanMethod in ['PLOT'] and not os.path.exists(os.path.join(self._FileName,'ScanInf.txt')):
+                sf.ErrorStop("The information file %s/ScanInf.txt doesn't exist. Please give ScanInf.txt and check the first line in ScanInf.txt carefully."%self._FileName)
+
+            if self._ScanMethod in ['READ', 'PLOT']:
+                sf.Info("* Now you are in READ (PLOT) mode. Files in SavedFile and Figure (Figure) in\n* %s\n* would be deleted and other files in\n* %s\n* not be deleted. Please choose the way how to deal with files in SavedFile and Figure (Figure)." % (self._FileName, self._FileName) )
                 while True:
-                    c = raw_input("Choose: (d)delete, (b)backup, (s)stop\n")
+                    c = raw_input("Choose: (d)elete, (b)ackup, (s)top\n")
                     if c == "s":
                         exit(1)
                     elif c == "d":
-                        os.system(r"find %s -type f -name '*' | xargs rm" %os.path.join(self._FileName,'SavedFile'))
+                        os.system(r"find %s -type f -name '*' | xargs rm" %os.path.join(self._FileName,'Figure'))
+                        if self._ScanMethod == 'READ':
+                            os.system(r"find %s -type f -name '*' | xargs rm" %os.path.join(self._FileName,'SavedFile'))
                         break
-                    elif c == "d":
-                        print "Not ready, please choose another way."
-                        exit(1)
+                    elif c == "b":
                         if not (os.path.exists(sf.CurrentPath+"/Backup")):
                             os.mkdir(sf.CurrentPath+"/Backup")
                         BackupTime = time.strftime("_%Y_%m_%d_%H_%M_%S", time.localtime())
                         BackupPath = os.path.join(sf.CurrentPath, 'Backup/'+name+BackupTime)
-                        os.system(r"mv %s %s" %(self._FileName, BackupPath))
+                        os.system(r"cp -r %s %s" %(self._FileName, BackupPath))
+                        os.system(r"find %s -type f -name '*' | xargs rm" %os.path.join(self._FileName,'Figure'))
+                        if self._ScanMethod == 'READ':
+                            os.system(r"find %s -type f -name '*' | xargs rm" %os.path.join(self._FileName,'SavedFile'))
                         break
                     else:
                         sf.Info("Wrong input! Please type in one of ('c', 's')")
@@ -1325,11 +1332,14 @@ class plot():
             jj+=1
 
 
-    def setPlotPar(self,path):
+    def setPlotPar(self,path,ScanMethod):
         ## try this
         # self._data =  np.loadtxt(path)
-        
-        f_data = open(os.path.join(path,'ScanInf.txt'),'r')
+       
+        if ScanMethod in ['READ']:
+            f_data = open(os.path.join(path,'ScanInfINPUT.txt'),'r')
+        else:
+            f_data = open(os.path.join(path,'ScanInf.txt'),'r')
         path   = map(str,f_data.readline().split())
         var    = {}
         while True:
@@ -1338,7 +1348,7 @@ class plot():
                 break
             plot_line = map(str,plot_line.split())
             var["+".join(plot_line[:-1])] = int(plot_line[-1])
-    
+   
         self._path = os.path.join(path[0],'Figure')
         if not os.path.exists(self._path):
             os.mkdir(self._path)
@@ -1362,22 +1372,23 @@ class plot():
                     sf.Debug('Skip parameter %s'%ii)
 
         ##new 20180418 liang
-        for ii in var:
-            self._dataAllTry[ii] = []
-
-        f_dataAllTry = open(os.path.join(path[0],'All_%s'%path[1]), 'r')
-        while True:
-            line = f_dataAllTry.readline()
-            if not line :
-                break
-            line_par = map(str,line.split())
+        if ScanMethod not in ['READ', 'MULTINEST', 'PLOT']:
             for ii in var:
-                try:
-                    self._dataAllTry[ii].append(float( line_par[var[ii]] ))
-                except:
-                    sf.Debug('Skip parameter %s'%ii)
+                self._dataAllTry[ii] = []
+            
+            f_dataAllTry = open(os.path.join(path[0],'All_%s'%path[1]), 'r')
+            while True:
+                line = f_dataAllTry.readline()
+                if not line :
+                    break
+                line_par = map(str,line.split())
+                for ii in var:
+                    try:
+                        self._dataAllTry[ii].append(float( line_par[var[ii]] ))
+                    except:
+                        sf.Debug('Skip parameter %s'%ii)
 
-    def checkPar(self,par,num):                
+    def checkPar(self,par,num):               
             for jj in range(num):
                 if max(self._data[par[jj]]) == min(self._data[par[jj]]):
                     sf.ErrorStop("The parameter %s=%f is a cosntant with all samples, can not creat plot for it. Please correct in [plot] in your input file!"%(par[jj], min(self._data[par[jj]]) )  )
@@ -1409,7 +1420,7 @@ class plot():
     
         return contours
 
-    def getPlot(self):
+    def getPlot(self,ScanMethod):
         if len(self._Histogram) + len(self._Scatter) + len(self._Color) + len(self._Contour) == 0:
             sf.Info('You have close ploting the result ... ')
             return
@@ -1437,15 +1448,16 @@ class plot():
             subplot.tick_params(which = 'both', direction = 'out')
             plt.savefig(os.path.join(self._path, ii[2]))
 
-            f=plt.figure(**figconf)
-            subplot=f.add_subplot(111)
-            subplot.scatter(self._dataAllTry[ii[0]],self._dataAllTry[ii[1]],label='All',**scatterconf)
-            subplot.scatter(self._data[ii[0]],self._data[ii[1]],label='Surviving',**scatterconf)
-            plt.legend(**legendconf)
-            subplot.set_xlabel(ii[0], **labelconf)
-            subplot.set_ylabel(ii[1], **labelconf)
-            subplot.tick_params(which = 'both', direction = 'out')
-            plt.savefig(os.path.join(self._path, 'Compare_%s'%ii[2]))
+            if ScanMethod not in ['READ', 'MULTINEST', 'PLOT']:
+                f=plt.figure(**figconf)
+                subplot=f.add_subplot(111)
+                subplot.scatter(self._dataAllTry[ii[0]],self._dataAllTry[ii[1]],label='All',**scatterconf)
+                subplot.scatter(self._data[ii[0]],self._data[ii[1]],label='Surviving',**scatterconf)
+                plt.legend(**legendconf)
+                subplot.set_xlabel(ii[0], **labelconf)
+                subplot.set_ylabel(ii[1], **labelconf)
+                subplot.tick_params(which = 'both', direction = 'out')
+                plt.savefig(os.path.join(self._path, 'Compare_%s'%ii[2]))
 
         for ii in self._Color :
             sf.Info('Generate color plot of parameter %s and %s with color %s'%(ii[0],ii[1],ii[2]))
