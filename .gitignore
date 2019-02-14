@@ -63,3 +63,19 @@ target/
 
 #ignore external in easyscan
 Externals/
+.gitignore~
+bin/EASYSCAN.LOG
+bin/NonUniversal3000.ini
+bin/NonUniversal3000.ini.grid
+bin/NonUniversal3000.ini.grid~
+bin/NonUniversal3000.ini.random
+bin/NonUniversal3000.ini.random~
+bin/NonUniversal3000.ini.read
+bin/NonUniversal3000.ini~
+bin/USM_NonUniversal_3000/
+bin/test_gd/
+bin/test_mcmc/
+bin/test_ms/
+bin/test_rd/
+src/.mainfun.py.swp
+Internals/MultiNest/
