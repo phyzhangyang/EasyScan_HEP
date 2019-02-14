@@ -115,12 +115,15 @@ def string2nestlist(s):
 ## "File" parameter readd 20180416 liang
 def WriteResultInf(InPar,OutPar,Chi2,Path, ScanMethod,File):
     if ScanMethod == 'PLOT': return
-    if ScanMethod == 'READ': return
     #if ScanMethod == 'READ': os.rename(os.path.join(Path,'ScanInf.txt'),os.path.join(Path,'ScanInf_old.txt'))
     file_inf = open(os.path.join(Path,'ScanInf.txt'),'w')
     #unmark 20180416 liang
-    file_inf.write(    '\t'.join([Path, File])     +'\n')
+    file_inf.write('\t'.join([Path, File])+'\n')
     i   = 0
+    if ScanMethod == 'MULTINEST':
+        file_inf.write('probability\t0\n')
+        file_inf.write('-2*loglikehood\t1\n')
+        i = 2
     for name in InPar:
         file_inf.write('\t'.join([name,str(i)])+'\n')
         i += 1
@@ -149,18 +152,29 @@ def parseMath(par):
     safe_dict = dict([ (k, locals().get(k, None)) for k in safe_list ])
     ## add any needed builtins back in.
     safe_dict['abs'] = abs
+    safe_dict['float'] = float 
 
     safe_dict.update(par)
     safe_dict.update({"__builtins__": None})
 
     for key,value in par.items():
-        flag = key.split()[0]
-        expr = ''.join(key.split()[1:])
-        expr = ','.join(expr.split(':'))
+        expr = ','.join(key.split(':'))
 
-        if flag.upper() == "MATH":
-             cal = eval(expr, safe_dict)
-             par[key] = cal
+        try:
+            cal = eval(expr, safe_dict)
+        except SyntaxError:
+            for keyAlt,valueAlt in par.items():
+                if type(valueAlt) == str:
+                    expr=expr.replace(keyAlt, valueAlt)
+                else:
+                    if isnan(valueAlt): 
+                        expr=expr.replace(keyAlt, "float('NaN')")
+                    else:
+                        expr=expr.replace(keyAlt, str(valueAlt))
+            cal = eval(expr, safe_dict)
+
+        #print key, expr, cal; raw_input("math") 
+        par[key] = cal
 
 #new 20180419 liang
 def checkItemInList(List):

@@ -16,7 +16,7 @@ def readrun(LogLikelihood,Prior,n_dims,n_params,inpar,bin_num,n_print,outputfile
 
     import mainfun as mf
     Ploter = mf.plot()
-    Ploter.setPlotPar(outputfiles_basename)
+    Ploter.setPlotPar(outputfiles_basename, 'READ')
     
     for i,name in enumerate(inpar):
         try:
@@ -62,9 +62,9 @@ def readrun(LogLikelihood,Prior,n_dims,n_params,inpar,bin_num,n_print,outputfile
         #new 20180519 liang
         cubeProtect = list(cube)
 
-        if cubePre[n_dims:n_params] == cube[n_dims:n_params]:
-            for i in range(n_dims, n_params):
-                cube[i]=sf.NaN
+        #if cubePre[n_dims:n_params] == cube[n_dims:n_params]:
+        #    for i in range(n_dims, n_params):
+        #        cube[i]=sf.NaN
         
         if (Nrun+1)%n_print == 0:
             print '------------ Num: %i ------------'%(Nrun+1)
@@ -128,9 +128,9 @@ def gridrun(LogLikelihood,Prior,n_dims,n_params,inpar,bin_num,n_print,outputfile
         #new 20180519 liang
         cubeProtect = list(cube)
 
-        if cubePre[n_dims:n_params] == cube[n_dims:n_params]:
-            for i in range(n_dims, n_params):
-                cube[i]=sf.NaN
+        #if cubePre[n_dims:n_params] == cube[n_dims:n_params]:
+        #    for i in range(n_dims, n_params):
+        #        cube[i]=sf.NaN
 
         if (Nrun+1)%n_print == 0:
             print '------------ Num: %i ------------'%(Nrun+1)
@@ -328,10 +328,6 @@ def mcmcrun(LogLikelihood,Prior,n_dims,n_params,n_live_points,inpar,outpar,StepS
         if RangeFlag and (Chisq < - 2.0 * sf.log_zero) :
             f_out2.write('\t'.join([str(x) for x in CurObs])+'\t'+str(mult)+'\n')
             f_out2.flush()
-
-
-
-
 
 
 
