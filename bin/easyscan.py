@@ -35,7 +35,7 @@ if ES.getScanMethod() == 'RANDOM':
 elif ES.getScanMethod() == 'MCMC':
     ResultFile = 'MCMCData.txt'
 elif ES.getScanMethod() == 'MULTINEST':
-    ResultFile = 'MultiNestData/ev.dat'
+    ResultFile = 'MultiNestData/.txt'
 elif ES.getScanMethod() == 'GRID':
     ResultFile = 'GridData.txt'
 elif ES.getScanMethod() == 'READ':
@@ -99,8 +99,8 @@ if ES.getScanMethod() == 'RANDOM':
         Prior                = Prior,
         n_dims               = len(ES.InPar),
         n_params             = len(ES.AllPar)+len(CS.Chi2),
-        inpar                = ES.InPar,
-	outpar               = ES.OutPar,
+#        inpar                = ES.InPar,
+#	outpar               = ES.OutPar,
         n_live_points        = ES.getPointNum(),
         n_print              = ES.getPrintNum(),
         outputfiles_basename = ES.getFileName(),
@@ -156,7 +156,7 @@ elif ES.getScanMethod() == 'GRID':
         n_dims               = len(ES.InPar),
         n_params             = len(ES.AllPar)+len(CS.Chi2),
         inpar                = ES.InPar,
-	outpar               = ES.OutPar,
+#	outpar               = ES.OutPar,
         bin_num              = ES.GridBin,
         n_print              = ES.getPrintNum(),
         outputfiles_basename = ES.getFileName(),
@@ -170,7 +170,6 @@ elif ES.getScanMethod() == 'READ':
             n_dims               = len(ES.InPar),
             n_params             = len(ES.AllPar)+len(CS.Chi2),
             inpar                = ES.InPar,
-            outpar               = ES.OutPar,
             bin_num              = ES.GridBin,
             n_print              = ES.getPrintNum(),
             outputfiles_basename = ES.getFileName(),
@@ -183,8 +182,8 @@ if ES.getScanMethod() != 'PLOT':
 
 
 """ Plot """
-Ploter.setPlotPar(ES.getFileName())
-Ploter.getPlot()
+Ploter.setPlotPar(ES.getFileName(), ES._ScanMethod)
+Ploter.getPlot(ES._ScanMethod)
 
 
 
