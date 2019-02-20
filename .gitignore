@@ -82,3 +82,5 @@ EASYSCAN.LOG
 Externals/susyhit
 Internals/install_test/
 bin/mu_n_1/
+EXAMPLE/input.txt
+EXAMPLE/output.txt
