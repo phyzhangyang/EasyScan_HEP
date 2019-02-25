@@ -1,33 +1,34 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 #########################################################################
 """
        ____ ____ ____ _   _ ____ ____ ____ _  _ _  _ ____ ___
        |___ |__| [__   \_/  [__  |    |__| |\ | |__| |___ |__]
        |___ |  | ___]   |   ___] |___ |  | | \| |  | |___ |
 
-    An Easy-to-use tool providing a comfortable way connecting programs 
-    to Scan the parameter space for high energy physics(HEP) models.
+    A tool for easily connecting programs to scan physics models.
         
-    Author: Liangliang Shang and Yang Zhang
+    Author: Yang Zhang and Liangliang Shang
     Web: http://easyscanhep.hepforge.org
                                                                      """
 ##########################################################################
 
 ## External modules.
-import os,sys,math
+import os,sys
 sys.path.append(os.path.join(os.path.split(os.path.split(os.path.realpath(__file__))[0])[0], "src"))
 ## Internal modules.
-import init       as sf
-import mainfun    as mf
-import statfun    as stat
-import readin
+import init     as sf
+import statfun
+from readin     import ReadIn
+from scaninput  import SCANINPUT
+from constraint import CONSTRAINT
+from ploter     import PLOTER
 
 # define basic class object
-ES       = mf.EasyScanInput()
+ES       = SCANINPUT()
 Programs = {}
-CS       = mf.constraint()
-Ploter   = mf.plot()
-ProgID   = readin.ReadIn(sys.argv[1],ES,Programs,CS,Ploter)
+CS       = CONSTRAINT()
+Ploter   = PLOTER()
+ProgID   = ReadIn(sys.argv[1],ES,Programs,CS,Ploter)
 
 ## new 20180416 liang
 if ES.getScanMethod() == 'RANDOM':
@@ -52,16 +53,10 @@ def LogLikelihood(cube, ndim, nparams):
     # Run each programs
     # ES.AllPar is a dictionary involving variables and their values of scanning parameters and output variables. 
     for ii in ProgID:
-        if Programs[ii].getRunFlag(ES.AllPar):
-            Programs[ii].WriteInputFile(ES.AllPar)
-            # new 20180416 liang
-            Programs[ii].RemoveOutputFile()
-            Programs[ii].RunProgram()
-            Phy = Programs[ii].ReadOutputFile(ES.AllPar,ES.getFileName())
-            if Phy:
-                Phy = Programs[ii].ReadBound(ES.AllPar)
-        else:
-            Phy = Programs[ii].SetOutput(ES.AllPar)
+        Programs[ii].WriteInputFile(ES.AllPar)
+        Programs[ii].RunProgram()
+        Phy = Programs[ii].ReadOutputFile(ES.AllPar,ES.getFileName())
+        if Phy: Phy = Programs[ii].ReadBound(ES.AllPar)
         # if the point is unphysical, return log(0)
         if not Phy : return sf.log_zero
 
@@ -70,26 +65,17 @@ def LogLikelihood(cube, ndim, nparams):
         cube[i+ndim]   = ES.AllPar[name]
 
     loglike = - CS.getChisq(ES.AllPar)/2.0
-
+    
+    if (len(CS.Chi2)==1): return loglike
     ## new 20180428 liang
     for i,name in enumerate(CS.Chi2) :
         cube[i+ndim+len(ES.OutPar)]   = CS.Chi2[name]
 
     return loglike 
 
-
+# prior function
 def Prior(cube, ndim, nparams):
-    for i,name in enumerate(ES.InPar):
-        if ES.InputPar[name][1].lower() == 'flat':
-            min = float(ES.InputPar[name][2])
-            max = float(ES.InputPar[name][3])
-            cube[i] = cube[i] * (max - min) + min
-        elif ES.InputPar[name][1].lower() == 'log':
-            min = math.log10(float(ES.InputPar[name][2]))
-            max = math.log10(float(ES.InputPar[name][3]))
-            cube[i] = 10.0**(cube[i]*(max - min) + min )
-        else:
-            sf.ErrorStop( 'Not ready. Only "flat" and "log" prior can be used.' )
+    for i,name in enumerate(ES.InPar): cube[i] = statfun.prior(cube[i],ES.InputPar[name])
 
 ## Load corresponding scan method
 if ES.getScanMethod() == 'RANDOM':
@@ -99,8 +85,8 @@ if ES.getScanMethod() == 'RANDOM':
         Prior                = Prior,
         n_dims               = len(ES.InPar),
         n_params             = len(ES.AllPar)+len(CS.Chi2),
-#        inpar                = ES.InPar,
-#	outpar               = ES.OutPar,
+        inpar                = ES.InPar,
+	outpar               = ES.OutPar,
         n_live_points        = ES.getPointNum(),
         n_print              = ES.getPrintNum(),
         outputfiles_basename = ES.getFileName(),
@@ -126,6 +112,7 @@ elif ES.getScanMethod() == 'MCMC':
 
 elif ES.getScanMethod() == 'MULTINEST':
     import pymultinest
+    # https://johannesbuchner.github.io/PyMultiNest/_modules/pymultinest/run.html
     pymultinest.run(
         LogLikelihood        = LogLikelihood,
         Prior                = Prior,
@@ -134,18 +121,8 @@ elif ES.getScanMethod() == 'MULTINEST':
         seed                 = ES.getRandomSeed(),
         outputfiles_basename = ES.MNOutputFile,
         n_live_points        = ES.getPointNum(),
-        n_clustering_params        = 2,
-        wrapped_params             = None,
-        multimodal                 = True,
-        const_efficiency_mode      = False,
-        evidence_tolerance         = 1.0,
-        sampling_efficiency        = 2.0,
-        n_iter_before_update       = 1,
-        null_log_evidence          = -1e+90,
-        max_modes                  = 5,
         verbose                    = True,
         resume                     = False, #!!!!!!!!!
-        context                    = 0,
         importance_nested_sampling = True)
 
 elif ES.getScanMethod() == 'GRID':
@@ -156,7 +133,7 @@ elif ES.getScanMethod() == 'GRID':
         n_dims               = len(ES.InPar),
         n_params             = len(ES.AllPar)+len(CS.Chi2),
         inpar                = ES.InPar,
-#	outpar               = ES.OutPar,
+	outpar               = ES.OutPar,
         bin_num              = ES.GridBin,
         n_print              = ES.getPrintNum(),
         outputfiles_basename = ES.getFileName(),
@@ -170,16 +147,15 @@ elif ES.getScanMethod() == 'READ':
             n_dims               = len(ES.InPar),
             n_params             = len(ES.AllPar)+len(CS.Chi2),
             inpar                = ES.InPar,
+            outpar               = ES.OutPar,
             bin_num              = ES.GridBin,
             n_print              = ES.getPrintNum(),
             outputfiles_basename = ES.getFileName(),
             outputfiles_filename = ResultFile )
 
 ## recover the modified input file(s) for external programs
-if ES.getScanMethod() != 'PLOT':
+if ES.getScanMethod() != 'PLOT': 
     for ii in Programs: Programs[ii].Recover()
-#    sf.WriteResultInf(ES.InPar,ES.OutPar,CS.Chi2,ES.getFileName(),ResultFile,ES.getScanMethod())
-
 
 """ Plot """
 Ploter.setPlotPar(ES.getFileName(), ES._ScanMethod)

@@ -10,17 +10,19 @@ import optparse
 import logging
 import logging.config
 import time
-
-print '\033[1;36;2m'
-print '''
+from collections import OrderedDict
+from math import *
+    
+print('\033[1;36;2m')
+print('''
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 ____ ____ ____ _   _ ____ ____ ____ _  _ _  _ ____ ___
 |___ |__| [__   \_/  [__  |    |__| |\ | |__| |___ |__]
 |___ |  | ___]   |   ___] |___ |  | | \| |  | |___ |
 
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-'''
-print '\033[0m'
+''')
+print('\033[0m')
 
 ## Add debug option
 usage = "usage: %prog [options] [FILE] "
@@ -48,12 +50,11 @@ try:
     open(sys.argv[1],'r')
 except IndexError:
     logger.error('No configfile for the script easyscan')
-    print 'Usage: ./easyscan configfile'
+    print('Usage: ./easyscan configfile')
     sys.exit(1)
 except IOError:
     logger.error('Configfile not exist')
     sys.exit(1)
-
 
 ## define 'negetive infinity'
 log_zero = -1e+100
@@ -62,36 +63,31 @@ NaN = float('NaN')
 ## Current path
 CurrentPath = os.getcwd()
 
+## define screen print functions
 def ColorText(i,text,j=1):
     return '\033[%i;3%i;2m %s\033[0m' %(j,i,text)
-
 def GotoWeb():
-    print ColorText(1,'# Goto ') + ColorText(1,'http://easyscanhep.hepforge.org',4) + ColorText(1,' for detail.')
-
+    print(ColorText(1,'# Goto ') + ColorText(1,'http://easyscanhep.hepforge.org',4) + ColorText(1,' for detail.'))
 def WarningWait(warinfo):
     logger.warning(ColorText(1,warinfo))
-    print ColorText(1,'# Waiting 3 seconds for WARNING.')
+    print(ColorText(1,'# Waiting 3 seconds for WARNING.'))
     time.sleep(3)
-
 def WarningNoWait(warinfo):
     logger.warning(ColorText(1,warinfo))
-
 def ErrorStop(errinfo):
     logger.error( ColorText(1,errinfo) )
     GotoWeb()
-    print ColorText(1,'# Exiting with ERROR.')
+    print(ColorText(1,'# Exiting with ERROR.'))
     sys.exit(1)
-
 def Info(debinfo):
     logger.info( ColorText(2,debinfo) )
-
 def Debug(debinfo,debvalue=''):
     if debvalue=='':
         logger.debug( ColorText(5, str(debinfo) ) )
     else:
         logger.debug( ColorText(5, str(debinfo)+': '+str(debvalue) ) )
 
-
+## transform str into int and float
 def autotype(s):
     if type(s) is not str:
         return s
@@ -102,17 +98,19 @@ def autotype(s):
     except ValueError:
         return s
 
+## transform str into list
 def string2list(s):
     s = [ autotype(ss.strip()) for ss in s.split('\n') ]
     return s
 
-## used for parsing string of input variable and output variable in configure file to list of list of items.
+## parse string of input variable and output variable in configure file to list of items.
 def string2nestlist(s):
-    s = map( lambda x: x.split(','), s.split('\n') )
+    s = [x.split(',') for x in s.split('\n')]
     s = [[autotype(x.strip()) for x in ss] for ss in s]
     return s
 
 ## "File" parameter readd 20180416 liang
+# TODO why 'READ' is return
 def WriteResultInf(InPar,OutPar,Chi2,Path, ScanMethod,File):
     if ScanMethod == 'PLOT': return
     #if ScanMethod == 'READ': os.rename(os.path.join(Path,'ScanInf.txt'),os.path.join(Path,'ScanInf_old.txt'))
@@ -121,8 +119,8 @@ def WriteResultInf(InPar,OutPar,Chi2,Path, ScanMethod,File):
     file_inf.write('\t'.join([Path, File])+'\n')
     i   = 0
     if ScanMethod == 'MULTINEST':
-        file_inf.write('probability\t0\n')
-        file_inf.write('-2*loglikehood\t1\n')
+        file_inf.write('posteriorPDF\t0\n')
+        file_inf.write('chi2\t1\n')
         i = 2
     for name in InPar:
         file_inf.write('\t'.join([name,str(i)])+'\n')
@@ -135,31 +133,27 @@ def WriteResultInf(InPar,OutPar,Chi2,Path, ScanMethod,File):
         file_inf.write('\t'.join([name,str(i)])+'\n')
         i += 1
     if ScanMethod == 'MCMC':
-        file_inf.write('\t'.join(['mult',str(i+0)])+'\n')
+        file_inf.write('\t'.join(['mult',str(i)])+'\n')
     file_inf.close()
 
+## evaluate a math string
+# make a list of safe functions
+# Thanks to authors at the web page http://lybniz2.sourceforge.net/safeeval.html
+safe_list = ['math','acos', 'asin', 'atan', 'atan2', 'ceil', 'cos', 'cosh',
+             'degrees', 'e', 'exp', 'fabs', 'floor', 'fmod', 'frexp', 'hypot',
+             'ldexp', 'log', 'log10', 'modf', 'pi', 'pow', 'radians', 'sin',
+             'sinh', 'sqrt', 'tan', 'tanh']
+# use the list to filter the local namespace
+safe_dict = dict([ (k, locals().get(k, None)) for k in safe_list ])
+# add any needed builtins back in.
+safe_dict['abs'] = abs
+safe_dict['float'] = float 
 def parseMath(par):
-    ## Thanks to authors at the web page http://lybniz2.sourceforge.net/safeeval.html
-
-    from math import *
-    ## make a list of safe functions
-    safe_list = ['math','acos', 'asin', 'atan', 'atan2', 'ceil', 'cos', 'cosh',
-                 'degrees', 'e', 'exp', 'fabs', 'floor', 'fmod', 'frexp', 'hypot',
-                 'ldexp', 'log', 'log10', 'modf', 'pi', 'pow', 'radians', 'sin',
-                 'sinh', 'sqrt', 'tan', 'tanh']
-
-    ## use the list to filter the local namespace
-    safe_dict = dict([ (k, locals().get(k, None)) for k in safe_list ])
-    ## add any needed builtins back in.
-    safe_dict['abs'] = abs
-    safe_dict['float'] = float 
-
     safe_dict.update(par)
     safe_dict.update({"__builtins__": None})
-
     for key,value in par.items():
-        expr = ','.join(key.split(':'))
-
+        expr = ''.join(key.split())
+        expr = ','.join(expr.split(':'))
         try:
             cal = eval(expr, safe_dict)
         except SyntaxError:
@@ -175,15 +169,9 @@ def parseMath(par):
 
         #print key, expr, cal; raw_input("math") 
         par[key] = cal
-
-#new 20180419 liang
-def checkItemInList(List):
-    for item in List:
-        counter = List.count(item)
-        if counter>1:
-            ErrorStop('Figure name / output variable name "%s" duplicating %i times! Please correct in [plot] / [programX] in your input file!!'%(item, counter))
         
-#new 20180420 liang
+## delete path in the name of files
+# TODO don't save file name
 def checkFileInList(List):
     newList=[]
     files=[]
@@ -199,10 +187,11 @@ def checkFileInList(List):
                 newList.append(item)
 
     return newList, files
- 
-## new 20180428 liang
+
+
+
+## TODO I don't understand this   ---Yang
 def sortDic(Dic):
-    from collections import OrderedDict
-    return OrderedDict(sorted(Dic.items(), key = lambda t: t[0]))
+    return OrderedDict(sorted(list(Dic.items()), key = lambda t: t[0]))
 
        
