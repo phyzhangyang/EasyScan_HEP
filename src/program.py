@@ -1,16 +1,16 @@
-#!/usr/bin/env python
+####################################################################
+#    Class PROGRAM: contral External programs                      #
+####################################################################
+# External modules
 import os,sys
 import re,shutil
 import subprocess
-import linecache
-import random
 import numpy
 import time
-import math
+# Internal modules
+import init as sf
 
-import init  as sf
-
-class program:
+class PROGRAM:
     def __init__(self):
         self._ProgName  =''
         self._Command   =''
@@ -43,11 +43,13 @@ class program:
         self.cffchi2var= {}
             
         self._Count   = 0
-        self._runflag = 'True'
+        self._executor = True
+
+        self._outputclean = True
+        self._timelimit = 60
 
     def setProgName(self, name):
         self._ProgName=name
-        sf.Info('...............................................')
         sf.Info('...............................................')
         sf.Info('Program name    = %s'% self._ProgName)
     def setCommand(self, command):
@@ -203,9 +205,10 @@ class program:
                     blk = str(jj[4]).split()
                     blk_flag = False
                     #ks  = str(jj[5]).split()
-                    ks  = map(str, jj[5:])
+                    ks  = list(map(str, jj[5:]))
                     ks_flag  = False
                     for kk in invar:
+                        if len(kk)==0: continue
                         if kk[0].startswith('#'): continue
 
                         if blk_flag:
@@ -398,9 +401,40 @@ class program:
                     sf.ErrorStop( 'For input variable "%s" in program "%s" with "SLHA" method, the 4th item must be "BLOCK" or "DECAY". If you can to used other formats, please contact with the authors.'%(jj[0],self._ProgName) )
                 sf.Info('  varID= %s \tfileID= %s \tMethod= %s \tB/D= %s \tName= %s \tKeys= %s'%(jj[0],jj[1],jj[2],jj[3],jj[4],jj[5]))
             
-    def setRunFlag(self, name):
-        self._runflag = name
-        sf.Info('Run this program if '+name)
+    def setExecutor(self, executor):
+        if executor.lower() == 'os.system':
+            self._executor = True
+            sf.Info('Use "%s" execute commands.'%executor)
+        elif executor.lower() == 'subprocess.popen':
+            self._executor = False
+            sf.Info('Use "%s" execute commands.'%executor)
+        else:
+            sf.Info('The command executor for program "%s" should be either "os.system" or "subprocess.popen", not "%s".'%(self._ProgName,executor))
+            self._executor = True
+            sf.WarningNoWait('Use "os.system" execute commands.')
+
+    def setOutputClean(self, outputclean):
+        if outputclean.lower()  in ['yes','y','t','true']:
+            self._outputclean = True
+            sf.Info('Delete the output file of program "%s" before execute it. '%self._ProgName)
+        elif outputclean.lower()  in ['no','n','f','false']:
+            self._outputclean = False
+            sf.Info('Keep the output file of program "%s" before execute it. '%self._ProgName)      
+        else:
+            sf.WarningNoWait('The item "Output clean" for program "%s" should be either "Yes" or "No", not "%s".'%(self._ProgName,outputclean))
+            self._outputclean = True
+            sf.Info('Delete the output file of program "%s" before execute it. '%self._ProgName)
+
+    def setTimeLimit(self, timelimit):
+        if self._executor:
+            sf.WarningWait('There is no time limit if "Command executor"="os.system"')
+        elif timelimit<1:
+            sf.WarningWait('The time limit for program "%s" should be larger than 1 minutes')
+            sf.WarningNoWait('Time limit = %i minutes.'%self._timelimit)
+        else:
+            self._timelimit = timelimit
+            sf.Info('Time limit = %i minutes.'%self._timelimit)
+
 
     def getProgName(self):
         return self._ProgName
@@ -416,11 +450,6 @@ class program:
         return self._OutputFile
     def getOutputVar(self):
         return self._OutputVar
-    def getRunFlag(self,par):
-        try:
-          return eval(self._runflag)
-        except:
-          sf.ErrorStop('The Run Flag "'+self._runflag+'" is wrong for program '+ self._ProgName)
 
     def WriteInputFile(self,par):
         if self._InFileID ==['']:
@@ -513,7 +542,7 @@ class program:
                 blk = str(jj[4]).split()
                 blk_flag = False
                 #ks  = str(jj[5]).split()
-                ks  = map(str, jj[5:])
+                ks  = list(map(str, jj[5:]))
                 ks_flag  = False
                 for kki, kk in enumerate( invar ):
                     if kk[0].startswith('#'): continue
@@ -564,11 +593,16 @@ class program:
 
     def RunProgram(self):
         cwd=self._ComPath
+        # remove output file
+        if self._outputclean:
+            for ii in self._OutFileID:
+                if os.path.exists(self._OutputFile[ii]): os.remove(self._OutputFile[ii])
+        # TODO Let user set the time limit
         timeout = 60*2   # if the program run more than 2 hour, it may be killed
         for cmd in self._Command:
           sf.Debug('Runing Program %s with command'%self._ProgName,cmd)
-          Use_os_system = True
-          if Use_os_system:
+
+          if self._executor:
               ncwd = os.getcwd()
               os.chdir(cwd)
               os.system(cmd[0])
@@ -584,11 +618,11 @@ class program:
                      time.sleep(0.1)
                      now = time.time()
                      timepassed = int((now-start)/60)
-                     if timepassed > timeout:
+                     if timepassed > self._timelimit:
                          sf.WarningWait("Program %s has run more than 1 hour, It will be kiled ")
                          try:
                              p.terminate()
-                         except Exception,e:
+                         except Exception as e:
                              return
                          return
                 (out, err) = p.communicate()
@@ -638,12 +672,6 @@ class program:
                 return False
             ## For 'File' method
             for jj in self._OutFileVar[ii]:
-                ##marked 20180420 liang
-                #if jj[3].lower() == 'save' :
-                #    self._Count += 1
-                #    path = os.path.join(path,"SavedFile")
-                #    SavePath = os.path.join(path, os.path.basename(self._OutputFile[ii]))+"."+str(self._Count)
-                #    shutil.copy(self._OutputFile[ii],SavePath)
                 par[jj[0]] = self._OutputFile[ii]
         
             if len(self._OutPosVar[ii])+ len(self._OutLabelVar[ii]) + len(self._OutSLHAVar[ii])>0 :
@@ -685,6 +713,7 @@ class program:
                 ks  = str(jj[5]).split()
                 ks_flag  = False
                 for kki, kk in enumerate( ouvar ):
+                    if len(kk)==0: continue
                     if kk[0].startswith('#'): continue
                     if blk_flag:
                         if kk[0].upper() in ['BLOCK','DECAY']:
@@ -714,30 +743,10 @@ class program:
 
         return True
 
-    def SetOutput(self,par):
-        for ii in self._OutFileID:
-            for jj in self._OutputVar[ii]:
-                par[jj[0]] = float("nan")
-        return True
-
     def Recover(self):
         for ii in self._InFileID:
             if (ii!= '') and os.path.isfile(self._InputFile[ii]+".ESbackup"):
                 os.system("mv %s.ESbackup %s" %(self._InputFile[ii],self._InputFile[ii]))
-
-    def __str__(self):
-        return '\
-## [program] #############################################################\n\
-Name    : %(name)s\n\
-Command :\n~~~~ %(command)s\n\
-Command Path:\n~~~~ %(cpath)s\n\
-Input File: \n~~~~ %(inputfile)s\n\
-Input: \n~~~~ %(inputvar)s\n\
-Output File: \n~~~~ %(outputfile)s\n\
-Output: \n~~~~ %(outputvar)s'\
-%{'name':self._ProgName, 'command':self._Command, 'cpath':self._ComPath,
-'inputfile': self._InputFile, 'inputvar': self._InputVar,
-'outputfile': self._OutputFile, 'outputvar': self._OutputVar}
 
     ## new function to use "math .." in [constrain]
     ## in order to add new variable in self.AllPar
@@ -880,6 +889,7 @@ Output: \n~~~~ %(outputvar)s'\
 
         return phy 
 
+<<<<<<< HEAD:src/mainfun.py
 
 class EasyScanInput:
     def __init__(self):
@@ -1502,5 +1512,4 @@ class plot():
             subplot.set_ylabel(ii[1], **labelconf)
             subplot.tick_params(which = 'both', direction = 'out')
             plt.savefig(os.path.join(self._path, ii[3]))
-
 
