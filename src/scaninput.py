@@ -17,7 +17,7 @@ class SCANINPUT:
         self._RandomSeed = -1
         self._PrintNum   = 10
         self._AccepRate  = 0.25
-        self._FalgTuneR  = False
+        self._FlagTuneR  = False
 
         self.InputPar = {}
         
@@ -261,7 +261,7 @@ class SCANINPUT:
     def getInitialValue(self):
         return self.MCMCiv
 
-    def getFalgTuneR(self):
-        return self._FalgTuneR
+    def getFlagTuneR(self):
+        return self._FlagTuneR
     def getAccepRate(self):
         return self._AccepRate

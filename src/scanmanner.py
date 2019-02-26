@@ -41,13 +41,13 @@ def printPoint(Nrun,cube,n_dims,inpar,outpar,loglike,Naccept):
     sf.Info('Accepted Num   = '+str(Naccept))
     sf.Info('Total    Num   = '+str(Nrun+1))
 
-def printPoint4MCMC(Chisq,CurChisq,MinChisq,AccRat,FalgTune,kcovar):
+def printPoint4MCMC(Chisq,CurChisq,MinChisq,AccRat,FlagTuneR,kcovar):
     sf.Info('.......... MCMC info ............')
     sf.Info('Test     Chi^2 = '+str(Chisq))
     sf.Info('Current  Chi^2 = '+str(CurChisq))
     sf.Info('Mimimum  Chi^2 = '+str(MinChisq))
     sf.Info('Accepted Ratio = '+str(AccRat))
-    if FalgTune :
+    if FlagTuneR :
         sf.Info('StepZize factor= '+str(exp(kcovar)))
 
 
@@ -275,14 +275,14 @@ def mcmcrun(LogLikelihood,Prior,n_dims,n_params,n_live_points,inpar,outpar,StepS
 
         AccRat = float(Naccept)/float(Nrun)
 
-        if FalgTune and Nrun < 1000: 
+        if FlagTuneR and Nrun < 1000: 
             kcovar = kcovar + 1.0/(float(Nrun)**0.7)*(AccRat - AccepRate)
         else: 
             kcovar = 1
 
         if Nrun%n_print == 0: 
             printPoint(Nrun,cube,n_dims,inpar,outpar,loglike,Naccept)
-            printPoint4MCMC(Chisq,CurChisq,MinChisq,AccRat,FalgTune,kcovar)
+            printPoint4MCMC(Chisq,CurChisq,MinChisq,AccRat,FlagTuneR,kcovar)
 
     # save the last point
     CurObs[-1]=mult
