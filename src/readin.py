@@ -57,10 +57,10 @@ def ReadIn(Configfile,ES,Programs,CS,Ploter):
     try:
         #ES.setPointNum(cf.getint('scan', 'Number of points'))
         ES.setPointNum(cf.getint('scan', 'Points number'))
-	if cf.get('scan', 'Scan method').upper() in ["GRID"]:
+        if cf.get('scan', 'Scan method').upper() in ["GRID"]:
             sf.WarningNoWait('"Points number" in the input configure file is not used in "GRID" scan mode.')
     except ConfigParser.NoOptionError:
-	if cf.get('scan', 'Scan method').upper() in ["GRID"]:
+        if cf.get('scan', 'Scan method').upper() in ["GRID"]:
             pass
         sf.WarningWait('Can not find "Points number" in the input configure file, it will take the default value, 100.')
     except ValueError:
@@ -152,11 +152,11 @@ def ReadIn(Configfile,ES,Programs,CS,Ploter):
     try:
         # auto get lowered items by cf.options("constraint")
         constraint_items  = cf.options("constraint")
-        if len(constraint_items) == 0:
-            sf.ErrorStop('No item in the section [constraint] in the configure file!\n* For "GRID", "RANDOM" or "READ" scan mode, items could be calculated but not guide scanning. For "MCMC" and "MULTINEST" scan mode, items are calculated and guide scanning.')
+        #if len(constraint_items) == 0:
+        #    sf.ErrorStop('No item in the section [constraint] in the configure file!\n* For "GRID", "RANDOM" or "READ" scan mode, items could be calculated but not guide scanning. For "MCMC" and "MULTINEST" scan mode, items are calculated and guide scanning.')
     except ConfigParser.NoSectionError:
-        #if cf.get('scan', 'Scan method').upper() in ["MCMC", "MULTINEST"]:
-        sf.ErrorStop('ConfigParser.NoSectionError: No section: [constraint] in the configure file.')
+        if cf.get('scan', 'Scan method').upper() in ["MCMC", "MULTINEST"]:
+            sf.ErrorStop('ConfigParser.NoSectionError: No section: [constraint] in the configure file.')
             
     sf.Info('...............................................')
     sf.Info('...............................................')
