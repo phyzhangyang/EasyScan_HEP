@@ -119,8 +119,8 @@ def WriteResultInf(InPar,OutPar,Chi2,Path, ScanMethod,File):
     file_inf.write('\t'.join([Path, File])+'\n')
     i   = 0
     if ScanMethod == 'MULTINEST':
-        file_inf.write('posteriorPDF\t0\n')
-        file_inf.write('chi2\t1\n')
+        file_inf.write('probability\t0\n')
+        file_inf.write('-2*loglikehood\t1\n')
         i = 2
     for name in InPar:
         file_inf.write('\t'.join([name,str(i)])+'\n')
