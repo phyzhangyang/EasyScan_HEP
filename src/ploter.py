@@ -15,7 +15,7 @@ import init as sf
 ############################################################
 
 
-histconf={'bins':50, 'normed':False, 'facecolor':'green', 'alpha':0.7}
+histconf={'bins':50, 'density':False, 'facecolor':'green', 'alpha':0.7}
 scatterconf={'s':50, 'marker':'o', 'edgecolors':'None', 'alpha':0.9}
 colorconf={'s':50, 'edgecolors':'None','cmap':plt.get_cmap('winter')}
 figconf={'figsize':(7,7), 'dpi':80}
@@ -84,10 +84,15 @@ class PLOTER():
             jj+=1
 
 
-    def setPlotPar(self,path):
+    def setPlotPar(self,path,ScanMethod):
         ## try this
         # self._data =  np.loadtxt(path)
-        
+       
+        if ScanMethod in ['READ']:
+            f_data = open(os.path.join(path,'ScanInfINPUT.txt'),'r')
+        else:
+            f_data = open(os.path.join(path,'ScanInf.txt'),'r')
+ 
         f_data = open(os.path.join(path,'ScanInf.txt'),'r')
         path   = list(map(str,f_data.readline().split()))
         var    = {}
@@ -120,21 +125,23 @@ class PLOTER():
                 except:
                     sf.Debug('Skip parameter %s'%ii)
 
-#        ##new 20180418 liang
-#        for ii in var:
-#            self._dataAllTry[ii] = []
+        ##new 20180418 liang
+        if ScanMethod not in ['READ', 'MULTINEST', 'PLOT']:
+            for ii in var:
+                self._dataAllTry[ii] = []
 
-#        f_dataAllTry = open(os.path.join(path[0],'All_%s'%path[1]), 'r')
-#        while True:
-#            line = f_dataAllTry.readline()
-#            if not line :
-#                break
-#            line_par = list(map(str,line.split()))
-#            for ii in var:
-#                try:
-#                    self._dataAllTry[ii].append(float( line_par[var[ii]] ))
-#                except:
-#                    sf.Debug('Skip parameter %s'%ii)
+            f_dataAllTry = open(os.path.join(path[0],'All_%s'%path[1]), 'r')
+            while True:
+                line = f_dataAllTry.readline()
+                if not line :
+                    break
+                line_par = map(str,line.split())
+                for ii in var:
+                    try:
+                        self._dataAllTry[ii].append(float( line_par[var[ii]] ))
+                    except:
+                        sf.Debug('Skip parameter %s'%ii)
+
 
     def checkPar(self,par,num):                
             for jj in range(num):
@@ -168,7 +175,7 @@ class PLOTER():
     
         return contours
 
-    def getPlot(self):
+    def getPlot(self,ScanMethod):
         if len(self._Histogram) + len(self._Scatter) + len(self._Color) + len(self._Contour) == 0:
             sf.Info('You have close ploting the result ... ')
             return
@@ -196,15 +203,16 @@ class PLOTER():
             subplot.tick_params(which = 'both', direction = 'out')
             plt.savefig(os.path.join(self._path, ii[2]))
 
-            f=plt.figure(**figconf)
-            subplot=f.add_subplot(111)
-            subplot.scatter(self._dataAllTry[ii[0]],self._dataAllTry[ii[1]],label='All',**scatterconf)
-            subplot.scatter(self._data[ii[0]],self._data[ii[1]],label='Surviving',**scatterconf)
-            plt.legend(**legendconf)
-            subplot.set_xlabel(ii[0], **labelconf)
-            subplot.set_ylabel(ii[1], **labelconf)
-            subplot.tick_params(which = 'both', direction = 'out')
-            plt.savefig(os.path.join(self._path, 'Compare_%s'%ii[2]))
+            if ScanMethod not in ['READ', 'MULTINEST', 'PLOT']:
+                f=plt.figure(**figconf)
+                subplot=f.add_subplot(111)
+                subplot.scatter(self._dataAllTry[ii[0]],self._dataAllTry[ii[1]],label='All',**scatterconf)
+                subplot.scatter(self._data[ii[0]],self._data[ii[1]],label='Surviving',**scatterconf)
+                plt.legend(**legendconf)
+                subplot.set_xlabel(ii[0], **labelconf)
+                subplot.set_ylabel(ii[1], **labelconf)
+                subplot.tick_params(which = 'both', direction = 'out')
+                plt.savefig(os.path.join(self._path, 'Compare_%s'%ii[2]))
 
         for ii in self._Color :
             sf.Info('Generate color plot of parameter %s and %s with color %s'%(ii[0],ii[1],ii[2]))
