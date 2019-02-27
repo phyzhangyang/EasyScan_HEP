@@ -86,7 +86,7 @@ def readrun(LogLikelihood,Prior,n_dims,n_params,inpar,outpar,bin_num,n_print,out
         for i,name in enumerate(inpar):
             cube[i] = Ploter._data[name][iner]
         
-        loglike = LogLikelihood(cube, n_dims)
+        loglike = LogLikelihood(cube, n_dims, n_params)
         if loglike > sf.log_zero:
             Naccept += 1
             saveCube(cube,f_out,f_path,str(Naccept),True)
@@ -130,8 +130,8 @@ def gridrun(LogLikelihood,Prior,n_dims,n_params,inpar,outpar,bin_num,n_print,out
             cube[i] = ( int(Nrun/iner) )%bin_num[name] * interval[name]
             iner   *= bin_num[name]
         
-        Prior(cube)
-        loglike = LogLikelihood(cube, n_dims)
+        Prior(cube, n_dims, n_params)
+        loglike = LogLikelihood(cube, n_dims, n_params)
 
         saveCube(cube,f_out2,f_path,str(Naccept),False)
 
@@ -168,8 +168,8 @@ def randomrun(LogLikelihood,Prior,n_dims,n_params,inpar,outpar,n_live_points,n_p
         for j in range(n_dims):
             cube[j] = random()
         
-        Prior(cube)
-        loglike = LogLikelihood(cube, n_dims)
+        Prior(cube, n_dims, n_params)
+        loglike = LogLikelihood(cube, n_dims, n_params)
         
         if loglike > sf.log_zero:
             Naccept += 1
@@ -206,8 +206,8 @@ def mcmcrun(LogLikelihood,Prior,n_dims,n_params,n_live_points,inpar,outpar,StepS
         CurPar.append( cube[i] )
     n_init = 0
     while True:
-        Prior(cube) # normalized to cube to real value
-        loglike = LogLikelihood(cube, n_dims)
+        Prior(cube, n_dims, n_params) # normalized to cube to real value
+        loglike = LogLikelihood(cube, n_dims, n_params)
         saveCube(cube,f_out2,f_path,'0',False)
         if loglike > sf.log_zero / 2.0 : break
         if n_init == 0 : 
@@ -249,8 +249,8 @@ def mcmcrun(LogLikelihood,Prior,n_dims,n_params,n_live_points,inpar,outpar,StepS
         else:
             Nout=0
             for i in range(n_dims): cube[i] = par[i]
-            Prior(cube)
-            loglike = LogLikelihood(cube, n_dims)
+            Prior(cube, n_dims, n_params)
+            loglike = LogLikelihood(cube, n_dims, n_params)
             saveCube(cube,f_out2,f_path,'0',False)
             Chisq = - 2.0 * loglike
 

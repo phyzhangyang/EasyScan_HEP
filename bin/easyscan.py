@@ -45,7 +45,7 @@ if ES.getScanMethod() != 'PLOT':
     sf.WriteResultInf(ES.InPar,ES.OutPar,CS.Chi2,ES.getFileName(),ES.getScanMethod(), ResultFile)
 
 # logarithm of likelihood function
-def LogLikelihood(cube, ndim):
+def LogLikelihood(cube, ndim, nparams):
     # pass the input value from cube to InPar
     for i,name in enumerate(ES.InPar) :
         ES.InPar [name]=cube[i]
@@ -74,7 +74,7 @@ def LogLikelihood(cube, ndim):
     return loglike 
 
 # prior function
-def Prior(cube):
+def Prior(cube, ndim, nparams):
     for i,name in enumerate(ES.InPar):  
         cube[i] = statfun.prior(cube[i],ES.InputPar[name])
 
