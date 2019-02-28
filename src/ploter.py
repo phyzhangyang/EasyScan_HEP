@@ -126,7 +126,7 @@ class PLOTER():
                     sf.Debug('Skip parameter %s'%ii)
 
         ##new 20180418 liang
-        if ScanMethod not in ['READ', 'MULTINEST', 'PLOT']:
+        if ScanMethod in ['MCMC']:
             for ii in var:
                 self._dataAllTry[ii] = []
 
@@ -203,7 +203,7 @@ class PLOTER():
             subplot.tick_params(which = 'both', direction = 'out')
             plt.savefig(os.path.join(self._path, ii[2]))
 
-            if ScanMethod not in ['READ', 'MULTINEST', 'PLOT']:
+            if ScanMethod in ['MCMC']:
                 f=plt.figure(**figconf)
                 subplot=f.add_subplot(111)
                 subplot.scatter(self._dataAllTry[ii[0]],self._dataAllTry[ii[1]],label='All',**scatterconf)

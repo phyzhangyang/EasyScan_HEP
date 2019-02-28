@@ -53,7 +53,7 @@ def printPoint4MCMC(Chisq,CurChisq,MinChisq,AccRat,FlagTuneR,kcovar):
 
 def readrun(LogLikelihood,Prior,n_dims,n_params,inpar,outpar,bin_num,n_print,outputfiles_basename,outputfiles_filename):
     f_out = open(os.path.join(outputfiles_basename,outputfiles_filename),'w')
-    f_out2 = open(os.path.join(outputfiles_basename,'All_'+outputfiles_filename),'w')
+    #f_out2 = open(os.path.join(outputfiles_basename,'All_'+outputfiles_filename),'w')
     f_path = os.path.join(outputfiles_basename,"SavedFile")
 
     import mainfun as mf
@@ -90,7 +90,7 @@ def readrun(LogLikelihood,Prior,n_dims,n_params,inpar,outpar,bin_num,n_print,out
         if loglike > sf.log_zero:
             Naccept += 1
             saveCube(cube,f_out,f_path,str(Naccept),True)
-        saveCube(cube,f_out2,f_path,str(Naccept),False)
+        #saveCube(cube,f_out2,f_path,str(Naccept),False)
         
         if Nrun%n_print == 0: printPoint(Nrun+1,cube,n_dims,inpar,outpar,loglike,Naccept)
 
@@ -105,7 +105,7 @@ def readrun(LogLikelihood,Prior,n_dims,n_params,inpar,outpar,bin_num,n_print,out
 def gridrun(LogLikelihood,Prior,n_dims,n_params,inpar,outpar,bin_num,n_print,outputfiles_basename,outputfiles_filename):
     f_out = open(os.path.join(outputfiles_basename,outputfiles_filename),'w')
     #new 20180420 liang
-    f_out2 = open(os.path.join(outputfiles_basename,'All_'+outputfiles_filename),'w')
+    #f_out2 = open(os.path.join(outputfiles_basename,'All_'+outputfiles_filename),'w')
     f_path = os.path.join(outputfiles_basename,"SavedFile")
     
     ntotal = 1
@@ -133,7 +133,7 @@ def gridrun(LogLikelihood,Prior,n_dims,n_params,inpar,outpar,bin_num,n_print,out
         Prior(cube, n_dims, n_params)
         loglike = LogLikelihood(cube, n_dims, n_params)
 
-        saveCube(cube,f_out2,f_path,str(Naccept),False)
+        #saveCube(cube,f_out2,f_path,str(Naccept),False)
 
         if loglike > sf.log_zero:
             Naccept += 1
@@ -152,7 +152,7 @@ def gridrun(LogLikelihood,Prior,n_dims,n_params,inpar,outpar,bin_num,n_print,out
 def randomrun(LogLikelihood,Prior,n_dims,n_params,inpar,outpar,n_live_points,n_print,outputfiles_basename,outputfiles_filename):
     f_out = open(os.path.join(outputfiles_basename,outputfiles_filename),'w')
     #new 20180420 liang
-    f_out2 = open(os.path.join(outputfiles_basename,'All_'+outputfiles_filename),'w')
+    #f_out2 = open(os.path.join(outputfiles_basename,'All_'+outputfiles_filename),'w')
     f_path = os.path.join(outputfiles_basename,"SavedFile")
    
     cube = []
@@ -174,7 +174,7 @@ def randomrun(LogLikelihood,Prior,n_dims,n_params,inpar,outpar,n_live_points,n_p
         if loglike > sf.log_zero:
             Naccept += 1
             saveCube(cube,f_out,f_path,str(Naccept),True)
-        saveCube(cube,f_out2,f_path,str(Naccept),False)
+        #saveCube(cube,f_out2,f_path,str(Naccept),False)
         
         if Nrun%n_print == 0: printPoint(Nrun+1,cube,n_dims,inpar,outpar,loglike,Naccept)
 
