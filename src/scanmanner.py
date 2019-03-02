@@ -23,8 +23,11 @@ def saveCube(cube,f,path,num,save):
     f.write('\n')
     f.flush()
 
-def printPoint(Nrun,cube,n_dims,inpar,outpar,loglike,Naccept):
-    sf.Info('------------ Num: %i ------------'%(Nrun))
+def printPoint(Numrun,cube,n_dims,inpar,outpar,loglike,Naccept):
+    if Numrun == 0:
+        sf.Info('------------ Start Point ------------')
+    else:
+        sf.Info('------------ Num: %i ------------'%Numrun)
     for i,name in enumerate(inpar):
         sf.Info('Input  - %s = %s '%(name,cube[i]))
     sf.Info('.................................')
@@ -37,9 +40,11 @@ def printPoint(Nrun,cube,n_dims,inpar,outpar,loglike,Naccept):
             if '/' not in outVar: sf.Info('Output - %s = %s '%(name,outVar))
             
     sf.Info('.................................')
-    sf.Info('     loglike   = '+str(loglike))
-    sf.Info('Accepted Num   = '+str(Naccept))
-    sf.Info('Total    Num   = '+str(Nrun+1))
+    sf.Info('loglikelihood   = '+str(loglike))
+    if Numrun == 0:
+        sf.Info('Initial Chi2    = '+str(-2*loglike))
+    sf.Info('Accepted Num    = '+str(Naccept))
+    sf.Info('Total    Num    = '+str(Numrun))
 
 def printPoint4MCMC(Chisq,CurChisq,MinChisq,AccRat,FlagTuneR,kcovar):
     sf.Info('.......... MCMC info ............')
@@ -92,7 +97,7 @@ def readrun(LogLikelihood,Prior,n_dims,n_params,inpar,outpar,bin_num,n_print,out
             saveCube(cube,f_out,f_path,str(Naccept),True)
         #saveCube(cube,f_out2,f_path,str(Naccept),False)
         
-        if Nrun%n_print == 0: printPoint(Nrun+1,cube,n_dims,inpar,outpar,loglike,Naccept)
+        if (Nrun+1)%n_print == 0: printPoint(Nrun+1,cube,n_dims,inpar,outpar,loglike,Naccept)
 
         #new 20180519 liang
         #cubeProtect = list(cube)
@@ -139,7 +144,7 @@ def gridrun(LogLikelihood,Prior,n_dims,n_params,inpar,outpar,bin_num,n_print,out
             Naccept += 1
             saveCube(cube,f_out,f_path,str(Naccept),True)
 
-        if Nrun%n_print == 0: printPoint(Nrun+1,cube,n_dims,inpar,outpar,loglike,Naccept)
+        if (Nrun+1)%n_print == 0: printPoint(Nrun+1,cube,n_dims,inpar,outpar,loglike,Naccept)
 
         #new 20180519 liang
         #cubeProtect = list(cube)
@@ -176,7 +181,7 @@ def randomrun(LogLikelihood,Prior,n_dims,n_params,inpar,outpar,n_live_points,n_p
             saveCube(cube,f_out,f_path,str(Naccept),True)
         #saveCube(cube,f_out2,f_path,str(Naccept),False)
         
-        if Nrun%n_print == 0: printPoint(Nrun+1,cube,n_dims,inpar,outpar,loglike,Naccept)
+        if (Nrun+1)%n_print == 0: printPoint(Nrun+1,cube,n_dims,inpar,outpar,loglike,Naccept)
 
         #new 20180519 liang
         #cubeProtect = list(cube)
@@ -208,7 +213,9 @@ def mcmcrun(LogLikelihood,Prior,n_dims,n_params,n_live_points,inpar,outpar,StepS
     while True:
         Prior(cube, n_dims, n_params) # normalized to cube to real value
         loglike = LogLikelihood(cube, n_dims, n_params)
-        saveCube(cube,f_out2,f_path,'0',False)
+        AllOutMCMC = cube.copy()
+        AllOutMCMC.append(1)
+        saveCube(AllOutMCMC,f_out2,f_path,'0',False)
         if loglike > sf.log_zero / 2.0 : break
         if n_init == 0 : 
             sf.WarningNoWait('The initial point is unphysical, it will find the physical initial points randmly.')
@@ -235,11 +242,11 @@ def mcmcrun(LogLikelihood,Prior,n_dims,n_params,n_live_points,inpar,outpar,StepS
     kcovar = 0 
     while Naccept < n_live_points:
 
-        Nrun += 1
+        #Nrun += 1
         RangeFlag = True
         for j in range(n_dims):
-            rd = random()
             par[j] = gauss(CurPar[j],exp(kcovar)*covar[j]) # normalized to 1 
+            #rd = random()
             #par[j] = CurPar[j] + covar[j] * (0.5-rd)*2
         if max(par)>1 or min(par)<0 :
             RangeFlag = False
@@ -247,11 +254,14 @@ def mcmcrun(LogLikelihood,Prior,n_dims,n_params,n_live_points,inpar,outpar,StepS
             if Nout%100 == 0: 
                 sf.WarningNoWait("Too many points out of range!")
         else:
+            Nrun += 1
             Nout=0
             for i in range(n_dims): cube[i] = par[i]
             Prior(cube, n_dims, n_params)
             loglike = LogLikelihood(cube, n_dims, n_params)
-            saveCube(cube,f_out2,f_path,'0',False)
+            AllOutMCMC = cube.copy()
+            AllOutMCMC.append(1)
+            saveCube(AllOutMCMC,f_out2,f_path,'0',False)
             Chisq = - 2.0 * loglike
 
         Flag_accept = RangeFlag and (Chisq < CurChisq + 20) 
@@ -271,7 +281,8 @@ def mcmcrun(LogLikelihood,Prior,n_dims,n_params,n_live_points,inpar,outpar,StepS
             Naccept += 1
             mult = 1
         else:
-            mult +=1
+            if RangeFlag:
+                mult +=1
 
         AccRat = float(Naccept)/float(Nrun)
 
@@ -281,11 +292,10 @@ def mcmcrun(LogLikelihood,Prior,n_dims,n_params,n_live_points,inpar,outpar,StepS
             kcovar = 1
 
         if Nrun%n_print == 0: 
-            printPoint(Nrun,cube,n_dims,inpar,outpar,loglike,Naccept)
-            printPoint4MCMC(Chisq,CurChisq,MinChisq,AccRat,FlagTuneR,kcovar)
+            if RangeFlag:
+                printPoint(Nrun,cube,n_dims,inpar,outpar,loglike,Naccept)
+                printPoint4MCMC(Chisq,CurChisq,MinChisq,AccRat,FlagTuneR,kcovar)
 
     # save the last point
     CurObs[-1]=mult
     saveCube(CurObs,f_out,f_path,str(Naccept),True)
-
-
