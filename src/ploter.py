@@ -147,8 +147,11 @@ class PLOTER():
 
     def checkPar(self,par,num):                
             for jj in range(num):
-                if max(self._data[par[jj]]) == min(self._data[par[jj]]):
-                    sf.ErrorStop("The parameter %s=%f is a cosntant with all samples, can not creat plot for it. Please correct in [plot] in your input file!"%(par[jj], min(self._data[par[jj]]) )  )
+                try:
+                    if max(self._data[par[jj]]) == min(self._data[par[jj]]):
+                        sf.ErrorStop("The parameter %s=%f is a cosntant with all samples, can not creat plot for it. Please correct in [plot] in your input file!"%(par[jj], min(self._data[par[jj]]) )  )
+                except KeyError:
+                    sf.ErrorStop("The parameter '%s' do not exist and plot for it do not be created. Please correct in [plot] in your input file!"%( par[jj] )  )
                 #new 20180416 liang
                 if len(self._data[par[jj]]) == 1:
                     sf.ErrorStop("One sample (e.g., see parameter %s) only, can not creat plot for it. Please correct in [plot] in your input file!"%par[jj])
