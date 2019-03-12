@@ -3,6 +3,8 @@
 ####################################################################
 # External modules
 import os
+import matplotlib
+matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 import numpy as np
 from matplotlib.mlab import griddata
