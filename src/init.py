@@ -139,12 +139,12 @@ def WriteResultInf(InPar,OutPar,Chi2,Path, ScanMethod,File):
 ## evaluate a math string
 # make a list of safe functions
 # Thanks to authors at the web page http://lybniz2.sourceforge.net/safeeval.html
-safe_list = ['math','acos', 'asin', 'atan', 'atan2', 'ceil', 'cos', 'cosh',
-             'degrees', 'e', 'exp', 'fabs', 'floor', 'fmod', 'frexp', 'hypot',
-             'ldexp', 'log', 'log10', 'modf', 'pi', 'pow', 'radians', 'sin',
-             'sinh', 'sqrt', 'tan', 'tanh']
+safe_list = ['acos', 'asin', 'atan', 'atan2', 'ceil', 'cos', 'cosh',
+             'degrees', 'e', 'exp', 'fabs', 'floor', 'fmod', 'frexp', 
+             'hypot', 'ldexp', 'log', 'log10', 'modf', 'pi', 'pow', 
+             'radians', 'sin', 'sinh', 'sqrt', 'tan', 'tanh']
 # use the list to filter the local namespace
-safe_dict = dict([ (k, locals().get(k, None)) for k in safe_list ])
+safe_dict = dict([ (k, globals().get(k, None)) for k in safe_list ])
 # add any needed builtins back in.
 safe_dict['abs'] = abs
 safe_dict['float'] = float 
@@ -152,8 +152,7 @@ def parseMath(par):
     safe_dict.update(par)
     safe_dict.update({"__builtins__": None})
     for key,value in par.items():
-        expr = ''.join(key.split())
-        expr = ','.join(expr.split(':'))
+        expr = ','.join(key.split(';'))
         try:
             cal = eval(expr, safe_dict)
         except SyntaxError:
