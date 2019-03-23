@@ -16,6 +16,8 @@ def saveCube(cube,f,path,num,save):
             f.write(str(ii)+'\t')
         except:
             if os.path.exists(ii):
+                #Zero fill into DATA.txt for file method
+                f.write(str(0)+'\t')
                 if save: shutil.copy(ii, os.path.join(path, os.path.basename(ii)+"."+num))
             else:
                 f.write(str(ii)+'\t')
