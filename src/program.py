@@ -691,15 +691,13 @@ class PROGRAM:
 
             ## For 'Label' method
             for jj in self._OutLabelVar[ii]:
-#                labelinum = [xxi for xx,xxi in enumerate(oulines) if jj[3] in xx]
-                labeline = [xx for xx in oulines if str(jj[3]) in xx]
+                labeline = [xx for xx in oulines if re.search(str(jj[3]),xx)]
                 if len(labeline)>1:
                     sf.ErrorStop( 'For output variable "%s" in program "%s" with "Label" method, there is %d "%s" in output file "%s". Please choose other method.'%(jj[0],self._ProgName,len(labelinum),jj[3],self._OutputFile[ii]) )
 
                 try:
                     ## new 20180425 liang
-                    #par[jj[0]] = float(labeline[0].split()[jj[4]-1])
-                    par[jj[0]] = float(re.split(r'[ \t,]+',labeline[0].strip())[jj[4]-1])
+                    par[jj[0]] = float(re.split(r'[ \t]+',labeline[0].strip())[jj[4]-1])
                     sf.Debug('Output - %s='%jj[0],par[jj[0]])
                 except:
                     sf.Debug('Can not read the output var',jj[0])
