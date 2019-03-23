@@ -23,7 +23,7 @@ class CONSTRAINT:
                 
                 sf.Info('    varID= %s\tMean= %e\tDeviation= %e\tType= %s\tName= %s'%(jj[0],jj[1],jj[2],jj[3],jj[4]))
             elif len(ii) in [4,5]:
-                if not ii[3] in ['symm','lower','upper']:
+                if not ii[3].lower() in ['symm','lower','upper']:
                     sf.ErrorStop( 'For the "Gaussian" constraint on "%s", the "Type" can only be "symm", "upper" or "lower", not "%s".'%(ii[0],ii[3]) )
                 ## new 20180428 liang
                 if len(ii) == 4: 
@@ -81,13 +81,15 @@ class CONSTRAINT:
         sf.parseMath(par)
 
         for ii in self._Gaussian:
-            if   ii[3] == 'symm':
+            #ichisq = sf.NaN 
+            ichisq = -1.0*sf.log_zero
+            if   ii[3].lower() == 'symm':
                 ichisq =     (ii[1] - par[ii[0]])**2/ii[2]**2
-            elif ii[3] == 'upper':
-                if ii[1] > par[ii[0]]:
+            elif ii[3].lower() == 'upper':
+                if par[ii[0]] <= ii[1] :
                     ichisq = (ii[1] - par[ii[0]])**2/ii[2]**2
-            elif ii[3] == 'lower':
-                if ii[1] < par[ii[0]]:
+            elif ii[3].lower() == 'lower':
+                if par[ii[0]] >= ii[1]:
                     ichisq = (ii[1] - par[ii[0]])**2/ii[2]**2
 
             ## new 20180428 liang
