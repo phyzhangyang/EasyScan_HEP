@@ -215,7 +215,8 @@ def mcmcrun(LogLikelihood,Prior,n_dims,n_params,n_live_points,inpar,outpar,StepS
         loglike = LogLikelihood(cube, n_dims, n_params)
         AllOutMCMC = cube.copy()
         AllOutMCMC.append(1)
-        saveCube(AllOutMCMC,f_out2,f_path,'0',False)
+        #"True" for saving files of initial physical point
+        saveCube(AllOutMCMC,f_out2,f_path,'0',True)
         if loglike > sf.log_zero / 2.0 : break
         if n_init == 0 : 
             sf.WarningNoWait('The initial point is unphysical, it will find the physical initial points randmly.')
@@ -272,7 +273,8 @@ def mcmcrun(LogLikelihood,Prior,n_dims,n_params,n_live_points,inpar,outpar,StepS
                 Flag_accept = random() < exp(CurChisq-Chisq) 
         if Flag_accept :
             CurObs[-1]=mult
-            saveCube(CurObs,f_out,f_path,str(Naccept),True)
+            #"Naccept+1" due to file of Chisq have covered file of CurChisq
+            saveCube(CurObs,f_out,f_path,str(Naccept+1),True)
             CurChisq = Chisq
             for i in range(n_params): CurObs[i]   = cube[i]
             for i in range(n_dims):   CurPar[i]   = par[i]
