@@ -538,10 +538,9 @@ class PROGRAM:
 
             ## For 'SLHA' method
             for jj in self._InSLHAVar[ii]:
-               
+              
                 blk = str(jj[4]).split()
                 blk_flag = False
-                #ks  = str(jj[5]).split()
                 ks  = list(map(str, jj[5:]))
                 ks_flag  = False
                 for kki, kk in enumerate( invar ):
@@ -708,7 +707,7 @@ class PROGRAM:
 
                 blk = str(jj[4]).split()
                 blk_flag = False
-                ks  = str(jj[5]).split()
+                ks  = list(map(str, jj[5:]))
                 ks_flag  = False
                 for kki, kk in enumerate( ouvar ):
                     if len(kk)==0: continue
