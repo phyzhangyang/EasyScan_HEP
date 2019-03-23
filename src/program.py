@@ -754,8 +754,8 @@ class PROGRAM:
             if len(ii) in [3]:
                 pass
             elif len(ii) in [4,5]:
-                if not ii[3] in ['symm','lower','upper']:
-                    sf.ErrorStop( 'For the "Gaussian" constraint on "%s", the "Type" can only be "upper"/"lower", not "%s".'%(ii[0],ii[3]) )
+                if not ii[3].lower() in ['symm','lower','upper']:
+                    sf.ErrorStop( 'For the "Gaussian" constraint on "%s", the "Type" can only be "symm", "upper" or "lower", not "%s".'%(ii[0],ii[3]) )
             else:
                 sf.ErrorStop( 'The "Gaussian" constraint on "%s" need 4 or 5 items( VarID, Mean, Deviation, Type [, Name] ).'%(ii[0]) )
 
