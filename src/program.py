@@ -829,10 +829,6 @@ class PROGRAM:
             else: 
                 sf.ErrorStop( 'The "Bound" in program "%s" have at most 5 items.'%self._ProgName )
 
-                self.boundvar[ii[0]] = sf.NaN
-                self.boundvar[ii[1]] = sf.NaN
-
-
     ## for "Bound" in [programX]
     ## ReadBound() have survived conditions in SetBound()
     def ReadBound(self,par):
@@ -844,35 +840,10 @@ class PROGRAM:
         if not self._BoundVar[0][0]:
             return True
 
-        ## new 20180429 liang
-        for ii in self._BoundVar:
-            if len(ii) in [4,5]:
-                if len(ii) == 4:
-                    jj = ii + ['Bound_%s_%s_%s'%(ii[0], ii[1], ii[2])]
-                else:
-                    jj = ii
-
-                if not (ii[3].startswith('/home') or ii[3].startswith('~')):
-                    ii[3]=os.path.join(sf.CurrentPath, ii[3])
-                boundfile = numpy.loadtxt(ii[3])
-                x=boundfile[:,0]
-                y=boundfile[:,1]
-                if par[ii[0]] < numpy.amin(x) or par[ii[0]] > numpy.amax(x):
-                    sf.WarningNoWati('"%s" less(greater) than min(max) of the first column in limit file "%s" with method "%s" in "Bound" in program "%s".'%(ii[0], ii[3], ii[2], self._ProgName))
-                    if ii[2].lower() == 'lower':
-                        yinter = -1E100
-                    else:
-                        yinter = 1E100
-                    sf.WarningNoWait('    So we set "%s=%e"'%(jj[4], yinter))
-                else:
-                    yinter = numpy.interp(par[ii[0]], x, y)
-                par[jj[4]] = yinter 
-                sf.Debug('"%s=%f" v.s. "%s=%f" compare to the %s limit "%s=%f" by interplotion in "Bound" for program %s'%(ii[0], par[ii[0]], ii[1], par[ii[1]], ii[2].lower(), ii[1], yinter, self._ProgName))
-
-
         ## add for "math ..." in "Bound" in [programX]
         sf.parseMath(par)
 
+        ## new 20180429 liang
         phy=True
         for ii in self._BoundVar:
             if len(ii)== 3:
@@ -883,6 +854,32 @@ class PROGRAM:
                     phy = phy and eval("%f%s%f"%(par[ii[0]], ii[1], par[ii[2]]))
                 else:
                     phy = phy and eval("%f%s%s"%(par[ii[0]], ii[1], ii[2]))
+            elif len(ii) in [4,5]:
+                if len(ii) == 4:
+                    jj = ii + ['Bound_%s_%s_%s'%(ii[0], ii[1], ii[2])]
+                else:
+                    jj = ii
+                if not (ii[3].startswith('/home') or ii[3].startswith('~')):
+                    ii[3]=os.path.join(sf.CurrentPath, ii[3])
+                boundfile = numpy.loadtxt(ii[3])
+                x=boundfile[:,0]
+                y=boundfile[:,1]
+                if par[ii[0]] < numpy.amin(x) or par[ii[0]] > numpy.amax(x):
+                    sf.WarningNoWait('"%s" less(greater) than min(max) of the first column in limit file "%s" with method "%s" in "Bound" in program "%s".'%(ii[0], ii[3], ii[2], self._ProgName))
+                    if ii[2].lower() == 'lower':
+                        yinter = sf.log_zero
+                    elif ii[2].lower() == 'upper':
+                        yinter = -1.0*sf.log_zero
+                    sf.WarningNoWait('    So we set "%s=%e"'%(jj[4], yinter))
+                else:
+                    yinter = numpy.interp(par[ii[0]], x, y)
+                par[jj[4]] = yinter 
+                sf.Debug('"%s=%f" v.s. "%s=%f" compare to the %s limit "%s=%f" by interplotion in "Bound" for program %s'%(ii[0], par[ii[0]], ii[1], par[ii[1]], ii[2].lower(), ii[1], yinter, self._ProgName))
+
+                if ii[2].lower() == "upper":
+                    phy = phy and eval("%f%s%s"%(par[ii[0]], '<=', par[jj[4]]))
+                elif ii[2].lower() == "lower":
+                    phy = phy and eval("%f%s%s"%(par[ii[0]], '>=', par[jj[4]]))
 
         return phy 
 
