@@ -94,8 +94,7 @@ class PLOTER():
             f_data = open(os.path.join(path,'ScanInfINPUT.txt'),'r')
         else:
             f_data = open(os.path.join(path,'ScanInf.txt'),'r')
- 
-        f_data = open(os.path.join(path,'ScanInf.txt'),'r')
+
         path   = list(map(str,f_data.readline().split()))
         var    = {}
         while True:

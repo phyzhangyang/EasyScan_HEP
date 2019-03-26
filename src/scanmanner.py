@@ -8,6 +8,7 @@ from random import random,gauss
 from math import exp
 ## Internal modules.
 import init as sf
+import ploter
 
 def saveCube(cube,f,path,num,save):
     for ii in cube:
@@ -63,8 +64,7 @@ def readrun(LogLikelihood,Prior,n_dims,n_params,inpar,outpar,bin_num,n_print,out
     #f_out2 = open(os.path.join(outputfiles_basename,'All_'+outputfiles_filename),'w')
     f_path = os.path.join(outputfiles_basename,"SavedFile")
 
-    import mainfun as mf
-    Ploter = mf.plot()
+    Ploter = ploter.PLOTER()
     Ploter.setPlotPar(outputfiles_basename, 'READ')
     
     for i,name in enumerate(inpar):
