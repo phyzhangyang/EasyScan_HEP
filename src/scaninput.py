@@ -71,29 +71,37 @@ class SCANINPUT:
         else:
             if not os.path.exists(self._FileName):
                 sf.ErrorStop("The result file %s doesn't exist."%self._FileName)
-            if not os.path.exists(os.path.join(self._FileName,'ScanInf.txt')):
-                sf.ErrorStop("The info filr %s/ScanInf.txt doesn't exist. Please Check the input."%self._FileName)
+
+            if self._ScanMethod in ['PLOT'] and not os.path.exists(os.path.join(self._FileName,'ScanInf.txt')):
+                sf.ErrorStop("The information file %s/ScanInf.txt doesn't exist. Please give file ScanInf.txt. Note please properly set the first line in the file."%self._FileName)
+
+            if self._ScanMethod in ['READ'] and not os.path.exists(os.path.join(self._FileName,'ScanInfINPUT.txt')):
+                sf.ErrorStop("The information file %s/ScanInfINPUT.txt doesn't exist. Please copy ScanInf.txt as ScanInfINPUT.txt and properly set the first line in the file."%self._FileName)
                     
-            if self._ScanMethod == 'READ':
-                sf.Info("* Now you are in READ mode. About files in \n* %s\n*, do you want to  would be delete." % os.path.join(self._FileName, "SavedFile") )
+            if self._ScanMethod in ['PLOT', 'READ']:
+                sf.Info("* Now you are in PLOT (READ) mode:\n* Files of folder Figure (Figure and SavedFile) in\n* %s\n* would be deleted and other files in\n* %s\n* not be deleted.\n* Please choose the way how to deal with files in\n* %s\n*." % (self._FileName, self._FileName, self._FileName) )
                 while True:
-                    c = input("Choose: (d)delete, (b)backup, (s)stop\n")
+                    c = input("Choose: (d)elete, (b)ackup, (s)top\n")
                     if c == "s":
                         exit(1)
                     elif c == "d":
-                        os.system(r"find %s -type f -name '*' | xargs rm" %os.path.join(self._FileName,'SavedFile'))
+                        os.system(r"find %s -type f -name '*' | xargs rm" %os.path.join(self._FileName,'Figure'))
+                        if self._ScanMethod == 'READ':
+                            os.system(r"find %s -type f -name '*' | xargs rm" %os.path.join(self._FileName,'SavedFile'))
                         break
-                    elif c == "d":
-                        sf.Info("Not ready, please choose another way.")
-                        exit(1)
+                    elif c == "b":
                         if not (os.path.exists(sf.CurrentPath+"/Backup")):
                             os.mkdir(sf.CurrentPath+"/Backup")
                         BackupTime = time.strftime("_%Y_%m_%d_%H_%M_%S", time.localtime())
                         BackupPath = os.path.join(sf.CurrentPath, 'Backup/'+name+BackupTime)
-                        os.system(r"mv %s %s" %(self._FileName, BackupPath))
+                        #os.system(r"mv %s %s" %(self._FileName, BackupPath))
+                        os.system(r"cp -r %s %s" %(self._FileName, BackupPath))
+                        os.system(r"find %s -type f -name '*' | xargs rm" %os.path.join(self._FileName,'Figure'))
+                        if self._ScanMethod == 'READ':
+                            os.system(r"find %s -type f -name '*' | xargs rm" %os.path.join(self._FileName,'SavedFile'))
                         break
                     else:
-                        sf.Info("Wrong input! Please type in one of ('c', 's')")
+                        sf.Info("Wrong input! Please type in one of ('d', 'b', 's')")
             sf.Info('...............................................')
             sf.Info('Result file name  = %s'%self._FileName)
 
