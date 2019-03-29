@@ -82,14 +82,18 @@ class CONSTRAINT:
 
         for ii in self._Gaussian:
             #ichisq = sf.NaN 
-            ichisq = -1.0*sf.log_zero
+            #ichisq = -1.0*sf.log_zero
             if   ii[3].lower() == 'symm':
                 ichisq =     (ii[1] - par[ii[0]])**2/ii[2]**2
             elif ii[3].lower() == 'upper':
                 if par[ii[0]] <= ii[1] :
+                    ichisq = 0
+                else:
                     ichisq = (ii[1] - par[ii[0]])**2/ii[2]**2
             elif ii[3].lower() == 'lower':
                 if par[ii[0]] >= ii[1]:
+                    ichisq = 0
+                else:
                     ichisq = (ii[1] - par[ii[0]])**2/ii[2]**2
 
             ## new 20180428 liang
