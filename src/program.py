@@ -345,6 +345,10 @@ class PROGRAM:
             self.checkVar_slha(ii, file_flag)
 
     def setOutputFile(self, outputfile):
+        if outputfile=='':
+            sf.Debug('No OutFile in program %s'%self._ProgName)
+            self._OutFileID = []
+            return 
         outputfile=sf.string2nestlist(outputfile)
         self._OutFileID = [x[0] for x in outputfile ]
         sf.Debug('OutFileID',self._OutFileID)
@@ -356,6 +360,9 @@ class PROGRAM:
             sf.Info('  ID= %s \tFile= %s'%(ii[0],ii[1]))
 
     def setOutputVar(self, outputvar):
+        if len(self._OutFileID)==0:
+            sf.Debug('No OutputVar with No OutFile in program %s'%self._ProgName)
+            return 
         outputvar=sf.string2nestlist(outputvar)
         for ii in outputvar:
             if not ii[1] in self._OutFileID:
@@ -704,7 +711,6 @@ class PROGRAM:
                         
             ## For 'SLHA' method
             for jj in self._OutSLHAVar[ii]:
-
                 blk = str(jj[4]).split()
                 blk_flag = False
                 ks  = list(map(str, jj[5:]))
@@ -720,7 +726,7 @@ class PROGRAM:
                         if jj[3].upper() == 'BLOCK' and ''.join(ks) ==  ''.join(kk[0:len(ks)]):
                             ks_flag  = True
                             par[jj[0]] = float(ouvar[kki][len(ks)])
-                        if jj[3].upper() == 'DECAY' and ''.join(ks) ==  ''.join(kk[1:len(ks)+1]):
+                        if jj[3].upper() == 'DECAY' and ''.join(ks).replace('.0','') ==  ''.join(kk[1:len(ks)+1]):
                             ks_flag  = True
                             par[jj[0]] = float(ouvar[kki][0])
                     if jj[3].upper() == kk[0].upper() and ''.join(blk) == ''.join(kk[1:len(blk)+1]) :
@@ -730,13 +736,18 @@ class PROGRAM:
                                 sf.Debug('Can not read the output var',jj)
                                 return False
                             else:
-                                par[jj[0]]=float(ouvar[kki][3])
+                                par[jj[0]]=float(ouvar[kki][2])
                                 ks_flag  = True
                             break
                 sf.Debug('Output - %s='%jj[0],par[jj[0]])
                 if not ks_flag:
-                    sf.Debug('Can not read the output var',jj)
-                    return False
+                    if jj[3].upper() == 'DECAY':
+                        sf.Debug('Can not read the output var',jj)
+                        sf.Debug('In DECAY mode, set it as zero!')
+                        par[jj[0]]=0
+                    else:
+                        sf.Debug('Can not read the output var',jj)
+                        return False
 
         return True
 

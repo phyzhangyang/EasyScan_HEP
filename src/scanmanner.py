@@ -136,6 +136,9 @@ def gridrun(LogLikelihood,Prior,n_dims,n_params,inpar,outpar,bin_num,n_print,out
         for i,name in enumerate(inpar):
             cube[i] = ( int(Nrun/iner) )%bin_num[name] * interval[name]
             iner   *= bin_num[name]
+
+        for i,name in enumerate(outpar):
+            cube[i+n_dims] = sf.NaN
         
         Prior(cube, n_dims, n_params)
         loglike = LogLikelihood(cube, n_dims, n_params)
