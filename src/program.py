@@ -885,12 +885,12 @@ class PROGRAM:
                 else:
                     yinter = numpy.interp(par[ii[0]], x, y)
                 par[jj[4]] = yinter 
-                sf.Debug('"%s=%f" v.s. "%s=%f" compare to the %s limit "%s=%f" by interplotion in "Bound" for program %s'%(ii[0], par[ii[0]], ii[1], par[ii[1]], ii[2].lower(), ii[1], yinter, self._ProgName))
+                sf.Debug('"x-axis: %s=%f, y-axis: %s=%f" compare to the %s limit "y-interplotion: %s=%f" by interplotion in "Bound" for program %s'%(ii[0], par[ii[0]], ii[1], par[ii[1]], ii[2].lower(), ii[1], yinter, self._ProgName))
 
                 if ii[2].lower() == "upper":
-                    phy = phy and eval("%f%s%s"%(par[ii[0]], '<=', par[jj[4]]))
+                    phy = phy and eval("%f%s%s"%(par[ii[1]], '<=', par[jj[4]]))
                 elif ii[2].lower() == "lower":
-                    phy = phy and eval("%f%s%s"%(par[ii[0]], '>=', par[jj[4]]))
+                    phy = phy and eval("%f%s%s"%(par[ii[1]], '>=', par[jj[4]]))
 
         return phy 
 
