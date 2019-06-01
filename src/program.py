@@ -598,11 +598,11 @@ class PROGRAM:
             open(self._InputFile[ii],'w').writelines(outlines)
 
     def RunProgram(self):
+        sf.Debug('Be about to run Program %s'%self._ProgName)
         cwd=self._ComPath
         # remove output file
         if self._outputclean:
-            for ii in self._OutFileID:
-                if os.path.exists(self._OutputFile[ii]): os.remove(self._OutputFile[ii])
+            self.RemoveOutputFile()
         # TODO Let user set the time limit
         timeout = 60*2   # if the program run more than 2 hour, it may be killed
         for cmd in self._Command:
@@ -663,12 +663,13 @@ class PROGRAM:
 
     def RemoveOutputFile(self):
         for ii in self._OutFileID:
+            sf.Debug('Remove remaining output file %s before running program %s'%(self._OutputFile[ii], self._ProgName))
             if not os.path.exists(self._OutputFile[ii]):
-                sf.Debug('No output file for program %s'%self._ProgName)
-                sf.Debug('output file name is %s'%self._OutputFile[ii])
+                sf.Debug('No remaining output file %s for program %s'%(self._OutputFile[ii], self._ProgName))
                 return False
             else:
                 os.remove(self._OutputFile[ii])
+                sf.Debug('Successful remaining output file %s for program %s'%(self._OutputFile[ii], self._ProgName))
 
     def ReadOutputFile(self,par,path):
         for ii in self._OutFileID:
