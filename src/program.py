@@ -2,7 +2,7 @@
 #    Class PROGRAM: contral External programs                      #
 ####################################################################
 # External modules
-import os,sys
+import os,sys,signal
 import re,shutil
 import subprocess
 import numpy
@@ -433,14 +433,9 @@ class PROGRAM:
             sf.Info('Delete the output file of program "%s" before execute it. '%self._ProgName)
 
     def setTimeLimit(self, timelimit):
-        if self._executor:
-            sf.WarningWait('There is no time limit if "Command executor"="os.system"')
-        elif timelimit<1:
-            sf.WarningWait('The time limit for program "%s" should be larger than 1 minutes')
-            sf.WarningNoWait('Time limit = %i minutes.'%self._timelimit)
-        else:
-            self._timelimit = timelimit
-            sf.Info('Time limit = %i minutes.'%self._timelimit)
+        self._executor = False
+        self._timelimit = timelimit
+        sf.Info('Time limit = %i minutes.'%self._timelimit)
 
 
     def getProgName(self):
@@ -592,7 +587,7 @@ class PROGRAM:
                          newList.append(invar[xxi][yyi])
                      newList.append(joinList[-1])
                  else:
-                     sf.ErrorStop("Keep format unchanged Failed! Check src/mainfun.py Line 559.") 
+                     sf.ErrorStop("Keep format unchanged Failed! Check src/program.py at Line about 559.") 
                  #outlines.append( "  ".join(invar[xxi])+"\n" )
                  outlines.append( "".join(newList))
             open(self._InputFile[ii],'w').writelines(outlines)
@@ -603,8 +598,6 @@ class PROGRAM:
         # remove output file
         if self._outputclean:
             self.RemoveOutputFile()
-        # TODO Let user set the time limit
-        timeout = 60*2   # if the program run more than 2 hour, it may be killed
         for cmd in self._Command:
           sf.Debug('Runing Program %s with command'%self._ProgName,cmd)
 
@@ -615,31 +608,20 @@ class PROGRAM:
               os.chdir(ncwd)
           else:
             try:
-                p=subprocess.Popen(cmd, stdout=subprocess.PIPE,
-                         stderr=subprocess.STDOUT, cwd=cwd,
-                         shell=True)
-                start = time.time()
-                timepassed = 0
-                while p.poll() is None:
-                     time.sleep(0.1)
-                     now = time.time()
-                     timepassed = int((now-start)/60)
-                     if timepassed > self._timelimit:
-                         sf.WarningWait("Program %s has run more than 1 hour, It will be kiled ")
-                         try:
-                             p.terminate()
-                         except Exception as e:
-                             return
-                         return
-                (out, err) = p.communicate()
-                if p.stdin:  p.stdin.close()
-                if p.stdout: p.stdout.close()
-                if p.stderr: p.stderr.close()
-                try:
-                    p.kill()
-                except OSError:
-                    pass
-                sf.Debug('Program %s done in %s minutes, corresponding output:'%(self._ProgName,timepassed),out)
+                t_begining = time.time()
+                process=subprocess.Popen(cmd, stdout=subprocess.PIPE,
+                        stderr=subprocess.STDOUT, cwd=cwd, preexec_fn=os.setpgrp,
+                        shell=True)
+                while process.poll() == None:
+                    process.stdout.flush()  
+                    output = process.stdout.readline()
+                    if output:
+                        print(output.strip())
+                    seconds_passed = time.time() - t_begining
+                    if seconds_passed > self._timelimit*60: 
+                        os.killpg(os.getpgid(process.pid), signal.SIGTERM) 
+                        sf.WarningWait("Program %s has been running more than %f minutes, It will be killed."%(self._ProgName, self._timelimit))
+                        return
             except OSError as error:
                 if cwd and not os.path.exists(cwd):
                     raise Exception('Directory %s doesn\'t exist. Impossible to run' % cwd)
