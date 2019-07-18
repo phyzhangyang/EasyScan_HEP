@@ -152,11 +152,11 @@ def ReadIn(Configfile,ES,Programs,CS,Ploter):
         constraint_items  = cf.options("constraint")
         #if len(constraint_items) == 0:
         #    sf.ErrorStop('No item in the section [constraint] in the configure file!\n* For "GRID", "RANDOM" or "READ" scan mode, items could be calculated but not guide scanning. For "MCMC" and "MULTINEST" scan mode, items are calculated and guide scanning.')
-    except ConfigParser.NoSectionError:
+    except configparser.NoSectionError:
         if cf.get('scan', 'Scan method').upper() in ["RANDOM", "GRID", "READ"]:
             pass 
         elif cf.get('scan', 'Scan method').upper() in ["MCMC", "MULTINEST"]:
-            sf.ErrorStop('ConfigParser.NoSectionError: No section: [constraint] in the configure file.')
+            sf.ErrorStop('configparser.NoSectionError: No section: [constraint] in the configure file.')
             
     sf.Info('...............................................')
     sf.Info('...............................................')
