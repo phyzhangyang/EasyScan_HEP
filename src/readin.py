@@ -153,7 +153,9 @@ def ReadIn(Configfile,ES,Programs,CS,Ploter):
         #if len(constraint_items) == 0:
         #    sf.ErrorStop('No item in the section [constraint] in the configure file!\n* For "GRID", "RANDOM" or "READ" scan mode, items could be calculated but not guide scanning. For "MCMC" and "MULTINEST" scan mode, items are calculated and guide scanning.')
     except ConfigParser.NoSectionError:
-        if cf.get('scan', 'Scan method').upper() in ["MCMC", "MULTINEST"]:
+        if cf.get('scan', 'Scan method').upper() in ["RANDOM", "GRID", "READ"]:
+            pass 
+        elif cf.get('scan', 'Scan method').upper() in ["MCMC", "MULTINEST"]:
             sf.ErrorStop('ConfigParser.NoSectionError: No section: [constraint] in the configure file.')
             
     sf.Info('...............................................')
@@ -173,9 +175,11 @@ def ReadIn(Configfile,ES,Programs,CS,Ploter):
         CS.setFreeFormChi2(cf.get('constraint', 'FreeFormChi2'))
         if Programs:
             Programs[ProgID[0]].setFreeFormChi2(cf.get('constraint', 'FreeFormChi2'))
-
     else:
-        sf.ErrorStop('Only support "GAUSSIAN" and "FREEFORMCHI2" in [constraint] in the configure file.')
+        if cf.get('scan', 'Scan method').upper() in ["RANDOM", "GRID", "READ"]:
+            pass
+        elif cf.get('scan', 'Scan method').upper() in ["MCMC", "MULTINEST"]:
+            sf.ErrorStop('Only support "GAUSSIAN" and "FREEFORMCHI2" in [constraint] in the configure file.')
     #################################
     ## manage the vars into ES.AllPar
     #    ES.setProgID(ProgID)
