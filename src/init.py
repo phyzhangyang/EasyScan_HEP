@@ -148,6 +148,7 @@ safe_dict = dict([ (k, globals().get(k, None)) for k in safe_list ])
 # add any needed builtins back in.
 safe_dict['abs'] = abs
 safe_dict['float'] = float 
+safe_dict['int'] = int 
 def parseMath(par):
     safe_dict.update(par)
     safe_dict.update({"__builtins__": None})
