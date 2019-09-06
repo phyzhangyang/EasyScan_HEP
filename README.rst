@@ -3,8 +3,8 @@ EasyScan_HEP
 =======
 
 :EasyScan_HEP: A tool for easily connecting programs to scan parameter space of high energy physics models
-:Author: EasyScan_HEP collaboration
-:Organiser: Yang Zhang, Liangliang Shang
+:Author: Liangliang Shang, Yang Zhang
+:Organiser: Yang Zhang
 :Version: 0.1.0
 :GitHub: https://github.com/phyzhangyang/EasyScan_HEP
 :Website: https://easyscanhep.hepforge.org
