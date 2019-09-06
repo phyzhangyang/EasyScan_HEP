@@ -14,7 +14,7 @@ EasyScan_HEP
 Installation instructions
 -------------------------
 
-EasyScan_HEP is a Python3 codes with dependencies on *numpy*, *scipy* and *ConfigParser* libraries. The optional plot functions and MultiNest sampler further require *matplotlib*, *pandas* and *pymultinest* libraries. The dependencies can be installed via pip:
+EasyScan_HEP is a Python3 code with dependencies on *numpy*, *scipy* and *ConfigParser* libraries. The optional plot functions and MultiNest sampler further require *matplotlib*, *pandas* and *pymultinest* libraries. The dependencies can be installed via pip:
 :: 
     sudo apt install python3-pip python3-tk 
     
