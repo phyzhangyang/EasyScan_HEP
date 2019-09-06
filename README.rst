@@ -4,7 +4,7 @@ EasyScan_HEP
 
 :EasyScan_HEP: A tool for easily connecting programs to scan parameter space of high energy physics models
 :Author: EasyScan_HEP collaboration
-:Organiser: Yang Zhang
+:Organiser: Yang Zhang, Liangliang Shang
 :Version: 0.1.0
 :GitHub: https://github.com/phyzhangyang/EasyScan_HEP
 :Website: https://easyscanhep.hepforge.org
@@ -14,8 +14,14 @@ EasyScan_HEP
 Installation instructions
 -------------------------
 
-EasyScan_HEP is a Python 3 code with the dependencies on \code{numpy}\cite{numpy}, \code{scipy}\cite{scipy}. If one wants to use the plotting function in \easyscan, he also needs \code{pandas}\cite{pandas} and \code{matplotlib}\cite{matplotlib}. 
-For Linus users, \eg Ubuntu 16.04, dependencies may be installed via
+EasyScan_HEP is a Python3 codes with dependencies on numpy, scipy and ConfigParser libraries. The optional plot functions and MultiNest sampler further require matplotlib, pandas and pymultinest libraries. The dependencies can be installed via pip:
 .. code:: bash
-    sudo apt-get install python-numpy python-scipy python-pandas python-matplotlib
+    sudo apt install python3-pip python3-tk
+    sudo pip3 install numpy scipy matplotlib ConfigParser pandas pymultinest
+
+The "easyscan.py" in folder "bin" is the main program, which is executed with
+configuration file through the command line,
+.. code:: bash
+    ./bin/easyscan.py templates/example_random.ini
+
 
