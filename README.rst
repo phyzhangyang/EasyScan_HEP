@@ -24,4 +24,8 @@ The "easyscan.py" in folder "bin" is the main program, which is executed with co
 ::
     ./bin/easyscan.py templates/example_random.ini
 
+Here *example_random.ini* is an example configuration file provided in EasyScan_HEP. It performs a scan on a simplified model,
+::
+    $f(x,y) = \sin^2 x + \cos^2 y$, 
 
+using random sampler, where $x$ and $y$ are input parameters in range $[0,\pi]$ and $[-\pi,\pi]$, respectively, and $f$ is output parameter. 
