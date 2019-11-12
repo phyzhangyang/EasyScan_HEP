@@ -7,7 +7,8 @@ import matplotlib
 matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 import numpy as np
-from matplotlib.mlab import griddata
+#from matplotlib.mlab import griddata
+from scipy.interpolate import griddata
 # Internal modules
 import init as sf
 
