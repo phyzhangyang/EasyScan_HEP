@@ -63,6 +63,8 @@ def readrun(LogLikelihood,Prior,n_dims,n_params,inpar,outpar,bin_num,n_print,out
     f_out = open(os.path.join(outputfiles_basename,outputfiles_filename),'w')
     #f_out2 = open(os.path.join(outputfiles_basename,'All_'+outputfiles_filename),'w')
     f_path = os.path.join(outputfiles_basename,"SavedFile")
+    if not os.path.exists(f_path):
+        os.makedirs(f_path)
 
     Ploter = ploter.PLOTER()
     Ploter.setPlotPar(outputfiles_basename, 'READ')
