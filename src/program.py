@@ -156,6 +156,9 @@ class PROGRAM:
             for jj in self._InLabVar[ii]:
                 if len(jj) != 5 :
                     sf.ErrorStop('For input variable "%s" in program "%s" with "Label" method, 5 items ( Name ID,  Input file ID,  Method,  Label name,  Input variable column number ) need to be provived.'%(jj[0],self._ProgName) )
+                if int(jj[4]) - jj[4] != 0:
+                    sf.ErrorStop('For input variable "%s" in program "%s" with "Label" method, the fourth item Input variable column number need to be an integer.'%(jj[0],self._ProgName) )
+
                 sf.Info('  varID= %s \tfileID= %s \tMethod= %s \tLabel= %s \tColumn= %s'%(jj[0],jj[1],jj[2],jj[3],jj[4]))
                 
                 if file_flag:
@@ -174,7 +177,7 @@ class PROGRAM:
                         sf.Debug('Labeled line',inlines[kk].strip('\n'))
                         if len(invar[kk]) < jj[4]:
                             sf.ErrorStop( 'For input variable "%s" in program "%s" with "Label" method, the column number "%i" defined by user is larger than the number of columns "%i" in the corresponding labeled line "%s" of input file "%s".'%(jj[0], self._ProgName, jj[4], len(invar[labelinum[0]]), invar[labelinum[0]], self._InputFile[ii]) )
-                        if invar[kk][jj[4]-1] == jj[3]:
+                        if invar[kk][int(jj[4]-1)] == jj[3]:
                             sf.ErrorStop( 'For input variable "%s" in program "%s" with "Label" method, the extracting item with column ID "%i" is just the label "%s" in the corresponding labeled line "%s" of input file "%s".'%(jj[0], self._ProgName, jj[4], jj[3], invar[labelinum[0]], self._InputFile[ii]) )
 
     def checkVar_slha(self, fileID, fileFlag):
@@ -390,6 +393,9 @@ class PROGRAM:
             for jj in self._OutPosVar[ii]:
                 if len(jj) != 5 :
                     sf.ErrorStop( 'For output variable "%s" in program "%s" with "Position" method, 5 items ( Name ID,  Input file ID,  Method, Line number,  Column number ) need to be provived.'%(jj[0],self._ProgName) )
+                if int(jj[4]) - jj[4] != 0:
+                    sf.ErrorStop('For output variable "%s" in program "%s" with "Label" method, the fourth item Input variable column number need to be an integer.'%(jj[0], self._ProgName) )
+
                 sf.Info('  varID= %s \tfileID= %s \tMethod= %s \tLine num= %s \tColumn num= %s'%(jj[0],jj[1],jj[2],jj[3],jj[4]))
         
             ## For 'label' method
@@ -536,7 +542,7 @@ class PROGRAM:
                 labelinum = [xxi for xxi,xx in enumerate(inlines) if jj[3] in xx]
             
                 for kk in labelinum:
-                    invar[kk][jj[4]-1] = str(par[jj[0]])
+                    invar[kk][int(jj[4]-1)] = str(par[jj[0]])
 
             ## For 'SLHA' method
             for jj in self._InSLHAVar[ii]:
@@ -686,7 +692,7 @@ class PROGRAM:
 
                 try:
                     ## new 20180425 liang
-                    par[jj[0]] = float(re.split(r'[ \t]+',labeline[0].strip())[jj[4]-1])
+                    par[jj[0]] = float(re.split(r'[ \t]+',labeline[0].strip())[int(jj[4]-1)])
                     sf.Debug('Output - %s='%jj[0],par[jj[0]])
                 except:
                     sf.Debug('Can not read the output var',jj[0])
