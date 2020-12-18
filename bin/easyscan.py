@@ -8,7 +8,7 @@
     A tool for easily connecting programs to scan physics models.
         
     Author: Yang Zhang and Liangliang Shang
-    Web: http://easyscanhep.hepforge.org
+    Web: https://github.com/phyzhangyang/EasyScan_HEP
                                                                      """
 ##########################################################################
 
