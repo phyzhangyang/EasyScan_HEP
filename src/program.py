@@ -8,7 +8,7 @@ import subprocess
 import numpy
 import time
 # Internal modules
-import init as sf
+import auxfun as af
 
 class PROGRAM:
     def __init__(self):
@@ -50,35 +50,35 @@ class PROGRAM:
 
     def setProgName(self, name):
         self._ProgName=name
-        sf.Info('...............................................')
-        sf.Info('Program name    = %s'% self._ProgName)
+        af.Info('...............................................')
+        af.Info('Program name    = %s'% self._ProgName)
     def setCommand(self, command):
-        self._Command=sf.string2nestlist(command)
-        sf.Info('Execute command = %s'% self._Command)
+        self._Command=af.string2nestlist(command)
+        af.Info('Execute command = %s'% self._Command)
     def setComPath(self, cpath):
         if cpath.startswith('/home') or cpath.startswith('~'):
             self._ComPath=cpath
         else:
-            self._ComPath=os.path.join(sf.CurrentPath, cpath)
+            self._ComPath=os.path.join(af.CurrentPath, cpath)
         if not os.path.exists(self._ComPath):
-            sf.ErrorStop('Command path "%s" do not exist.'%self._ComPath)
-        sf.Info('Command path    = %s'% self._ComPath)
+            af.ErrorStop('Command path "%s" do not exist.'%self._ComPath)
+        af.Info('Command path    = %s'% self._ComPath)
 
     def setInputFile(self, inputfile):
-        inputfile=sf.string2nestlist(inputfile)
+        inputfile=af.string2nestlist(inputfile)
         self._InFileID = [x[0] for x in inputfile ]
         if self._InFileID != list(set(self._InFileID)):
-            sf.ErrorStop('Input file in program "%s" have same File ID.'%self._ProgName)
-        sf.Info('Input file      = ')
+            af.ErrorStop('Input file in program "%s" have same File ID.'%self._ProgName)
+        af.Info('Input file      = ')
         for ii in inputfile:
             if len(ii) != 2:
                 if ii[0] == '':
                     break
-                sf.ErrorStop('The input file of %s need two items (File ID, File path).'%self._ProgName)
+                af.ErrorStop('The input file of %s need two items (File ID, File path).'%self._ProgName)
             if not (ii[1].startswith('/home') or ii[1].startswith('~')):
-                ii[1]=os.path.join(sf.CurrentPath, ii[1])
+                ii[1]=os.path.join(af.CurrentPath, ii[1])
             self._InputFile[ii[0]]=ii[1]
-            sf.Info('  fileID= %s \tFile= %s'%(ii[0],ii[1]))
+            af.Info('  fileID= %s \tFile= %s'%(ii[0],ii[1]))
 
     ## check functions for whether contents in input variable and output variable in configure is matching with contents in corresponding input file and output file with methods "file", "position", "label", "slha""
     def checkVar_file(self, fileID):
@@ -93,13 +93,13 @@ class PROGRAM:
 
             for jj in self._InFilVar[ii]:
                 if len(jj) != 4 :
-                    sf.ErrorStop( 'For input variable "%s" in program "%s" with "File" method, 4 items (Name, FileID, "File", Method) need to be provived.'%(jj[0],self._ProgName) )
+                    af.ErrorStop( 'For input variable "%s" in program "%s" with "File" method, 4 items (Name, FileID, "File", Method) need to be provived.'%(jj[0],self._ProgName) )
                 if not jj[3].upper() in ['PREVIOUS', 'SAVE', 'REPLACE', 'ADD']:
-                    sf.ErrorStop( 'For input variable "%s" in program "%s" with "File" method, the 4th item must be "PREVIOUS", "SAVE", "REPLACE" or "ADD". If you can use other formats, please contact with the authors.'%(jj[0], self._ProgName) )
+                    af.ErrorStop( 'For input variable "%s" in program "%s" with "File" method, the 4th item must be "PREVIOUS", "SAVE", "REPLACE" or "ADD". If you can use other formats, please contact with the authors.'%(jj[0], self._ProgName) )
                 if jj[3].upper() == "PREVIOUS":
                     file_flag = False
-                sf.Info( 'Becasue file (ID=%s) in program "%s" is obtained from previous program(s), check this input file is ignored.'%(jj[1], self._ProgName))
-                sf.Info('  Name= %s \tFileID= %s \t"File"= %s \tMethod %s'%(jj[0],jj[1],jj[2],jj[3]))
+                af.Info( 'Becasue file (ID=%s) in program "%s" is obtained from previous program(s), check this input file is ignored.'%(jj[1], self._ProgName))
+                af.Info('  Name= %s \tFileID= %s \t"File"= %s \tMethod %s'%(jj[0],jj[1],jj[2],jj[3]))
            
             return file_flag 
 
@@ -119,8 +119,8 @@ class PROGRAM:
 
             for jj in self._InPosVar[ii]:
                 if len(jj) != 5 :
-                    sf.ErrorStop('For input/output variable "%s" in program "%s" with "Position" method, 5 items ( Name ID, Input file ID, Method, Line number, Column number ) need to be provived.'%(jj[0], self._ProgName) )
-                sf.Info('  varID= %s \t fileID= %s \t Method= %s \t Line num= %s \t Column num= %s'%(jj[0],jj[1],jj[2],jj[3],jj[4]) )
+                    af.ErrorStop('For input/output variable "%s" in program "%s" with "Position" method, 5 items ( Name ID, Input file ID, Method, Line number, Column number ) need to be provived.'%(jj[0], self._ProgName) )
+                af.Info('  varID= %s \t fileID= %s \t Method= %s \t Line num= %s \t Column num= %s'%(jj[0],jj[1],jj[2],jj[3],jj[4]) )
                 
                 if file_flag:
                     ## inlines is a list of all lines
@@ -133,15 +133,15 @@ class PROGRAM:
                         return
                     invar = [ss.split() for ss in inlines]
 
-                    sf.Debug('Position len(invar)',len(invar))
-                    sf.Debug('Position line num',jj[3])
+                    af.Debug('Position len(invar)',len(invar))
+                    af.Debug('Position line num',jj[3])
                     if len(invar) < jj[3]:
-                        sf.ErrorStop('For input variable "%s" in program "%s" with "Position" method, the line number is larger than the number of lines of inoput file "%s". Please check your input file.'%(jj[0],self._ProgName,self._InputFile[ii]) )
-                    sf.Debug('Position len(invar[line num])',len(invar[jj[3]-1]))
-                    sf.Debug('Position Column number',jj[4])
+                        af.ErrorStop('For input variable "%s" in program "%s" with "Position" method, the line number is larger than the number of lines of inoput file "%s". Please check your input file.'%(jj[0],self._ProgName,self._InputFile[ii]) )
+                    af.Debug('Position len(invar[line num])',len(invar[jj[3]-1]))
+                    af.Debug('Position Column number',jj[4])
 
                     if len(invar[jj[3]-1]) < jj[4]:
-                        sf.ErrorStop('For input variable "%s" in program "%s" with "Position" method, the column number is larger than the number of columns in line %s of input file "%s". Please check your input file.'%(jj[0],self._ProgName,jj[3],self._InputFile[ii]) )
+                        af.ErrorStop('For input variable "%s" in program "%s" with "Position" method, the column number is larger than the number of columns in line %s of input file "%s". Please check your input file.'%(jj[0],self._ProgName,jj[3],self._InputFile[ii]) )
 
 
     def checkVar_label(self, fileID, fileFlag):
@@ -155,11 +155,11 @@ class PROGRAM:
             
             for jj in self._InLabVar[ii]:
                 if len(jj) != 5 :
-                    sf.ErrorStop('For input variable "%s" in program "%s" with "Label" method, 5 items ( Name ID,  Input file ID,  Method,  Label name,  Input variable column number ) need to be provived.'%(jj[0],self._ProgName) )
+                    af.ErrorStop('For input variable "%s" in program "%s" with "Label" method, 5 items ( Name ID,  Input file ID,  Method,  Label name,  Input variable column number ) need to be provived.'%(jj[0],self._ProgName) )
                 if int(jj[4]) - jj[4] != 0 or jj[4] == 0:
-                    sf.ErrorStop('For input variable "%s" in program "%s" with "Label" method, the fourth item Input variable column number need to be an integer and not zero.'%(jj[0],self._ProgName) )
+                    af.ErrorStop('For input variable "%s" in program "%s" with "Label" method, the fourth item Input variable column number need to be an integer and not zero.'%(jj[0],self._ProgName) )
 
-                sf.Info('  varID= %s \tfileID= %s \tMethod= %s \tLabel= %s \tColumn= %s'%(jj[0],jj[1],jj[2],jj[3],jj[4]))
+                af.Info('  varID= %s \tfileID= %s \tMethod= %s \tLabel= %s \tColumn= %s'%(jj[0],jj[1],jj[2],jj[3],jj[4]))
                 
                 if file_flag:
                     ## inlines is a list of all lines
@@ -170,17 +170,17 @@ class PROGRAM:
                     ## enumerate return object that could by use by for loop by parsing list where xxi is id and xx is value in list.
                     labelinum = [xxi for xxi,xx in enumerate(inlines) if jj[3] in xx]
                     if len(labelinum)==0:
-                        sf.ErrorStop( 'For input variable "%s" in program "%s" with "Label" method, there is no "%s" in the input file "%s". Please check your input file.'%(jj[0],self._ProgName,jj[3],self._InputFile[ii]) )
+                        af.ErrorStop( 'For input variable "%s" in program "%s" with "Label" method, there is no "%s" in the input file "%s". Please check your input file.'%(jj[0],self._ProgName,jj[3],self._InputFile[ii]) )
                     if len(labelinum)!=1:
-                        sf.ErrorStop( 'For input variable "%s" in program "%s" with "Label" method, there is more than one line with label "%s" in the input file "%s". Please check your input file.'%(jj[0],self._ProgName,jj[3],self._InputFile[ii]) )
+                        af.ErrorStop( 'For input variable "%s" in program "%s" with "Label" method, there is more than one line with label "%s" in the input file "%s". Please check your input file.'%(jj[0],self._ProgName,jj[3],self._InputFile[ii]) )
                     for kk in labelinum:
-                        sf.Debug('Labeled line',inlines[kk].strip('\n'))
+                        af.Debug('Labeled line',inlines[kk].strip('\n'))
                         if len(invar[kk]) < jj[4]:
-                            sf.ErrorStop( 'For input variable "%s" in program "%s" with "Label" method, the column number "%i" defined by user is larger than the number of columns "%i" in the corresponding labeled line "%s" of input file "%s".'%(jj[0], self._ProgName, jj[4], len(invar[labelinum[0]]), invar[labelinum[0]], self._InputFile[ii]) )
+                            af.ErrorStop( 'For input variable "%s" in program "%s" with "Label" method, the column number "%i" defined by user is larger than the number of columns "%i" in the corresponding labeled line "%s" of input file "%s".'%(jj[0], self._ProgName, jj[4], len(invar[labelinum[0]]), invar[labelinum[0]], self._InputFile[ii]) )
                         if jj[4] > 0 and invar[kk][int(jj[4]-1)] == jj[3]:
-                            sf.ErrorStop( 'For input variable "%s" in program "%s" with "Label" method, the extracting item with column ID "%i" is just the label "%s" in the corresponding labeled line "%s" of input file "%s".'%(jj[0], self._ProgName, jj[4], jj[3], invar[labelinum[0]], self._InputFile[ii]) )
+                            af.ErrorStop( 'For input variable "%s" in program "%s" with "Label" method, the extracting item with column ID "%i" is just the label "%s" in the corresponding labeled line "%s" of input file "%s".'%(jj[0], self._ProgName, jj[4], jj[3], invar[labelinum[0]], self._InputFile[ii]) )
                         if jj[4] < 0 and invar[kk][int(jj[4])] == jj[3]:
-                            sf.ErrorStop( 'For input variable "%s" in program "%s" with "Label" method, the ex    tracting item with column ID "%i" is just the label "%s" in the corresponding labeled line "%s" of input file     "%s".'%(jj[0], self._ProgName, jj[4], jj[3], invar[labelinum[0]], self._InputFile[ii]) )
+                            af.ErrorStop( 'For input variable "%s" in program "%s" with "Label" method, the ex    tracting item with column ID "%i" is just the label "%s" in the corresponding labeled line "%s" of input file     "%s".'%(jj[0], self._ProgName, jj[4], jj[3], invar[labelinum[0]], self._InputFile[ii]) )
 
     def checkVar_slha(self, fileID, fileFlag):
             ## For 'SLHA' method
@@ -193,11 +193,11 @@ class PROGRAM:
 
             for jj in self._InSLHAVar[ii]:
                 if len(jj) < 6 :
-                    sf.ErrorStop('For input variable "%s" in program "%s" with "SLHA" method, at least 6 items ( Name ID,  Input file ID,  Method, BLOCK/DECAY, Block name/PDG, Keys) need to be provived.'%(jj[0],self._ProgName) )
+                    af.ErrorStop('For input variable "%s" in program "%s" with "SLHA" method, at least 6 items ( Name ID,  Input file ID,  Method, BLOCK/DECAY, Block name/PDG, Keys) need to be provived.'%(jj[0],self._ProgName) )
                 if not jj[3].upper() in ['BLOCK','DECAY']:
-                    sf.ErrorStop( 'For input variable "%s" in program "%s" with "SLHA" method, the 4th item must be "BLOCK" or "DECAY". If you can use other formats, please contact with the authors.'%(jj[0],self._ProgName) )
+                    af.ErrorStop( 'For input variable "%s" in program "%s" with "SLHA" method, the 4th item must be "BLOCK" or "DECAY". If you can use other formats, please contact with the authors.'%(jj[0],self._ProgName) )
 
-                sf.Info('  varID= %s \t fileID= %s \t Method= %s \t Block/Decay= %s \tName= %s \tKeys= %s'%(jj[0], jj[1], jj[2], jj[3], jj[4], jj[5:]))
+                af.Info('  varID= %s \t fileID= %s \t Method= %s \t Block/Decay= %s \tName= %s \tKeys= %s'%(jj[0], jj[1], jj[2], jj[3], jj[4], jj[5:]))
 
                 if file_flag:
                     ## inlines is a list of all lines
@@ -227,26 +227,26 @@ class PROGRAM:
                                 continue
                             if jj[3].upper() == 'BLOCK' and ''.join(ks) ==  ''.join(kk[0:len(ks)]):
                                 ks_flag  = True
-                                sf.Debug('SLHA match data line', kk)
+                                af.Debug('SLHA match data line', kk)
                             if jj[3].upper() == 'DECAY' and ''.join(ks) ==  ''.join(kk[1:len(ks)+1]):
                                 ks_flag  = True
-                                sf.Debug('SLHA match data line', kk)
+                                af.Debug('SLHA match data line', kk)
                         if jj[3].upper() == kk[0].upper() and ''.join(blk) == ''.join(kk[1:len(blk)+1]) :
                             blk_flag = True
-                            sf.Debug('SLHA match line',kk)
+                            af.Debug('SLHA match line',kk)
                             if jj[3].upper() == 'DECAY' and jj[5] == 0:
                                 if len(kk) < 3 :
-                                    sf.ErrorStop( 'For input variable "%s" in program "%s" with "SLHA" method, there are only %i column is the head line of "%s %s" in the input file.'%(jj[0],self._ProgName,len(kk),jj[3],jj[4],self._InputFile[ii]) )
+                                    af.ErrorStop( 'For input variable "%s" in program "%s" with "SLHA" method, there are only %i column is the head line of "%s %s" in the input file.'%(jj[0],self._ProgName,len(kk),jj[3],jj[4],self._InputFile[ii]) )
                                 else:
-                                    sf.Debug('SLHA match data line', kk)
+                                    af.Debug('SLHA match data line', kk)
                                     ks_flag  = True
                                 break
                         
                     if not blk_flag:
-                        sf.ErrorStop( 'For input variable "%s" in program "%s" with "SLHA" method, can not find "%s %s" in the input file "%s".'%(jj[0], self._ProgName, jj[3], jj[4], self._InputFile[ii]) )
+                        af.ErrorStop( 'For input variable "%s" in program "%s" with "SLHA" method, can not find "%s %s" in the input file "%s".'%(jj[0], self._ProgName, jj[3], jj[4], self._InputFile[ii]) )
 
                     if not ks_flag:
-                        sf.ErrorStop( 'For input variable "%s" in program "%s" with "SLHA" method, can not find required line with key "%s" in "%s %s" of the input file "%s".'%(jj[0], self._ProgName, jj[5:], jj[3], jj[4], self._InputFile[ii]) )
+                        af.ErrorStop( 'For input variable "%s" in program "%s" with "SLHA" method, can not find required line with key "%s" in "%s %s" of the input file "%s".'%(jj[0], self._ProgName, jj[5:], jj[3], jj[4], self._InputFile[ii]) )
 
     def checkVar_replace(self, fileID, fileFlag):
             ## For 'Replace' method
@@ -271,34 +271,34 @@ class PROGRAM:
                         BackupFlag = False
                 ## Stop if easyscan could not read input file or input file.ESbackup.
                 except:
-                    sf.ErrorStop('Can not find/open the input file "%s" in program "%s".'%(self._InputFile[ii],self._ProgName))
+                    af.ErrorStop('Can not find/open the input file "%s" in program "%s".'%(self._InputFile[ii],self._ProgName))
 
             self._InRepVar[ii] = [x for x in self._InputVar if (x[1] == ii) and (x[2].lower() == 'replace')]
            
             for jj in self._InRepVar[ii]:
                 if len(jj) != 4 :
-                    sf.ErrorStop( 'For input variable "%s" in program "%s" with "Replace" method, 4 items ( Name ID,  Input file ID,  Method, Name of replaced parameter ) need to be provived.'%(jj[0], self._ProgName) )
-                sf.Info('  varID= %s \tfileID= %s \tMethod= %s \tName= %s'%(jj[0],jj[1],jj[2],jj[3]))
+                    af.ErrorStop( 'For input variable "%s" in program "%s" with "Replace" method, 4 items ( Name ID,  Input file ID,  Method, Name of replaced parameter ) need to be provived.'%(jj[0], self._ProgName) )
+                af.Info('  varID= %s \tfileID= %s \tMethod= %s \tName= %s'%(jj[0],jj[1],jj[2],jj[3]))
                
                 if file_flag:
                     ## re.findall used for returning a list of matching object.
                     match = re.findall(r"\b%s\b"%jj[3], infile)
                     if len(match)==0:
                         if not BackupFlag:
-                            sf.ErrorStop( 'For input variable "%s" in program "%s" with "Replace" method, can not find "%s" in coressponding input file "%s" and its ESbackup file.'%(jj[0],self._ProgName,jj[3],self._InputFile[ii]) )
+                            af.ErrorStop( 'For input variable "%s" in program "%s" with "Replace" method, can not find "%s" in coressponding input file "%s" and its ESbackup file.'%(jj[0],self._ProgName,jj[3],self._InputFile[ii]) )
                         else:
                             bk_match = re.findall(r"\b%s\b"%jj[3], infile_bk)
                             if len(bk_match)==0:
-                                sf.ErrorStop( 'For input variable "%s" in program "%s" with "Replace" method, can not find "%s" in coressponding input file "%s" and its ESbackup file.'%(jj[0], self._ProgName, jj[3], self._InputFile[ii]) )
+                                af.ErrorStop( 'For input variable "%s" in program "%s" with "Replace" method, can not find "%s" in coressponding input file "%s" and its ESbackup file.'%(jj[0], self._ProgName, jj[3], self._InputFile[ii]) )
                             else:
                                 ## the input file is wrong, use the ESbackup file
                                 infile = infile_bk
                                 match = re.findall(r"\b%s\b"%jj[3], infile)
                                 ## there is no backup file for the following par
                                 BackupFlag = False
-                                sf.WarningNoWait( 'For input variable "%s" in program "%s" with "Replace" method, the input file "%s" does not contain "%s", but ESbackup file exists and contain it. In the following, ESbackup file will replace the content of the original input file.'%(jj[0],self._ProgName,self._InputFile[ii],jj[3]) )
+                                af.WarningNoWait( 'For input variable "%s" in program "%s" with "Replace" method, the input file "%s" does not contain "%s", but ESbackup file exists and contain it. In the following, ESbackup file will replace the content of the original input file.'%(jj[0],self._ProgName,self._InputFile[ii],jj[3]) )
                     if len(match)>1:
-                        sf.WarningNoWait( 'For input variable "%s" in program "%s" with "Replace" method, find %i "%s" in coressponding input file "%s". They will all be replaced by variable "%s" in the following program.'%(jj[0],self._ProgName,len(match),jj[3],self._InputFile[ii],jj[0]) )
+                        af.WarningNoWait( 'For input variable "%s" in program "%s" with "Replace" method, find %i "%s" in coressponding input file "%s". They will all be replaced by variable "%s" in the following program.'%(jj[0],self._ProgName,len(match),jj[3],self._InputFile[ii],jj[0]) )
                     ## if the fist var do not use Backup file, the next var can not use
                     ## if the fist var use Backup, BackupFlag is already False
                     BackupFlag = False
@@ -312,21 +312,21 @@ class PROGRAM:
 
     def setInputVar(self, inputvar):
         ## inputvar is a string of all content in input variable section of configure file
-        self._InputVar=sf.string2nestlist(inputvar)
+        self._InputVar=af.string2nestlist(inputvar)
         
         for ii in self._InputVar:
             if len(ii) <4:
                 if ii[0] == '': ## Program can have zero input parameters
                     return
-                sf.ErrorStop( 'The input variables in program "%s" must have at least 4 items (Name ID,  Input file ID,  Method,  Note).'%self._ProgName )
+                af.ErrorStop( 'The input variables in program "%s" must have at least 4 items (Name ID,  Input file ID,  Method,  Note).'%self._ProgName )
             ## self._InFileID is file ID.
             if not ii[1] in self._InFileID:
-                sf.ErrorStop( 'For input variable "%s" in program "%s", There is no input file with ID "%s"'%(ii[0],self._ProgName, ii[1]) )
+                af.ErrorStop( 'For input variable "%s" in program "%s", There is no input file with ID "%s"'%(ii[0],self._ProgName, ii[1]) )
 
             ## add for "math ..." in "Input variable" in [programX]
-            self.invar[ii[0]] = sf.NaN
+            self.invar[ii[0]] = af.NaN
 
-        sf.Info('Input variable = ')
+        af.Info('Input variable = ')
         #file_flag = True
         for ii in self._InFileID:
             ## For 'File' method 
@@ -351,99 +351,99 @@ class PROGRAM:
 
     def setOutputFile(self, outputfile):
         if outputfile=='':
-            sf.Debug('No OutFile in program %s'%self._ProgName)
+            af.Debug('No OutFile in program %s'%self._ProgName)
             self._OutFileID = []
             return 
-        outputfile=sf.string2nestlist(outputfile)
+        outputfile=af.string2nestlist(outputfile)
         self._OutFileID = [x[0] for x in outputfile ]
-        sf.Debug('OutFileID',self._OutFileID)
-        sf.Info('Output file     = ')
+        af.Debug('OutFileID',self._OutFileID)
+        af.Info('Output file     = ')
         for ii in outputfile:
             if not (ii[1].startswith('/home') or ii[1].startswith('~')):
-                ii[1] = os.path.join(sf.CurrentPath, ii[1])
+                ii[1] = os.path.join(af.CurrentPath, ii[1])
             self._OutputFile[ii[0]]=ii[1]
-            sf.Info('  ID= %s \tFile= %s'%(ii[0],ii[1]))
+            af.Info('  ID= %s \tFile= %s'%(ii[0],ii[1]))
 
     def setOutputVar(self, outputvar):
         if len(self._OutFileID)==0:
-            sf.Debug('No OutputVar with No OutFile in program %s'%self._ProgName)
+            af.Debug('No OutputVar with No OutFile in program %s'%self._ProgName)
             return 
-        outputvar=sf.string2nestlist(outputvar)
+        outputvar=af.string2nestlist(outputvar)
         for ii in outputvar:
             if not ii[1] in self._OutFileID:
-                sf.ErrorStop( 'For output variable "%s" in program "%s", There is no output file with ID="%s".'%(ii[0],self._ProgName, ii[1]) )
+                af.ErrorStop( 'For output variable "%s" in program "%s", There is no output file with ID="%s".'%(ii[0],self._ProgName, ii[1]) )
             if not ii[2].upper() in ['FILE', 'POSITION', 'LABEL', 'SLHA']:
-                sf.ErrorStop( 'For output variable "%s" in program "%s", EasyScan_HEP not supporting method="%s" now!'%(ii[0],self._ProgName, ii[2]) )
-            self.outvar[ii[0]] = sf.NaN
-        sf.Info('Output variable = ')
+                af.ErrorStop( 'For output variable "%s" in program "%s", EasyScan_HEP not supporting method="%s" now!'%(ii[0],self._ProgName, ii[2]) )
+            self.outvar[ii[0]] = af.NaN
+        af.Info('Output variable = ')
         for ii in self._OutFileID:
             self._OutputVar[ii] = [x for x in outputvar if (x[1] == ii) and (x[2].lower() != 'file')]
 
             ## For 'File' method
             self._OutFileVar[ii] = [x for x in outputvar if (x[1] == ii) and (x[2].lower() == 'file')]
             if len(self._OutFileVar[ii])>1:
-                sf.ErrorStop( 'In program "%s", there is no need to use more than one vars to stand the output file "%s" where you use %s.'%(self._ProgName, self._OutputFile[ii],' '.join(self._OutFileVar[ii])) )
+                af.ErrorStop( 'In program "%s", there is no need to use more than one vars to stand the output file "%s" where you use %s.'%(self._ProgName, self._OutputFile[ii],' '.join(self._OutFileVar[ii])) )
             for jj in self._OutFileVar[ii]:
                 if len(jj) != 4 :
-                    sf.ErrorStop( 'For output variable "%s" in program "%s" with "File" method, 4 items ( Name, FileID, "File", Method ) need to be provived.'%(jj[0],self._ProgName) )
+                    af.ErrorStop( 'For output variable "%s" in program "%s" with "File" method, 4 items ( Name, FileID, "File", Method ) need to be provived.'%(jj[0],self._ProgName) )
                 if jj[3].upper() != 'SAVE' :
-                    sf.ErrorStop( 'For output variable "%s" in program "%s" with "File" method, 4 items ( Name, FileID, "File", Method ) need to be provived. Note Method=save only supporting now.'%(jj[0],self._ProgName) )
-                sf.Info('  varID= %s \tfileID= %s \t"File"= %s     Method=%s'%(jj[0],jj[1],jj[2],jj[3]))
+                    af.ErrorStop( 'For output variable "%s" in program "%s" with "File" method, 4 items ( Name, FileID, "File", Method ) need to be provived. Note Method=save only supporting now.'%(jj[0],self._ProgName) )
+                af.Info('  varID= %s \tfileID= %s \t"File"= %s     Method=%s'%(jj[0],jj[1],jj[2],jj[3]))
 
             ## For 'Position' method
             self._OutPosVar[ii]  = [x for x in outputvar if (x[1] == ii) and (x[2].lower() == 'position')]
             for jj in self._OutPosVar[ii]:
                 if len(jj) != 5 :
-                    sf.ErrorStop( 'For output variable "%s" in program "%s" with "Position" method, 5 items ( Name ID,  Input file ID,  Method, Line number,  Column number ) need to be provived.'%(jj[0],self._ProgName) )
+                    af.ErrorStop( 'For output variable "%s" in program "%s" with "Position" method, 5 items ( Name ID,  Input file ID,  Method, Line number,  Column number ) need to be provived.'%(jj[0],self._ProgName) )
                 if int(jj[4]) - jj[4] != 0 or jj[4] == 0:
-                    sf.ErrorStop('For output variable "%s" in program "%s" with "Label" method, the fourth item Input variable column number need to be an integer and not zero.'%(jj[0], self._ProgName) )
+                    af.ErrorStop('For output variable "%s" in program "%s" with "Label" method, the fourth item Input variable column number need to be an integer and not zero.'%(jj[0], self._ProgName) )
 
-                sf.Info('  varID= %s \tfileID= %s \tMethod= %s \tLine num= %s \tColumn num= %s'%(jj[0],jj[1],jj[2],jj[3],jj[4]))
+                af.Info('  varID= %s \tfileID= %s \tMethod= %s \tLine num= %s \tColumn num= %s'%(jj[0],jj[1],jj[2],jj[3],jj[4]))
         
             ## For 'label' method
             self._OutLabelVar[ii]  = [x for x in outputvar if (x[1] == ii) and (x[2].lower() == 'label')]
             for jj in self._OutLabelVar[ii]:
                 if len(jj) != 5 :
-                    sf.ErrorStop( 'For output variable "%s" in program "%s" with "Label" method, 5 items ( Name ID,  Input file ID,  Method, Label name,  Input variable column number ) need to be provived.'%(jj[0],self._ProgName) )
-                sf.Info('  varID= %s \tfileID= %s \tMethod= %s \tLabe=l %s \tColumn= %s'%(jj[0],jj[1],jj[2],jj[3],jj[4]))
+                    af.ErrorStop( 'For output variable "%s" in program "%s" with "Label" method, 5 items ( Name ID,  Input file ID,  Method, Label name,  Input variable column number ) need to be provived.'%(jj[0],self._ProgName) )
+                af.Info('  varID= %s \tfileID= %s \tMethod= %s \tLabe=l %s \tColumn= %s'%(jj[0],jj[1],jj[2],jj[3],jj[4]))
 
             ## For 'slha' method
             self._OutSLHAVar[ii] = [x for x in outputvar if (x[1] == ii) and (x[2].lower() == 'slha')]
             for jj in self._OutSLHAVar[ii]:
                 if len(jj) < 6 :
-                    sf.ErrorStop( 'For output variable "%s" in program "%s" with "SLHA" method, at least 6 items ( Name ID,  Input file ID,  Method, BLOCK/DECAY, Block name/PDG, Keys) need to be provived.'%(jj[0],self._ProgName) )
+                    af.ErrorStop( 'For output variable "%s" in program "%s" with "SLHA" method, at least 6 items ( Name ID,  Input file ID,  Method, BLOCK/DECAY, Block name/PDG, Keys) need to be provived.'%(jj[0],self._ProgName) )
                 if not jj[3].upper() in ['BLOCK','DECAY']:
-                    sf.ErrorStop( 'For input variable "%s" in program "%s" with "SLHA" method, the 4th item must be "BLOCK" or "DECAY". If you can to used other formats, please contact with the authors.'%(jj[0],self._ProgName) )
-                sf.Info('  varID= %s \tfileID= %s \tMethod= %s \tB/D= %s \tName= %s \tKeys= %s'%(jj[0],jj[1],jj[2],jj[3],jj[4],jj[5]))
+                    af.ErrorStop( 'For input variable "%s" in program "%s" with "SLHA" method, the 4th item must be "BLOCK" or "DECAY". If you can to used other formats, please contact with the authors.'%(jj[0],self._ProgName) )
+                af.Info('  varID= %s \tfileID= %s \tMethod= %s \tB/D= %s \tName= %s \tKeys= %s'%(jj[0],jj[1],jj[2],jj[3],jj[4],jj[5]))
             
     def setExecutor(self, executor):
         if executor.lower() == 'os.system':
             self._executor = True
-            sf.Info('Use "%s" execute commands.'%executor)
+            af.Info('Use "%s" execute commands.'%executor)
         elif executor.lower() == 'subprocess.popen':
             self._executor = False
-            sf.Info('Use "%s" execute commands.'%executor)
+            af.Info('Use "%s" execute commands.'%executor)
         else:
-            sf.Info('The command executor for program "%s" should be either "os.system" or "subprocess.popen", not "%s".'%(self._ProgName,executor))
+            af.Info('The command executor for program "%s" should be either "os.system" or "subprocess.popen", not "%s".'%(self._ProgName,executor))
             self._executor = True
-            sf.WarningNoWait('Use "os.system" execute commands.')
+            af.WarningNoWait('Use "os.system" execute commands.')
 
     def setOutputClean(self, outputclean):
         if outputclean.lower()  in ['yes','y','t','true']:
             self._outputclean = True
-            sf.Info('Delete the output file of program "%s" before execute it. '%self._ProgName)
+            af.Info('Delete the output file of program "%s" before execute it. '%self._ProgName)
         elif outputclean.lower()  in ['no','n','f','false']:
             self._outputclean = False
-            sf.Info('Keep the output file of program "%s" before execute it. '%self._ProgName)      
+            af.Info('Keep the output file of program "%s" before execute it. '%self._ProgName)      
         else:
-            sf.WarningNoWait('The item "Output clean" for program "%s" should be either "Yes" or "No", not "%s".'%(self._ProgName,outputclean))
+            af.WarningNoWait('The item "Output clean" for program "%s" should be either "Yes" or "No", not "%s".'%(self._ProgName,outputclean))
             self._outputclean = True
-            sf.Info('Delete the output file of program "%s" before execute it. '%self._ProgName)
+            af.Info('Delete the output file of program "%s" before execute it. '%self._ProgName)
 
     def setTimeLimit(self, timelimit):
         self._executor = False
         self._timelimit = timelimit
-        sf.Info('Time limit = %i minutes.'%self._timelimit)
+        af.Info('Time limit = %i minutes.'%self._timelimit)
 
 
     def getProgName(self):
@@ -466,7 +466,7 @@ class PROGRAM:
             return
 
         ## add for "math ..." in "Input variable" in [programX]
-        sf.parseMath(par)
+        af.parseMath(par)
 
         ## self._InFileID is list of file ID in Input file in [programX]
         for ii in self._InFileID:
@@ -481,15 +481,15 @@ class PROGRAM:
                 elif jj[3].lower()=='save':
                     pass
                 elif jj[3].lower()=='replace':
-                    sf.Debug("For program",self._ProgName)
-                    sf.Debug("Copied file",par[jj[0]])
-                    sf.Debug("Copy file",self._InputFile[ii])
+                    af.Debug("For program",self._ProgName)
+                    af.Debug("Copied file",par[jj[0]])
+                    af.Debug("Copy file",self._InputFile[ii])
                     shutil.copy(par[jj[0]],self._InputFile[ii])
                 else:
                     try:
                         open(self._InputFile[ii],'a').write( open(par[jj[0]].read()) )
                     except:
-                        sf.ErrorStop('Can not open input file "%s" or "%s" in program "%s", by "%s".'%(self._InputFile[ii], par[jj[0]], self._ProgName, self._InFilVar[ii]))
+                        af.ErrorStop('Can not open input file "%s" or "%s" in program "%s", by "%s".'%(self._InputFile[ii], par[jj[0]], self._ProgName, self._InFilVar[ii]))
 
             ## Open the input file
             if file_flag:
@@ -499,12 +499,12 @@ class PROGRAM:
                     else:
                         infile = open(self._InputFile[ii],'r').read()
                 except:
-                    sf.ErrorStop('Can not open the input file "%s" in program "%s".'%(self._InputFile[ii], self._ProgName))
+                    af.ErrorStop('Can not open the input file "%s" in program "%s".'%(self._InputFile[ii], self._ProgName))
             else:
                 try:
                     infile = open(self._InputFile[ii],'r').read()
                 except:
-                    sf.ErrorStop('Can not open the input file "%s" in program "%s", which is obtained from previous program(s).'%(self._InputFile[ii],self._ProgName))
+                    af.ErrorStop('Can not open the input file "%s" in program "%s", which is obtained from previous program(s).'%(self._InputFile[ii],self._ProgName))
         
             ## For 'Replace' method
             for jj in self._InRepVar[ii]:
@@ -512,7 +512,7 @@ class PROGRAM:
                 if True:
                     match = re.findall(r"\b%s\b"%jj[3],infile)
                     if len(match)==0:
-                        sf.ErrorStop('For input variable "%s" in program "%s" with "Replace" method, can not find "%s" in coressponding input file "%s", which is obtained from previous program(s).'%(jj[0],self._ProgName,jj[3],self._InputFile[ii]) )
+                        af.ErrorStop('For input variable "%s" in program "%s" with "Replace" method, can not find "%s" in coressponding input file "%s", which is obtained from previous program(s).'%(jj[0],self._ProgName,jj[3],self._InputFile[ii]) )
                 ## jj[3] is something being replaced and par is a dictionary and par[jj[0]] (value) will replace jj[3].
                 ## "\b" will make sure ES_lam in ES_lamT would not be replaced
                 infile = re.sub(r"\b%s\b"%jj[3],str(par[jj[0]]),infile)
@@ -598,19 +598,19 @@ class PROGRAM:
                          newList.append(invar[xxi][yyi])
                      newList.append(joinList[-1])
                  else:
-                     sf.ErrorStop("Keep format unchanged Failed! Check src/program.py at Line about 559.") 
+                     af.ErrorStop("Keep format unchanged Failed! Check src/program.py at Line about 559.") 
                  #outlines.append( "  ".join(invar[xxi])+"\n" )
                  outlines.append( "".join(newList))
             open(self._InputFile[ii],'w').writelines(outlines)
 
     def RunProgram(self):
-        sf.Debug('Be about to run Program %s'%self._ProgName)
+        af.Debug('Be about to run Program %s'%self._ProgName)
         cwd=self._ComPath
         # remove output file
         if self._outputclean:
             self.RemoveOutputFile()
         for cmd in self._Command:
-          sf.Debug('Runing Program %s with command'%self._ProgName,cmd)
+          af.Debug('Runing Program %s with command'%self._ProgName,cmd)
 
           if self._executor:
               ncwd = os.getcwd()
@@ -631,7 +631,7 @@ class PROGRAM:
                     seconds_passed = time.time() - t_begining
                     if seconds_passed > self._timelimit*60: 
                         os.killpg(os.getpgid(process.pid), signal.SIGTERM) 
-                        sf.WarningWait("Program %s has been running more than %f minutes, It will be killed."%(self._ProgName, self._timelimit))
+                        af.WarningWait("Program %s has been running more than %f minutes, It will be killed."%(self._ProgName, self._timelimit))
                         return
             except OSError as error:
                 if cwd and not os.path.exists(cwd):
@@ -656,19 +656,19 @@ class PROGRAM:
 
     def RemoveOutputFile(self):
         for ii in self._OutFileID:
-            sf.Debug('Remove remaining output file %s before running program %s'%(self._OutputFile[ii], self._ProgName))
+            af.Debug('Remove remaining output file %s before running program %s'%(self._OutputFile[ii], self._ProgName))
             if not os.path.exists(self._OutputFile[ii]):
-                sf.Debug('No remaining output file %s for program %s'%(self._OutputFile[ii], self._ProgName))
+                af.Debug('No remaining output file %s for program %s'%(self._OutputFile[ii], self._ProgName))
                 return False
             else:
                 os.remove(self._OutputFile[ii])
-                sf.Debug('Successful remaining output file %s for program %s'%(self._OutputFile[ii], self._ProgName))
+                af.Debug('Successful remaining output file %s for program %s'%(self._OutputFile[ii], self._ProgName))
 
     def ReadOutputFile(self,par,path):
         for ii in self._OutFileID:
             if not os.path.exists(self._OutputFile[ii]):
-                sf.Debug('No output file for program %s'%self._ProgName)
-                sf.Debug('output file name is %s'%self._OutputFile[ii])
+                af.Debug('No output file for program %s'%self._ProgName)
+                af.Debug('output file name is %s'%self._OutputFile[ii])
                 return False
             ## For 'File' method
             for jj in self._OutFileVar[ii]:
@@ -684,16 +684,16 @@ class PROGRAM:
             for jj in self._OutPosVar[ii]:
                 try:
                     par[jj[0]] = float(ouvar[jj[3]-1][jj[4]-1])
-                    sf.Debug('Output - %s='%jj[0],par[jj[0]])
+                    af.Debug('Output - %s='%jj[0],par[jj[0]])
                 except:
-                    sf.Info('Can not read the output var %s'%jj)
+                    af.Info('Can not read the output var %s'%jj)
                     return False
 
             ## For 'Label' method
             for jj in self._OutLabelVar[ii]:
                 labeline = [xx for xx in oulines if re.search(str(jj[3]),xx)]
                 if len(labeline)>1:
-                    sf.ErrorStop( 'For output variable "%s" in program "%s" with "Label" method, there is %d "%s" in output file "%s". Please choose other method.'%(jj[0],self._ProgName,len(labelinum),jj[3],self._OutputFile[ii]) )
+                    af.ErrorStop( 'For output variable "%s" in program "%s" with "Label" method, there is %d "%s" in output file "%s". Please choose other method.'%(jj[0],self._ProgName,len(labelinum),jj[3],self._OutputFile[ii]) )
 
                 try:
                     ## new 20180425 liang
@@ -702,9 +702,9 @@ class PROGRAM:
                         par[jj[0]] = re.split(r'[ \t]+',labeline[0].strip())[int(jj[4]-1)]
                     else:
                         par[jj[0]] = re.split(r'[ \t]+',labeline[0].strip())[int(jj[4])]
-                    sf.Debug('Output - %s='%jj[0],par[jj[0]])
+                    af.Debug('Output - %s='%jj[0],par[jj[0]])
                 except:
-                    sf.Debug('Can not read the output var',jj[0])
+                    af.Debug('Can not read the output var',jj[0])
                     return False
                         
             ## For 'SLHA' method
@@ -731,20 +731,20 @@ class PROGRAM:
                         blk_flag = True
                         if jj[3].upper() == 'DECAY' and jj[5] == 0:
                             if len(kk) < 3 :
-                                sf.Debug('Can not read the output var',jj)
+                                af.Debug('Can not read the output var',jj)
                                 return False
                             else:
                                 par[jj[0]]=float(ouvar[kki][2])
                                 ks_flag  = True
                             break
-                sf.Debug('Output - %s='%jj[0],par[jj[0]])
+                af.Debug('Output - %s='%jj[0],par[jj[0]])
                 if not ks_flag:
                     if jj[3].upper() == 'DECAY':
-                        sf.Debug('Can not read the output var',jj)
-                        sf.Debug('In DECAY mode, set it as zero!')
+                        af.Debug('Can not read the output var',jj)
+                        af.Debug('In DECAY mode, set it as zero!')
                         par[jj[0]]=0
                     else:
-                        sf.Debug('Can not read the output var',jj)
+                        af.Debug('Can not read the output var',jj)
                         return False
 
         return True
@@ -757,74 +757,74 @@ class PROGRAM:
     ## new function to use "math .." in [constrain]
     ## in order to add new variable in self.AllPar
     def setGaussian(self,var):
-        var = sf.string2nestlist(var)
-        sf.Info('Gaussian Constraint:')
+        var = af.string2nestlist(var)
+        af.Info('Gaussian Constraint:')
         for ii in var:
             if len(ii) in [3]:
                 pass
             elif len(ii) in [4,5]:
                 if not ii[3].lower() in ['symm','lower','upper']:
-                    sf.ErrorStop( 'For the "Gaussian" constraint on "%s", the "Type" can only be "symm", "upper" or "lower", not "%s".'%(ii[0],ii[3]) )
+                    af.ErrorStop( 'For the "Gaussian" constraint on "%s", the "Type" can only be "symm", "upper" or "lower", not "%s".'%(ii[0],ii[3]) )
             else:
-                sf.ErrorStop( 'The "Gaussian" constraint on "%s" need 4 or 5 items( VarID, Mean, Deviation, Type [, Name] ).'%(ii[0]) )
+                af.ErrorStop( 'The "Gaussian" constraint on "%s" need 4 or 5 items( VarID, Mean, Deviation, Type [, Name] ).'%(ii[0]) )
 
-            self.cgauvar[ii[0]] = sf.NaN
+            self.cgauvar[ii[0]] = af.NaN
 
     ## new 20180430 liang
     def setFreeFormChi2(self,var):
-        var = sf.string2nestlist(var)
-        sf.Info('FreeFormChi2:')
+        var = af.string2nestlist(var)
+        af.Info('FreeFormChi2:')
         for ii in var:
             if (len(ii)==1 and ii[0] ) or len(ii)==2:
                 pass
             else:
-                sf.ErrorStop( 'The "FreeFormChi2" constraint on "%s" need 1 item or 2 items( VarID [, Name] ).'%(ii[0]) )
+                af.ErrorStop( 'The "FreeFormChi2" constraint on "%s" need 1 item or 2 items( VarID [, Name] ).'%(ii[0]) )
 
-            self.cffchi2var[ii[0]] = sf.NaN
+            self.cffchi2var[ii[0]] = af.NaN
 
     ## for "Bound" in [programX]
     def setBound(self, boundvar):
         ## boundvar is a string of all content in "Bound" in [programX] of configure file
-        self._BoundVar=sf.string2nestlist(boundvar)
+        self._BoundVar=af.string2nestlist(boundvar)
 
-        sf.Info('Bound condition in program %s:'%self._ProgName)
+        af.Info('Bound condition in program %s:'%self._ProgName)
         for ii in self._BoundVar:
             if len(ii) <3:
                 if ii[0] == '': ## Program can have zero input parameters
                     return
-                sf.ErrorStop( 'The "Bound" in program "%s" must have at least 3 items.'%self._ProgName )
+                af.ErrorStop( 'The "Bound" in program "%s" must have at least 3 items.'%self._ProgName )
             elif len(ii) == 3:
                 if ii[1] not in ["<=", ">=", ">", "<", "==", "!="]:
-                    sf.ErrorStop( 'The second item "%s" in "Bound" in program "%s" must be "<=", ">=", ">", "<", "==", "!=" or a real number at 3 items.'%(ii[1], self._ProgName) )
+                    af.ErrorStop( 'The second item "%s" in "Bound" in program "%s" must be "<=", ">=", ">", "<", "==", "!=" or a real number at 3 items.'%(ii[1], self._ProgName) )
                 try:
                     float(ii[2]) 
                 except: 
-                    self.boundvar[ii[2]] = sf.NaN
+                    self.boundvar[ii[2]] = af.NaN
 
-                self.boundvar[ii[0]] = sf.NaN
+                self.boundvar[ii[0]] = af.NaN
 
-                sf.Info('    NameID= %s \tOperator= %s \tLimit= %s'%(ii[0],ii[1],ii[2]))
+                af.Info('    NameID= %s \tOperator= %s \tLimit= %s'%(ii[0],ii[1],ii[2]))
 
             elif len(ii) in [4,5]:
                 if ii[2].lower() not in ["upper", "lower"]:
-                    sf.ErrorStop( 'The third item "%s" in "Bound" in program "%s" must be "lower" or "upper" at 4 items.'%(ii[2], self._ProgName) )
+                    af.ErrorStop( 'The third item "%s" in "Bound" in program "%s" must be "lower" or "upper" at 4 items.'%(ii[2], self._ProgName) )
                 if not (ii[3].startswith('/home') or ii[3].startswith('~')):
-                    ii[3]=os.path.join(sf.CurrentPath, ii[3])
+                    ii[3]=os.path.join(af.CurrentPath, ii[3])
                 try:
                     open(ii[3])
                 except:
-                    sf.ErrorStop('Can not find/open the limit file "%s" in "Bound" in program "%s".'%(ii[3],self._ProgName))
+                    af.ErrorStop('Can not find/open the limit file "%s" in "Bound" in program "%s".'%(ii[3],self._ProgName))
                 try:
                     boundfile = numpy.loadtxt(ii[3])
                 except:
-                    sf.ErrorStop('Find string in the limit file "%s" in "Bound" in program "%s".'%(ii[3],self._ProgName))
+                    af.ErrorStop('Find string in the limit file "%s" in "Bound" in program "%s".'%(ii[3],self._ProgName))
                 try:
                     numpy.shape(boundfile)[1]
                 except:
-                    sf.ErrorStop('Only one row or column in the limit file "%s" in "Bound" in program "%s".'%(ii[3],self._ProgName))
+                    af.ErrorStop('Only one row or column in the limit file "%s" in "Bound" in program "%s".'%(ii[3],self._ProgName))
                 if numpy.shape(boundfile)[1] < 2:
-                    sf.ErrorStop('Less than two columns in the limit file "%s" in "Bound" in program "%s".'%(ii[3],self._ProgName))
-                sf.Info('    NameID= %s \tNameID= %s \tBound= %s \tBoundFile= %s'%(ii[0],ii[1],ii[2],ii[3]))
+                    af.ErrorStop('Less than two columns in the limit file "%s" in "Bound" in program "%s".'%(ii[3],self._ProgName))
+                af.Info('    NameID= %s \tNameID= %s \tBound= %s \tBoundFile= %s'%(ii[0],ii[1],ii[2],ii[3]))
 
 
                 ## new 20180429 liang
@@ -833,10 +833,10 @@ class PROGRAM:
                 else:
                     jj = ii
 
-                self.boundvar[jj[4]] = sf.NaN
+                self.boundvar[jj[4]] = af.NaN
 
             else: 
-                sf.ErrorStop( 'The "Bound" in program "%s" have at most 5 items.'%self._ProgName )
+                af.ErrorStop( 'The "Bound" in program "%s" have at most 5 items.'%self._ProgName )
 
     ## for "Bound" in [programX]
     ## ReadBound() have survived conditions in SetBound()
@@ -850,13 +850,13 @@ class PROGRAM:
             return True
 
         ## add for "math ..." in "Bound" in [programX]
-        sf.parseMath(par)
+        af.parseMath(par)
 
         ## new 20180429 liang
         phy=True
         for ii in self._BoundVar:
             if len(ii)== 3:
-                sf.Debug('"%s=%f" compare to the limit "%s" in "Bound" for program %s'%(ii[0], par[ii[0]], ii[1:], self._ProgName))
+                af.Debug('"%s=%f" compare to the limit "%s" in "Bound" for program %s'%(ii[0], par[ii[0]], ii[1:], self._ProgName))
                 try:
                     float(ii[2])
                 except:
@@ -869,21 +869,21 @@ class PROGRAM:
                 else:
                     jj = ii
                 if not (ii[3].startswith('/home') or ii[3].startswith('~')):
-                    ii[3]=os.path.join(sf.CurrentPath, ii[3])
+                    ii[3]=os.path.join(af.CurrentPath, ii[3])
                 boundfile = numpy.loadtxt(ii[3])
                 x=boundfile[:,0]
                 y=boundfile[:,1]
                 if par[ii[0]] < numpy.amin(x) or par[ii[0]] > numpy.amax(x):
-                    sf.WarningNoWait('"%s" less(greater) than min(max) of the first column in limit file "%s" with method "%s" in "Bound" in program "%s".'%(ii[0], ii[3], ii[2], self._ProgName))
+                    af.WarningNoWait('"%s" less(greater) than min(max) of the first column in limit file "%s" with method "%s" in "Bound" in program "%s".'%(ii[0], ii[3], ii[2], self._ProgName))
                     if ii[2].lower() == 'lower':
-                        yinter = sf.log_zero
+                        yinter = af.log_zero
                     elif ii[2].lower() == 'upper':
-                        yinter = -1.0*sf.log_zero
-                    sf.WarningNoWait('    So we set "%s=%e"'%(jj[4], yinter))
+                        yinter = -1.0*af.log_zero
+                    af.WarningNoWait('    So we set "%s=%e"'%(jj[4], yinter))
                 else:
                     yinter = numpy.interp(par[ii[0]], x, y)
                 par[jj[4]] = yinter 
-                sf.Debug('"x-axis: %s=%f, y-axis: %s=%f" compare to the %s limit "y-interplotion: %s=%f" by interplotion in "Bound" for program %s'%(ii[0], par[ii[0]], ii[1], par[ii[1]], ii[2].lower(), ii[1], yinter, self._ProgName))
+                af.Debug('"x-axis: %s=%f, y-axis: %s=%f" compare to the %s limit "y-interplotion: %s=%f" by interplotion in "Bound" for program %s'%(ii[0], par[ii[0]], ii[1], par[ii[1]], ii[2].lower(), ii[1], yinter, self._ProgName))
 
                 if ii[2].lower() == "upper":
                     phy = phy and eval("%f%s%s"%(par[ii[1]], '<=', par[jj[4]]))

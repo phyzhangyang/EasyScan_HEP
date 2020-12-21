@@ -1,4 +1,4 @@
-.PHONY: susyhit micromegas
+all: susyhit micromegas
 
 # SUSYHIT
 SUSYHIT = ./susyhit
@@ -13,5 +13,6 @@ micromegas:
 	[ -f $(MicrOMEGAs)/lib/micromegas.a ] || (cd $(MicrOMEGAs) && make) 
 	[ -f $(MicrOMEGAs)/MSSM/main ] || (cd $(MicrOMEGAs)/MSSM && make main=main.c)
     
+.PHONY: clean
 clean: 
 	rm -rf $(SUSYHIT) $(MicrOMEGAs)

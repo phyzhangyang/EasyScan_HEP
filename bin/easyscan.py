@@ -16,12 +16,12 @@
 import os,sys
 sys.path.append(os.path.join(os.path.split(os.path.split(os.path.realpath(__file__))[0])[0], "src"))
 ## Internal modules.
-import init     as sf
-import statfun
-from readin     import ReadIn
-from scaninput  import SCANINPUT
-from constraint import CONSTRAINT
-from ploter     import PLOTER
+import initialize
+import auxfun, statfun
+from readin_config import ReadIn
+from scaninput     import SCANINPUT
+from constraint    import CONSTRAINT
+from ploter        import PLOTER
 
 # define basic class object
 ES       = SCANINPUT()
@@ -30,7 +30,6 @@ CS       = CONSTRAINT()
 Ploter   = PLOTER()
 ProgID   = ReadIn(sys.argv[1],ES,Programs,CS,Ploter)
 
-## new 20180416 liang
 if ES.getScanMethod() == 'RANDOM':
     ResultFile = 'RandomData.txt'
 elif ES.getScanMethod() == 'MCMC':
@@ -42,7 +41,7 @@ elif ES.getScanMethod() == 'GRID':
 elif ES.getScanMethod() == 'READ':
     ResultFile = 'ReadData.txt'
 if ES.getScanMethod() != 'PLOT':
-    sf.WriteResultInf(ES.InPar,ES.OutPar,CS.Chi2,ES.getFileName(),ES.getScanMethod(), ResultFile)
+    auxfun.WriteResultInf(ES.InPar,ES.OutPar,CS.Chi2,ES.getFileName(),ES.getScanMethod(), ResultFile)
 
 # logarithm of likelihood function
 def LogLikelihood(cube, ndim, nparams):
@@ -58,9 +57,9 @@ def LogLikelihood(cube, ndim, nparams):
         Phy = Programs[ii].ReadOutputFile(ES.AllPar,ES.getFileName())
         if Phy: Phy = Programs[ii].ReadBound(ES.AllPar)
         # if the point is unphysical, return log(0)
-        if not Phy : return sf.log_zero
+        if not Phy : return auxfun.log_zero
 
-    # pass all output variables with values to "cube" for using in each scan method in "scanmanner.py"
+    # pass all output variables with values to "cube" for using in each scan method in "scanner.py"
     for i,name in enumerate(ES.OutPar) :
         cube[i+ndim]   = ES.AllPar[name]
 
@@ -80,7 +79,7 @@ def Prior(cube, ndim, nparams):
 
 ## Load corresponding scan method
 if ES.getScanMethod() == 'RANDOM':
-    from scanmanner import randomrun
+    from scanner import randomrun
     randomrun(
         LogLikelihood        = LogLikelihood,
         Prior                = Prior,
@@ -94,7 +93,7 @@ if ES.getScanMethod() == 'RANDOM':
         outputfiles_filename = ResultFile )
 
 elif ES.getScanMethod() == 'MCMC':
-    from scanmanner import mcmcrun
+    from scanner import mcmcrun
     mcmcrun(
         LogLikelihood        = LogLikelihood,
         Prior                = Prior,
@@ -127,7 +126,7 @@ elif ES.getScanMethod() == 'MULTINEST':
         importance_nested_sampling = True)
 
 elif ES.getScanMethod() == 'GRID':
-    from scanmanner import gridrun
+    from scanner import gridrun
     gridrun(
         LogLikelihood        = LogLikelihood,
         Prior                = Prior,
@@ -141,7 +140,7 @@ elif ES.getScanMethod() == 'GRID':
         outputfiles_filename = ResultFile )
 
 elif ES.getScanMethod() == 'READ':
-    from scanmanner import readrun
+    from scanner import readrun
     readrun(
             LogLikelihood        = LogLikelihood,
             Prior                = Prior,
