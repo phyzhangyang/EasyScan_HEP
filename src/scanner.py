@@ -6,9 +6,42 @@
 import os,sys,shutil
 from random import random,gauss
 from math import exp
-## Internal modules.
-import init as sf
+# Internal modules
+import auxfun as af
 import ploter
+
+
+class SCANNER:
+  def __init__(self, name, no_random=False, no_like=False, only_plot=False, use_AccepRate=False):
+    self.name = name.upper()
+    self.no_random = no_random
+    self.no_like = no_like
+    self.use_AccepRate = use_AccepRate
+    self.only_plot = only_plot
+    if only_plot:
+      self.no_random = True
+      self.no_like = True
+
+
+random = SCANNER("RANDOM", no_like=True)
+grid = SCANNER("GRID", no_random=True, no_like=True)
+mcmc = SCANNER("MCMC", use_AccepRate=True)
+multinest = SCANNER("MULTINEST")
+postprocess = SCANNER("POSTPROCESS",no_random=True, no_like=True)
+plot = SCANNER("Plot", only_plot=True, no_like=True)
+
+
+scanners = [random, grid, mcmc, multinest, postprocess, plot]
+
+names = list(map(lambda x:x.name, scanners))
+names_no_random = list(map(lambda x:x.name, filter(lambda y:y.no_random, scanners)))
+names_no_like   = list(map(lambda x:x.name, filter(lambda y:y.no_like,   scanners)))
+names_only_plot = list(map(lambda x:x.name, filter(lambda y:y.only_plot, scanners)))
+names_use_AccepRate = list(map(lambda x:x.name, filter(lambda y:y.use_AccepRate, scanners)))
+
+
+print(names)
+print(names_use_AccepRate)
 
 def saveCube(cube,f,path,num,save):
     for ii in cube:
@@ -29,35 +62,35 @@ def saveCube(cube,f,path,num,save):
 
 def printPoint(Numrun,cube,n_dims,inpar,outpar,loglike,Naccept):
     if Numrun == 0:
-        sf.Info('------------ Start Point ------------')
+        af.Info('------------ Start Point ------------')
     else:
-        sf.Info('------------ Num: %i ------------'%Numrun)
+        af.Info('------------ Num: %i ------------'%Numrun)
     for i,name in enumerate(inpar):
-        sf.Info('Input  - %s = %s '%(name,cube[i]))
-    sf.Info('.................................')
+        af.Info('Input  - %s = %s '%(name,cube[i]))
+    af.Info('.................................')
     for i,name in enumerate(outpar):
         outVar = cube[i+n_dims]
         try:
             float(outVar)
-            sf.Info('Output - %s = %s '%(name,outVar))
+            af.Info('Output - %s = %s '%(name,outVar))
         except:
-            if '/' not in outVar: sf.Info('Output - %s = %s '%(name,outVar))
+            if '/' not in outVar: af.Info('Output - %s = %s '%(name,outVar))
             
-    sf.Info('.................................')
-    sf.Info('loglikelihood   = '+str(loglike))
+    af.Info('.................................')
+    af.Info('loglikelihood   = '+str(loglike))
     if Numrun == 0:
-        sf.Info('Initial Chi2    = '+str(-2*loglike))
-    sf.Info('Accepted Num    = '+str(Naccept))
-    sf.Info('Total    Num    = '+str(Numrun))
+        af.Info('Initial Chi2    = '+str(-2*loglike))
+    af.Info('Accepted Num    = '+str(Naccept))
+    af.Info('Total    Num    = '+str(Numrun))
 
 def printPoint4MCMC(Chisq,CurChisq,MinChisq,AccRat,FlagTuneR,kcovar):
-    sf.Info('.......... MCMC info ............')
-    sf.Info('Test     Chi^2 = '+str(Chisq))
-    sf.Info('Current  Chi^2 = '+str(CurChisq))
-    sf.Info('Mimimum  Chi^2 = '+str(MinChisq))
-    sf.Info('Accepted Ratio = '+str(AccRat))
+    af.Info('.......... MCMC info ............')
+    af.Info('Test     Chi^2 = '+str(Chisq))
+    af.Info('Current  Chi^2 = '+str(CurChisq))
+    af.Info('Mimimum  Chi^2 = '+str(MinChisq))
+    af.Info('Accepted Ratio = '+str(AccRat))
     if FlagTuneR :
-        sf.Info('StepZize factor= '+str(exp(kcovar)))
+        af.Info('StepZize factor= '+str(exp(kcovar)))
 
 
 def readrun(LogLikelihood,Prior,n_dims,n_params,inpar,outpar,bin_num,n_print,outputfiles_basename,outputfiles_filename):
@@ -74,7 +107,7 @@ def readrun(LogLikelihood,Prior,n_dims,n_params,inpar,outpar,bin_num,n_print,out
         try:
             Ploter._data[name]
         except:
-            sf.ErrorStop('Input parameter "%s" could not found in ScanInf.txt.'%name)
+            af.ErrorStop('Input parameter "%s" could not found in ScanInf.txt.'%name)
 
     for i,name in enumerate(inpar):
         ntotal = len(Ploter._data[name])
@@ -87,7 +120,7 @@ def readrun(LogLikelihood,Prior,n_dims,n_params,inpar,outpar,bin_num,n_print,out
         cube.append(0.0)
         cubePre.append(0.0)
 
-    sf.Info('Begin read scan ...')
+    af.Info('Begin read scan ...')
     
     Naccept = 0
     
@@ -97,7 +130,7 @@ def readrun(LogLikelihood,Prior,n_dims,n_params,inpar,outpar,bin_num,n_print,out
             cube[i] = Ploter._data[name][iner]
         
         loglike = LogLikelihood(cube, n_dims, n_params)
-        if loglike > sf.log_zero:
+        if loglike > af.log_zero:
             Naccept += 1
             saveCube(cube,f_out,f_path,str(Naccept),True)
         #saveCube(cube,f_out2,f_path,str(Naccept),False)
@@ -108,7 +141,7 @@ def readrun(LogLikelihood,Prior,n_dims,n_params,inpar,outpar,bin_num,n_print,out
         #cubeProtect = list(cube)
         #if cubePre[n_dims:n_params] == cube[n_dims:n_params]:
         #    for i in range(n_dims, n_params):
-        #        cube[i]=sf.NaN
+        #        cube[i]=af.NaN
         #cube = list(cubeProtect)
         #cubePre = list(cube)
 
@@ -130,7 +163,7 @@ def gridrun(LogLikelihood,Prior,n_dims,n_params,inpar,outpar,bin_num,n_print,out
         cube.append(0)
         cubePre.append(0)
 
-    sf.Info('Begin grid scan ...')
+    af.Info('Begin grid scan ...')
     
     Naccept = 0
 
@@ -141,14 +174,14 @@ def gridrun(LogLikelihood,Prior,n_dims,n_params,inpar,outpar,bin_num,n_print,out
             iner   *= bin_num[name]
 
         for i,name in enumerate(outpar):
-            cube[i+n_dims] = sf.NaN
+            cube[i+n_dims] = af.NaN
         
         Prior(cube, n_dims, n_params)
         loglike = LogLikelihood(cube, n_dims, n_params)
 
         #saveCube(cube,f_out2,f_path,str(Naccept),False)
 
-        if loglike > sf.log_zero:
+        if loglike > af.log_zero:
             Naccept += 1
             saveCube(cube,f_out,f_path,str(Naccept),True)
 
@@ -158,7 +191,7 @@ def gridrun(LogLikelihood,Prior,n_dims,n_params,inpar,outpar,bin_num,n_print,out
         #cubeProtect = list(cube)
         #if cubePre[n_dims:n_params] == cube[n_dims:n_params]:
         #    for i in range(n_dims, n_params):
-        #        cube[i]=sf.NaN
+        #        cube[i]=af.NaN
         #cube = list(cubeProtect)
         #cubePre = list(cube)
 
@@ -175,7 +208,7 @@ def randomrun(LogLikelihood,Prior,n_dims,n_params,inpar,outpar,n_live_points,n_p
         cube.append(0.0)
         cubePre.append(0.0)
 
-    sf.Info('Begin random scan ...')
+    af.Info('Begin random scan ...')
     Naccept = 0
     for Nrun in range(n_live_points) :
         for j in range(n_dims):
@@ -184,7 +217,7 @@ def randomrun(LogLikelihood,Prior,n_dims,n_params,inpar,outpar,n_live_points,n_p
         Prior(cube, n_dims, n_params)
         loglike = LogLikelihood(cube, n_dims, n_params)
         
-        if loglike > sf.log_zero:
+        if loglike > af.log_zero:
             Naccept += 1
             saveCube(cube,f_out,f_path,str(Naccept),True)
         #saveCube(cube,f_out2,f_path,str(Naccept),False)
@@ -195,7 +228,7 @@ def randomrun(LogLikelihood,Prior,n_dims,n_params,inpar,outpar,n_live_points,n_p
         #cubeProtect = list(cube)
         #if cubePre[n_dims:n_params] == cube[n_dims:n_params]:
         #    for i in range(n_dims, n_params):
-        #        cube[i]=sf.NaN
+        #        cube[i]=af.NaN
         #cube = list(cubeProtect)
         #cubePre = list(cube)
 
@@ -225,12 +258,12 @@ def mcmcrun(LogLikelihood,Prior,n_dims,n_params,n_live_points,inpar,outpar,StepS
         AllOutMCMC.append(1)
         #"True" for saving files of initial physical point
         saveCube(AllOutMCMC,f_out2,f_path,'0',True)
-        if loglike > sf.log_zero / 2.0 : break
+        if loglike > af.log_zero / 2.0 : break
         if n_init == 0 : 
-            sf.WarningNoWait('The initial point is unphysical, it will find the physical initial points randmly.')
+            af.WarningNoWait('The initial point is unphysical, it will find the physical initial points randmly.')
         n_init = n_init +1
         if n_init>100:
-            sf.ErrorStop('Can not find physical initial points with 100 tries.')
+            af.ErrorStop('Can not find physical initial points with 100 tries.')
         for i in range(n_dims):
             cube[i] = random()
             CurPar[i] = cube[i]
@@ -261,7 +294,7 @@ def mcmcrun(LogLikelihood,Prior,n_dims,n_params,n_live_points,inpar,outpar,StepS
             RangeFlag = False
             Nout = Nout +1
             if Nout%100 == 0: 
-                sf.WarningNoWait("Too many points out of range!")
+                af.WarningNoWait("Too many points out of range!")
         else:
             Nrun += 1
             Nout=0
