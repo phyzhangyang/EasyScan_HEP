@@ -64,7 +64,7 @@ def string2nestlist(s):
 
 ## Write information of result into file
 # TODO why 'postprocess' is return
-def WriteResultInf(InPar,OutPar,Chi2,Path,ScanMethod,File):
+def WriteResultInf(InPar,OutPar,Constraint,Path,ScanMethod,File):
     if ScanMethod == 'PLOT': return
     #if ScanMethod == 'POSTPROCESS': os.rename(os.path.join(Path,'ScanInf.txt'),os.path.join(Path,'ScanInf_old.txt'))
     file_inf = open(os.path.join(Path,'ScanInf.txt'),'w')
@@ -81,7 +81,7 @@ def WriteResultInf(InPar,OutPar,Chi2,Path,ScanMethod,File):
         file_inf.write('\t'.join([name,str(icount)])+'\n')
         icount += 1
     ## new 20180428 liang
-    for name in Chi2:
+    for name in Constraint:
         file_inf.write('\t'.join([name,str(icount)])+'\n')
         icount += 1
     if ScanMethod == 'MCMC':
@@ -140,6 +140,7 @@ def checkFileInList(List):
 
     return newList, files
 
+# Sort parameters so that we can output them in right order
 def sortDic(Dic):
     return OrderedDict(sorted(list(Dic.items()), key = lambda t: t[0]))
        

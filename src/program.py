@@ -665,10 +665,10 @@ class PROGRAM:
                 af.Debug('Successful remaining output file %s for program %s'%(self._OutputFile[ii], self._ProgName))
 
     def ReadOutputFile(self,par,path):
+        print(self._OutFileID)
         for ii in self._OutFileID:
             if not os.path.exists(self._OutputFile[ii]):
-                af.Debug('No output file for program %s'%self._ProgName)
-                af.Debug('output file name is %s'%self._OutputFile[ii])
+                af.Debug('No output file "%s" for program %s'%(self._OutputFile[ii], self._ProgName))
                 return False
             ## For 'File' method
             for jj in self._OutFileVar[ii]:
@@ -676,12 +676,11 @@ class PROGRAM:
         
             if len(self._OutPosVar[ii])+ len(self._OutLabelVar[ii]) + len(self._OutSLHAVar[ii])>0 :
                 oulines = open(self._OutputFile[ii]).readlines()
-                ## new 20180425 liang
-                #ouvar = [ss.split() for ss in oulines]
                 ouvar = [re.split(r'[ \t,]+', ss.strip()) for ss in oulines]
-            
+            print(ii)
             ## For 'Position' method
             for jj in self._OutPosVar[ii]:
+                print(jj)
                 try:
                     par[jj[0]] = float(ouvar[jj[3]-1][jj[4]-1])
                     af.Debug('Output - %s='%jj[0],par[jj[0]])

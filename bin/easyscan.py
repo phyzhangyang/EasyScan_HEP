@@ -18,18 +18,19 @@ sys.path.append(os.path.join(os.path.split(os.path.split(os.path.realpath(__file
 ## Internal modules.
 import initialize
 import auxfun, statfun
-from readin_config import ReadIn
-from scaninput     import SCANINPUT
+from readin_config   import ReadIn
+from scan_controller import SCANINPUT
 from constraint    import CONSTRAINT
 from ploter        import PLOTER
 
 # define basic class object
-ES       = SCANINPUT()
-Programs = {}
-CS       = CONSTRAINT()
-Ploter   = PLOTER()
-ProgID   = ReadIn(sys.argv[1],ES,Programs,CS,Ploter)
+ES         = SCANINPUT()
+Programs   = {}
+Constraint = CONSTRAINT()
+Ploter     = PLOTER()
+ProgID     = ReadIn(sys.argv[1], ES, Programs, Constraint, Ploter)
 
+# TODO
 if ES.getScanMethod() == 'RANDOM':
     ResultFile = 'RandomData.txt'
 elif ES.getScanMethod() == 'MCMC':
@@ -41,56 +42,68 @@ elif ES.getScanMethod() == 'GRID':
 elif ES.getScanMethod() == 'READ':
     ResultFile = 'ReadData.txt'
 if ES.getScanMethod() != 'PLOT':
-    auxfun.WriteResultInf(ES.InPar,ES.OutPar,CS.Chi2,ES.getFileName(),ES.getScanMethod(), ResultFile)
+    auxfun.WriteResultInf(ES.InPar, ES.OutPar, Constraint.Chi2, ES.getFolderName(), ES.getScanMethod(), ResultFile)
 
-# logarithm of likelihood function
+# Logarithm of likelihood function
 def LogLikelihood(cube, ndim, nparams):
-    # pass the input value from cube to InPar
+    # Pass input value from cube to InPar
     for i,name in enumerate(ES.InPar) :
         ES.InPar [name]=cube[i]
         ES.AllPar[name]=cube[i]
-    # Run each programs
-    # ES.AllPar is a dictionary involving variables and their values of scanning parameters and output variables. 
+    # Run programs
     for ii in ProgID:
         Programs[ii].WriteInputFile(ES.AllPar)
         Programs[ii].RunProgram()
-        Phy = Programs[ii].ReadOutputFile(ES.AllPar,ES.getFileName())
+        print(ii)
+        Phy = Programs[ii].ReadOutputFile(ES.AllPar, ES.getFolderName())
+        # Apply bound
         if Phy: Phy = Programs[ii].ReadBound(ES.AllPar)
-        # if the point is unphysical, return log(0)
+        # If the point is unphysical, return log(0)
         if not Phy : return auxfun.log_zero
 
-    # pass all output variables with values to "cube" for using in each scan method in "scanner.py"
+    # Pass output variables to cube
     for i,name in enumerate(ES.OutPar) :
         cube[i+ndim]   = ES.AllPar[name]
 
-    loglike = - CS.getChisq(ES.AllPar)/2.0
-    
-    if (len(CS.Chi2)==1): return loglike
-    ## new 20180428 liang
-    for i,name in enumerate(CS.Chi2) :
-        cube[i+ndim+len(ES.OutPar)]   = CS.Chi2[name]
+    loglike = - 0.5*Constraint.getChisq(ES.AllPar)
+        
+    # Pass constraint likelihood to cube
+    for i,name in enumerate(Constraint.Chi2) :
+        cube[i+ndim+len(ES.OutPar)]   = Constraint.Chi2[name]
 
     return loglike 
 
-# prior function
+# Prior function
 def Prior(cube, ndim, nparams):
     for i,name in enumerate(ES.InPar):  
         cube[i] = statfun.prior(cube[i],ES.InputPar[name])
 
-## Load corresponding scan method
+# Load corresponding scan method
 if ES.getScanMethod() == 'RANDOM':
     from scanner import randomrun
     randomrun(
+        LogLikelihood = LogLikelihood,
+        Prior         = Prior,
+        n_dims        = len(ES.InPar),
+        n_params      = len(ES.AllPar)+len(Constraint.Chi2),
+        inpar         = ES.InPar,
+	      outpar        = ES.OutPar,
+        n_live_points = ES.getPointNum(),
+        n_print       = ES.getPrintNum(),
+        outputfolder  = ES.getFolderName())
+
+elif ES.getScanMethod() == 'GRID':
+    from scanner import gridrun
+    gridrun(
         LogLikelihood        = LogLikelihood,
         Prior                = Prior,
         n_dims               = len(ES.InPar),
-        n_params             = len(ES.AllPar)+len(CS.Chi2),
+        n_params             = len(ES.AllPar)+len(Constraint.Chi2),
         inpar                = ES.InPar,
-	outpar               = ES.OutPar,
-        n_live_points        = ES.getPointNum(),
+	      outpar               = ES.OutPar,
+        bin_num              = ES.GridBin,
         n_print              = ES.getPrintNum(),
-        outputfiles_basename = ES.getFileName(),
-        outputfiles_filename = ResultFile )
+        outputfolder  = ES.getFolderName())
 
 elif ES.getScanMethod() == 'MCMC':
     from scanner import mcmcrun
@@ -98,7 +111,7 @@ elif ES.getScanMethod() == 'MCMC':
         LogLikelihood        = LogLikelihood,
         Prior                = Prior,
         n_dims               = len(ES.InPar),
-        n_params             = len(ES.AllPar)+len(CS.Chi2),
+        n_params             = len(ES.AllPar)+len(Constraint.Chi2),
         n_live_points        = ES.getPointNum(),
         inpar                = ES.InPar,
         outpar               = ES.OutPar,
@@ -107,7 +120,7 @@ elif ES.getScanMethod() == 'MCMC':
         FlagTuneR            = ES.getFlagTuneR(),
         InitVal              = ES.getInitialValue(),
         n_print              = ES.getPrintNum(),
-        outputfiles_basename = ES.getFileName(),
+        outputfiles_basename = ES.getFolderName(),
         outputfiles_filename = ResultFile)
 
 elif ES.getScanMethod() == 'MULTINEST':
@@ -117,27 +130,13 @@ elif ES.getScanMethod() == 'MULTINEST':
         LogLikelihood        = LogLikelihood,
         Prior                = Prior,
         n_dims               = len(ES.InPar),
-        n_params             = len(ES.AllPar)+len(CS.Chi2),
+        n_params             = len(ES.AllPar)+len(Constraint.Chi2),
         seed                 = ES.getRandomSeed(),
         outputfiles_basename = ES.MNOutputFile,
         n_live_points        = ES.getPointNum(),
         verbose                    = True,
-        resume                     = False, #!!!!!!!!!
+        resume                     = False, #TODO
         importance_nested_sampling = True)
-
-elif ES.getScanMethod() == 'GRID':
-    from scanner import gridrun
-    gridrun(
-        LogLikelihood        = LogLikelihood,
-        Prior                = Prior,
-        n_dims               = len(ES.InPar),
-        n_params             = len(ES.AllPar)+len(CS.Chi2),
-        inpar                = ES.InPar,
-	outpar               = ES.OutPar,
-        bin_num              = ES.GridBin,
-        n_print              = ES.getPrintNum(),
-        outputfiles_basename = ES.getFileName(),
-        outputfiles_filename = ResultFile )
 
 elif ES.getScanMethod() == 'READ':
     from scanner import readrun
@@ -145,12 +144,12 @@ elif ES.getScanMethod() == 'READ':
             LogLikelihood        = LogLikelihood,
             Prior                = Prior,
             n_dims               = len(ES.InPar),
-            n_params             = len(ES.AllPar)+len(CS.Chi2),
+            n_params             = len(ES.AllPar)+len(Constraint.Chi2),
             inpar                = ES.InPar,
             outpar               = ES.OutPar,
             bin_num              = ES.GridBin,
             n_print              = ES.getPrintNum(),
-            outputfiles_basename = ES.getFileName(),
+            outputfiles_basename = ES.getFolderName(),
             outputfiles_filename = ResultFile )
 
 ## recover the modified input file(s) for external programs
@@ -158,7 +157,7 @@ if ES.getScanMethod() != 'PLOT':
     for ii in Programs: Programs[ii].Recover()
 
 """ Plot """
-Ploter.setPlotPar(ES.getFileName(), ES._ScanMethod)
+Ploter.setPlotPar(ES.getFolderName(), ES._ScanMethod)
 Ploter.getPlot(ES._ScanMethod)
 
 
