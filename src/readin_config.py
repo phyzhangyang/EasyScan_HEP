@@ -24,7 +24,7 @@ def notInteger(name):
 def takeDefault(name):
   return 'It will take default value, "%s".'%name
 
-def ReadIn(Configfile, ES, Programs, CS, Ploter):
+def ReadIn(Configfile, Controller, Programs, Constraint, Ploter):
     cf=configparser.ConfigParser()
     cf.read(Configfile)
 
@@ -32,11 +32,11 @@ def ReadIn(Configfile, ES, Programs, CS, Ploter):
     if not ('scan' in cf.sections()) :
         af.ErrorStop(notFind('[scan] section')) 
     try:
-        ES.setScanMethod(cf.get('scan', 'Scan method'))
+        Controller.setScanMethod(cf.get('scan', 'Scan method'))
     except configparser.NoOptionError:
         af.ErrorStop(notFind('Scan method'))
     try:
-        ES.setFileName(cf.get('scan', 'Result folder name'))
+        Controller.setFolderName(cf.get('scan', 'Result folder name'))
     except configparser.NoOptionError:
         af.ErrorStop(notFind('Result folder name')) 
 
@@ -46,7 +46,7 @@ def ReadIn(Configfile, ES, Programs, CS, Ploter):
     try: 
         plot_items  = cf.options("plot")
     except configparser.NoSectionError:
-        if ES.getScanMethod() in scanner.names_only_plot:
+        if Controller.getScanMethod() in scanner.names_only_plot:
             af.ErrorStop(notFind('[plot] section')) 
     if 'histogram' in plot_items:
         Ploter.setHistogram(cf.get('plot', 'Histogram'))
@@ -57,44 +57,44 @@ def ReadIn(Configfile, ES, Programs, CS, Ploter):
     if 'contour' in plot_items:
         Ploter.setContour(cf.get('plot', 'Contour'))
     checkDuplicatedName(Ploter._FigNames, "Figure")
-    if ES.getScanMethod() in scanner.names_only_plot: return []
+    if Controller.getScanMethod() in scanner.names_only_plot: return []
 
     # Back to read the basic scan parameters
     try:
-        ES.setPointNum(cf.getint('scan', 'Number of points'))
-        if ES.getScanMethod() in scanner.names_no_random:
+        Controller.setPointNum(cf.getint('scan', 'Number of points'))
+        if Controller.getScanMethod() in scanner.names_no_random:
             af.WarningNoWait('"Number of points" in configure file is not used.')
     except configparser.NoOptionError:
-        if ES.getScanMethod() in scanner.names_no_random:
+        if Controller.getScanMethod() in scanner.names_no_random:
             pass
         else:
             af.WarningWait(notFind('Number of points')+takeDefault('2')) 
     except ValueError:
         af.ErrorStop(notInteger("Number of points"))
     try:
-        ES.setRandomSeed(cf.getint('scan', 'Random seed'))
+        Controller.setRandomSeed(cf.getint('scan', 'Random seed'))
     except configparser.NoOptionError:
-        if ES.getScanMethod() not in scanner.names_no_random:
+        if Controller.getScanMethod() not in scanner.names_no_random:
            af.Info("Use current system time as random seed.")
     except ValueError:
         af.ErrorStop(notInteger("Random seed"))
 
     try:
-        ES.setPrintNum(cf.getint('scan', 'Interval of print'))
+        Controller.setPrintNum(cf.getint('scan', 'Interval of print'))
     except configparser.NoOptionError:
         af.Info(notFind('Interval of print')+takeDefault('1'))
     except ValueError:
         af.WarningNoWait(notInteger("Interval of print")+takeDefault('1'))
 
     try:
-        ES.setInputPar(cf.get('scan', 'Input parameters'))
+        Controller.setInputPar(cf.get('scan', 'Input parameters'))
     except configparser.NoOptionError:
         af.ErrorStop(notFind('Input parameters'))
 
     try:
-        ES.setAccepRate(cf.get('scan', 'Acceptance rate'))
+        Controller.setAccepRate(cf.get('scan', 'Acceptance rate'))
     except configparser.NoOptionError:
-        if ES.getScanMethod() in scanner.names_use_AccepRate:
+        if Controller.getScanMethod() in scanner.names_use_AccepRate:
             af.Info(notFind('Acceptance rate')+takeDefault('0.25')) 
         else:
             pass
@@ -171,10 +171,10 @@ def ReadIn(Configfile, ES, Programs, CS, Ploter):
     constraint_items = []
     try:
         constraint_items  = cf.options("constraint")
-        if len(constraint_items) == 0 and ES.getScanMethod() not in scanner.names_no_like:
+        if len(constraint_items) == 0 and (Controller.getScanMethod() not in scanner.names_no_like):
           af.ErrorStop('Section [constraint] is empty in the configure file.')
     except configparser.NoSectionError:
-        if ES.getScanMethod() in scanner.names_no_like:
+        if Controller.getScanMethod() in scanner.names_no_like:
             pass 
         else:
             af.ErrorStop(notFind('[constraint] section'))
@@ -182,17 +182,17 @@ def ReadIn(Configfile, ES, Programs, CS, Ploter):
     af.Info('...............................................')
     af.Debug('constraint_items',constraint_items)
     if 'gaussian' in constraint_items:
-        CS.setGaussian(cf.get('constraint', 'Gaussian'))
+        Constraint.setGaussian(cf.get('constraint', 'Gaussian'))
         # In order to add "math .." in "Gaussian" to self.AllPar TODO
         if Programs:
             Programs[ProgID[0]].setGaussian(cf.get('constraint', 'Gaussian'))
     if 'freeformchi2' in constraint_items:
-        CS.setFreeFormChi2(cf.get('constraint', 'FreeFormChi2'))
+        Constraint.setFreeFormChi2(cf.get('constraint', 'FreeFormChi2'))
         if Programs:
             Programs[ProgID[0]].setFreeFormChi2(cf.get('constraint', 'FreeFormChi2')) 
-    if ('gaussian' not in constraint_items) and ('freeformchi2' not in constraint_items) and (ES.getScanMethod() not in scanner.names_no_like):
+    if ('gaussian' not in constraint_items) and ('freeformchi2' not in constraint_items) and (Controller.getScanMethod() not in scanner.names_no_like):
         af.ErrorStop('No valid iterm in [constraint] section.')
 
-    ES.setProgram(Programs)
+    Controller.setProgram(Programs)
 
     return ProgID
