@@ -46,38 +46,40 @@ names_use_AccepRate = list(map(lambda x:x.name, filter(lambda y:y.use_AccepRate,
 
 
 def saveCube(cube, data_file, file_path, num, save_file):
+  result = []
   for ii in cube:
     try:
       float(ii)
-      data_file.write(str(ii)+'\t')
+      result.append(str(ii))
     except:
       if os.path.exists(ii):
-        # TODO Do not save path. Make sure this!
         if save_file: 
           shutil.copy(ii, os.path.join(file_path, os.path.basename(ii)+"."+num))
+        result.append(str(af.NaN))
       else:
-        data_file.write(str(ii)+'\t')
+        result.append(str(ii))
                 
-    data_file.write('\n')
-    data_file.flush()
+  data_file.write(','.join(result)+'\n')
+  data_file.flush()
 
-def printPoint(Numrun, cube, n_dims, inpar, outpar, loglike, Naccept):
+def printPoint(Numrun, cube, n_dims, inpar, fixedpar, outpar, loglike, Naccept):
     if Numrun == 0:
         af.Info('------------ Start Point ------------')
     else:
         af.Info('------------ Num: %i ------------'%Numrun)
     for i,name in enumerate(inpar):
         af.Info('Input  - %s = %s '%(name,cube[i]))
-    af.Info('.................................')
+    for i,name in enumerate(fixedpar):
+        af.Info('Input  - %s = %s '%(name,cube[i+n_dims]))
     for i,name in enumerate(outpar):
-        outVar = cube[i+n_dims]
+        outVar = cube[i+n_dims+len(fixedpar)]
         try:
-            float(outVar)
-            af.Info('Output - %s = %s '%(name,outVar))
+          float(outVar)
+          af.Info('Output - %s = %s '%(name,outVar))
         except:
-            if '/' not in outVar: af.Info('Output - %s = %s '%(name,outVar))
-            
-    af.Info('.................................')
+          if '/' not in outVar: 
+            af.Info('Output - %s = %s '%(name,outVar))
+
     af.Info('loglikelihood   = '+str(loglike))
     if Numrun == 0:
       af.Info('Initial loglike = '+str(-2*loglike))
@@ -95,8 +97,7 @@ def printPoint4MCMC(Chisq,CurChisq,MinChisq,AccRat,FlagTuneR,kcovar):
 
 
 def readrun(LogLikelihood,Prior,n_dims,n_params,inpar,outpar,bin_num,n_print,outputfiles_basename,outputfiles_filename):
-    f_out = open(os.path.join(outputfiles_basename,outputfiles_filename),'w')
-    #f_out2 = open(os.path.join(outputfiles_basename,'All_'+outputfiles_filename),'w')
+    f_out = open(os.path.join(outputfiles_basename,outputfiles_filename),'a')
     f_path = os.path.join(outputfiles_basename,"SavedFile")
     if not os.path.exists(f_path):
         os.makedirs(f_path)
@@ -146,11 +147,13 @@ def readrun(LogLikelihood,Prior,n_dims,n_params,inpar,outpar,bin_num,n_print,out
         #cube = list(cubeProtect)
         #cubePre = list(cube)
 
-def gridrun(LogLikelihood, Prior, n_dims,n_params,inpar,outpar,bin_num,n_print, outputfolder):
-    data_file = open(os.path.join(outputfolder, "ScanResult.txt"),'w') 
+def gridrun(LogLikelihood, Prior, n_params, inpar, fixedpar, outpar, bin_num, n_print, outputfolder):
+    data_file = open(os.path.join(outputfolder, "ScanResult.txt"),'a') 
     file_path = os.path.join(outputfolder,"SavedFile")
     
-    ntotal = 1 # TODO this is where I stopped
+    n_dims = len(inpar)
+    
+    ntotal = 1
     cube = []
     interval = {}
     for i,name in enumerate(inpar):
@@ -180,12 +183,15 @@ def gridrun(LogLikelihood, Prior, n_dims,n_params,inpar,outpar,bin_num,n_print, 
             Naccept += 1
             saveCube(cube,data_file,file_path,str(Naccept),True)
 
-        if (Nrun+1)%n_print == 0: printPoint(Nrun+1,cube,n_dims,inpar,outpar,loglike,Naccept)
+        if (Nrun+1)%n_print == 0: 
+          printPoint(Nrun+1, cube, n_dims, inpar, fixedpar, outpar, loglike, Naccept)
 
-def randomrun(LogLikelihood, Prior, n_dims, n_params, inpar, outpar, n_live_points, n_print, outputfolder):
-    data_file = open(os.path.join(outputfolder, "ScanResult.txt"),'w') # TODO w -> a
+def randomrun(LogLikelihood, Prior, n_params, inpar, fixedpar, outpar, n_live_points, n_print, outputfolder):
+    data_file = open(os.path.join(outputfolder, "ScanResult.txt"),'a') # TODO w -> a
     file_path = os.path.join(outputfolder,"SavedFile")
    
+    n_dims = len(inpar)
+    
     cube = []
     # Initialise the cube
     for i in range(n_params): 
@@ -205,11 +211,11 @@ def randomrun(LogLikelihood, Prior, n_dims, n_params, inpar, outpar, n_live_poin
             saveCube(cube, data_file, file_path, str(Naccept), True)
         
         if (Nrun+1)%n_print == 0: 
-            printPoint(Nrun+1, cube, n_dims, inpar, outpar, loglike, Naccept)
+            printPoint(Nrun+1, cube, n_dims, inpar, fixedpar, outpar, loglike, Naccept)
 
-def mcmcrun(LogLikelihood,Prior,n_dims,n_params,n_live_points,inpar,outpar,StepSize,AccepRate,FlagTuneR,InitVal,n_print,outputfiles_basename,outputfiles_filename):
-    f_out = open(os.path.join(outputfiles_basename,outputfiles_filename),'w')
-    f_out2 = open(os.path.join(outputfiles_basename,'All_'+outputfiles_filename),'w')
+def mcmcrun(LogLikelihood,Prior,n_dims,n_params,n_live_points,inpar,fixedpar,  outpar,StepSize,AccepRate,FlagTuneR,InitVal,n_print,outputfiles_basename,outputfiles_filename):
+    f_out = open(os.path.join(outputfiles_basename,outputfiles_filename),'a')
+    f_out2 = open(os.path.join(outputfiles_basename,'All_'+outputfiles_filename),'a')
     f_path = os.path.join(outputfiles_basename,"SavedFile")
     
     # Initialise the cube

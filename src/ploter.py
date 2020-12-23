@@ -7,7 +7,7 @@ import matplotlib
 matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 import numpy as np
-#from matplotlib.mlab import griddata
+import pandas as pd
 from scipy.interpolate import griddata
 # Internal modules
 import auxfun as af
@@ -88,82 +88,38 @@ class PLOTER():
 
 
     def setPlotPar(self,path,ScanMethod):
-        ## try this
-        # self._data =  np.loadtxt(path)
-       
-        if ScanMethod in ['READ']:
-            f_data = open(os.path.join(path,'ScanInfINPUT.txt'),'r')
+        # read result
+        if ScanMethod not in ['PLOT', 'POSTPROCESS', 'MULTINEST']:
+          self._data = pd.read_csv(os.path.join(path,'ScanResult.txt'), header=0, index_col=False)
         else:
-            f_data = open(os.path.join(path,'ScanInf.txt'),'r')
-
-        path   = list(map(str,f_data.readline().split()))
-        var    = {}
-        while True:
-            plot_line = f_data.readline()
-            if not plot_line :
-                break
-            plot_line = list(map(str,plot_line.split()))
-            var["+".join(plot_line[:-1])] = int(plot_line[-1])
-    
-        self._path = os.path.join(path[0],'Figures')
+          stop
+        
+        # make figure folder
+        self._path = os.path.join(path,'Figures')
         if not os.path.exists(self._path):
             os.mkdir(self._path)
         else:
             __import__("shutil").rmtree(self._path) 
             os.mkdir(self._path)
 
-        for ii in var:
-            self._data[ii] = []
-        
-        f_data = open(os.path.join(path[0],path[1]),'r')
-        while True:
-            line = f_data.readline()
-            if not line :
-                break
-            line_par = list(map(str,line.split()))
-            for ii in var:
-                try:
-                    self._data[ii].append(float( line_par[var[ii]] ))
-                except:
-                    af.Debug('Skip parameter %s'%ii)
+    def checkPar(self,par,num):                  
+      for jj in range(num):
+#        try:
+#          if self._data[par[jj]].min() == self._data[par[jj]].max():
+#            af.WarningNoWait("Parameter %s=%f is a cosntant number. No plot for it. "%(par[jj], self._data[par[jj]].min()))
+#            return False 
+#        except KeyError:
+#          af.WarningNoWait("Parameter '%s' in [plot] section do not exist. No plot for it."%( par[jj] )  )
+#          return False 
+        if par[jj] not in self._data.columns:
+          af.WarningNoWait("Parameter '%s' in [plot] section do not exist. No plot for it."%( par[jj] )  )
+          return False 
+        if not np.issubdtype(self._data[par[jj]].dtype, np.number):
+          af.WarningNoWait("Parameter %s is not float number. No plot for it."%par[jj])
+          return False 
+      return True
 
-        ##new 20180418 liang
-        if ScanMethod in ['MCMC']:
-            for ii in var:
-                self._dataAllTry[ii] = []
-
-            f_dataAllTry = open(os.path.join(path[0],'All_%s'%path[1]), 'r')
-            while True:
-                line = f_dataAllTry.readline()
-                if not line :
-                    break
-                line_par = map(str,line.split())
-                for ii in var:
-                    try:
-                        self._dataAllTry[ii].append(float( line_par[var[ii]] ))
-                    except:
-                        af.Debug('Skip parameter %s'%ii)
-
-
-    def checkPar(self,par,num):                
-            for jj in range(num):
-                try:
-                    if max(self._data[par[jj]]) == min(self._data[par[jj]]):
-                        af.ErrorStop("The parameter %s=%f is a cosntant with all samples, can not creat plot for it. Please correct in [plot] in your input file!"%(par[jj], min(self._data[par[jj]]) )  )
-                except KeyError:
-                    af.ErrorStop("The parameter '%s' do not exist and plot for it do not be created. Please correct in [plot] in your input file!"%( par[jj] )  )
-                #new 20180416 liang
-                if len(self._data[par[jj]]) == 1:
-                    af.ErrorStop("One sample (e.g., see parameter %s) only, can not creat plot for it. Please correct in [plot] in your input file!"%par[jj])
-                    return False 
-                try:
-                    list(map(float, self._data[par[jj]]))
-                except ValueError:
-                    af.WarningNoWait("The parameter %s not a number, can not creat plot for it."%par[jj])
-                    return False 
-            return True
-
-    ##only debug
+    ##only for debugging
     def get_contour_verts(self,cn):
         contours = []
         # for each contour line
@@ -182,7 +138,6 @@ class PLOTER():
 
     def getPlot(self,ScanMethod):
         if len(self._Histogram) + len(self._Scatter) + len(self._Color) + len(self._Contour) == 0:
-            af.Info('You have close ploting the result ... ')
             return
         af.Info('Start to plot the result ... ')
         FigNames=[]

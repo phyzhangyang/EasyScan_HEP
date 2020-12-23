@@ -113,7 +113,7 @@ def ReadIn(Configfile, Controller, Programs, Constraint, Ploter):
     outputVarNames=[]   
     for ii in ProgID:
         items  = cf.options(ii)
-
+        
         Programs[ii] = PROGRAM()
         if 'program name' in items:
             Programs[ii].setProgName(cf.get(ii, 'Program name'))
@@ -132,7 +132,7 @@ def ReadIn(Configfile, Controller, Programs, Constraint, Ploter):
         if 'input file' in items and 'input variable' in items:
             Programs[ii].setInputFile(cf.get(ii, 'Input file'))
             Programs[ii].setInputVar(cf.get(ii, 'Input variable'))
-        if 'output file' in items and 'Output variable' in items:
+        if 'output file' in items and 'output variable' in items:
             Programs[ii].setOutputFile(cf.get(ii, 'Output file'))
             Programs[ii].setOutputVar(cf.get(ii, 'Output variable'))
         
@@ -180,7 +180,7 @@ def ReadIn(Configfile, Controller, Programs, Constraint, Ploter):
             af.ErrorStop(notFind('[constraint] section'))
             
     af.Info('...............................................')
-    af.Debug('constraint_items',constraint_items)
+    af.Debug('Constraint items:',constraint_items)
     if 'gaussian' in constraint_items:
         Constraint.setGaussian(cf.get('constraint', 'Gaussian'))
         # In order to add "math .." in "Gaussian" to self.AllPar TODO

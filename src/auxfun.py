@@ -64,29 +64,18 @@ def string2nestlist(s):
 
 ## Write information of result into file
 # TODO why 'postprocess' is return
-def WriteResultInf(InPar,OutPar,Constraint,Path,ScanMethod,File):
+def WriteResultInf(InPar, FixedPar, OutPar, Constraint, Path, ScanMethod, File):
     if ScanMethod == 'PLOT': return
     #if ScanMethod == 'POSTPROCESS': os.rename(os.path.join(Path,'ScanInf.txt'),os.path.join(Path,'ScanInf_old.txt'))
-    file_inf = open(os.path.join(Path,'ScanInf.txt'),'w')
-    file_inf.write('\t'.join([Path, File])+'\n') # TODO is there any possibility that we do not need this?
-    icount = 0
+    outfile = open(os.path.join(Path,'ScanResult.txt'),'w')  
+    inf = ''
     if ScanMethod == 'MULTINEST':
-        file_inf.write('probability\t0\n')
-        file_inf.write('-2*loglikehood\t1\n')
-        icount += 2
-    for name in InPar:
-        file_inf.write('\t'.join([name,str(icount)])+'\n')
-        icount += 1
-    for name in OutPar :
-        file_inf.write('\t'.join([name,str(icount)])+'\n')
-        icount += 1
-    ## new 20180428 liang
-    for name in Constraint:
-        file_inf.write('\t'.join([name,str(icount)])+'\n')
-        icount += 1
+      inf += 'probability,-2loglike,'
+    inf += ','.join(list(InPar.keys())+list(FixedPar.keys())+list(OutPar.keys())+list(Constraint.keys()))
     if ScanMethod == 'MCMC':
-        file_inf.write('\t'.join(['mult',str(icount)])+'\n')
-    file_inf.close()
+      inf += ",mult"
+    outfile.write(inf+'\n')
+    outfile.close()
 
 ## Evaluate a math string
 # http://lybniz2.sourceforge.net/safeeval.html
@@ -121,24 +110,6 @@ def parseMath(par):
 
         #print key, expr, cal; raw_input("math") 
         par[key] = cal
-        
-## Delete path in the name of files
-# TODO don't save file name
-def checkFileInList(List):
-    newList=[]
-    files=[]
-    for item in List:
-        try:
-            float(item)
-            newList.append(item)
-        except ValueError:
-            if item.find('/') >= 0:
-                files.append(item)
-                newList.append(item.split('/')[-1])
-            else:
-                newList.append(item)
-
-    return newList, files
 
 # Sort parameters so that we can output them in right order
 def sortDic(Dic):
