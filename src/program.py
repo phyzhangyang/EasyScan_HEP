@@ -366,15 +366,17 @@ class PROGRAM:
 
     def setOutputVar(self, outputvar):
         if len(self._OutFileID)==0:
-            af.Debug('No OutputVar with No OutFile in program %s'%self._ProgName)
+            af.Debug('No OutFile for program %s'%self._ProgName)
             return 
         outputvar=af.string2nestlist(outputvar)
         for ii in outputvar:
-            if not ii[1] in self._OutFileID:
-                af.ErrorStop( 'For output variable "%s" in program "%s", There is no output file with ID="%s".'%(ii[0],self._ProgName, ii[1]) )
-            if not ii[2].upper() in ['FILE', 'POSITION', 'LABEL', 'SLHA']:
+            if ii[1] not in self._OutFileID:
+                af.ErrorStop( 'ID for output variable "%s" in program "%s" is wrong.'%(ii[0],self._ProgName, ii[1]))
+            if ii[2].upper() not in ['FILE', 'POSITION', 'LABEL', 'SLHA']:
                 af.ErrorStop( 'For output variable "%s" in program "%s", EasyScan_HEP not supporting method="%s" now!'%(ii[0],self._ProgName, ii[2]) )
+            
             self.outvar[ii[0]] = af.NaN
+            
         af.Info('Output variable = ')
         for ii in self._OutFileID:
             self._OutputVar[ii] = [x for x in outputvar if (x[1] == ii) and (x[2].lower() != 'file')]
@@ -464,8 +466,7 @@ class PROGRAM:
     def WriteInputFile(self,par):
         if self._InFileID ==['']:
             return
-
-        ## add for "math ..." in "Input variable" in [programX]
+            
         af.parseMath(par)
 
         ## self._InFileID is list of file ID in Input file in [programX]
@@ -665,7 +666,6 @@ class PROGRAM:
                 af.Debug('Successful remaining output file %s for program %s'%(self._OutputFile[ii], self._ProgName))
 
     def ReadOutputFile(self,par,path):
-        print(self._OutFileID)
         for ii in self._OutFileID:
             if not os.path.exists(self._OutputFile[ii]):
                 af.Debug('No output file "%s" for program %s'%(self._OutputFile[ii], self._ProgName))
@@ -677,10 +677,9 @@ class PROGRAM:
             if len(self._OutPosVar[ii])+ len(self._OutLabelVar[ii]) + len(self._OutSLHAVar[ii])>0 :
                 oulines = open(self._OutputFile[ii]).readlines()
                 ouvar = [re.split(r'[ \t,]+', ss.strip()) for ss in oulines]
-            print(ii)
+            
             ## For 'Position' method
             for jj in self._OutPosVar[ii]:
-                print(jj)
                 try:
                     par[jj[0]] = float(ouvar[jj[3]-1][jj[4]-1])
                     af.Debug('Output - %s='%jj[0],par[jj[0]])

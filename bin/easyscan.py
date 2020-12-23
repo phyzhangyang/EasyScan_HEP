@@ -42,34 +42,37 @@ elif ES.getScanMethod() == 'GRID':
 elif ES.getScanMethod() == 'READ':
     ResultFile = 'ReadData.txt'
 if ES.getScanMethod() != 'PLOT':
-    auxfun.WriteResultInf(ES.InPar, ES.OutPar, Constraint.Chi2, ES.getFolderName(), ES.getScanMethod(), ResultFile)
+    auxfun.WriteResultInf(ES.InPar, ES.FixedPar, ES.OutPar, Constraint.Chi2, ES.getFolderName(), ES.getScanMethod(), ResultFile)
 
 # Logarithm of likelihood function
 def LogLikelihood(cube, ndim, nparams):
     # Pass input value from cube to InPar
-    for i,name in enumerate(ES.InPar) :
+    for i,name in enumerate(ES.InPar):
         ES.InPar [name]=cube[i]
         ES.AllPar[name]=cube[i]
+        
     # Run programs
     for ii in ProgID:
         Programs[ii].WriteInputFile(ES.AllPar)
         Programs[ii].RunProgram()
-        print(ii)
         Phy = Programs[ii].ReadOutputFile(ES.AllPar, ES.getFolderName())
         # Apply bound
         if Phy: Phy = Programs[ii].ReadBound(ES.AllPar)
         # If the point is unphysical, return log(0)
         if not Phy : return auxfun.log_zero
 
+    # Pass fixed variables to cube
+    for i,name in enumerate(ES.FixedPar) :
+        cube[i+ndim]   = ES.AllPar[name]    
     # Pass output variables to cube
     for i,name in enumerate(ES.OutPar) :
-        cube[i+ndim]   = ES.AllPar[name]
+        cube[i+ndim+len(ES.FixedPar)]   = ES.AllPar[name]
 
     loglike = - 0.5*Constraint.getChisq(ES.AllPar)
         
     # Pass constraint likelihood to cube
     for i,name in enumerate(Constraint.Chi2) :
-        cube[i+ndim+len(ES.OutPar)]   = Constraint.Chi2[name]
+        cube[i+ndim+len(ES.FixedPar)+len(ES.OutPar)]   = Constraint.Chi2[name]
 
     return loglike 
 
@@ -84,9 +87,9 @@ if ES.getScanMethod() == 'RANDOM':
     randomrun(
         LogLikelihood = LogLikelihood,
         Prior         = Prior,
-        n_dims        = len(ES.InPar),
         n_params      = len(ES.AllPar)+len(Constraint.Chi2),
         inpar         = ES.InPar,
+        fixedpar      = ES.FixedPar,
 	      outpar        = ES.OutPar,
         n_live_points = ES.getPointNum(),
         n_print       = ES.getPrintNum(),
@@ -95,31 +98,31 @@ if ES.getScanMethod() == 'RANDOM':
 elif ES.getScanMethod() == 'GRID':
     from scanner import gridrun
     gridrun(
-        LogLikelihood        = LogLikelihood,
-        Prior                = Prior,
-        n_dims               = len(ES.InPar),
-        n_params             = len(ES.AllPar)+len(Constraint.Chi2),
-        inpar                = ES.InPar,
-	      outpar               = ES.OutPar,
-        bin_num              = ES.GridBin,
-        n_print              = ES.getPrintNum(),
+        LogLikelihood = LogLikelihood,
+        Prior         = Prior,
+        n_params      = len(ES.AllPar)+len(Constraint.Chi2),
+        inpar         = ES.InPar,
+        fixedpar      = ES.FixedPar,
+	      outpar        = ES.OutPar,
+        bin_num       = ES.GridBin,
+        n_print       = ES.getPrintNum(),
         outputfolder  = ES.getFolderName())
 
 elif ES.getScanMethod() == 'MCMC':
     from scanner import mcmcrun
     mcmcrun(
-        LogLikelihood        = LogLikelihood,
-        Prior                = Prior,
-        n_dims               = len(ES.InPar),
-        n_params             = len(ES.AllPar)+len(Constraint.Chi2),
-        n_live_points        = ES.getPointNum(),
-        inpar                = ES.InPar,
-        outpar               = ES.OutPar,
-        StepSize             = ES.getStepSize(),
-        AccepRate            = ES.getAccepRate(),
-        FlagTuneR            = ES.getFlagTuneR(),
-        InitVal              = ES.getInitialValue(),
-        n_print              = ES.getPrintNum(),
+        LogLikelihood = LogLikelihood,
+        Prior         = Prior,
+        n_params      = len(ES.AllPar)+len(Constraint.Chi2),
+        n_live_points = ES.getPointNum(),
+        inpar         = ES.InPar,
+        fixedpar      = ES.FixedPar,
+        outpar        = ES.OutPar,
+        StepSize      = ES.getStepSize(),
+        AccepRate     = ES.getAccepRate(),
+        FlagTuneR     = ES.getFlagTuneR(),
+        InitVal       = ES.getInitialValue(),
+        n_print       = ES.getPrintNum(),
         outputfiles_basename = ES.getFolderName(),
         outputfiles_filename = ResultFile)
 

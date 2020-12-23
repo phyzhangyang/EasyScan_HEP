@@ -24,6 +24,7 @@ class SCANINPUT:
         self._Prog    = {}
         self.AllPar   = {}
         self.InPar    = {}
+        self.FixedPar    = {}
         self.OutPar   = {}
 
         self.InputPar = {} # Different to InPar, including prior, value
@@ -127,7 +128,7 @@ class SCANINPUT:
         af.Info('Interval of print = %s'%self._PrintNum)
 
 
-    def InputCheck(name, num, items):
+    def InputCheck(self, name, num, items):
         return 'Input parameter "%s" need %i iterms [ID, Prior, %s]'%(name, num, items)
         
     def setInputPar(self, inputvar):
@@ -136,33 +137,40 @@ class SCANINPUT:
         # inputvar is list of list of input parameters define in section [scan]
         af.Info('Input parameters   =  ')
         for ii in inputvar:
-            self.AllPar[ii[0]]=af.NaN
-            self.InPar[ii[0]]=af.NaN
-            self.InputPar[ii[0]] = ii
             lenii = len(ii)
             
             if lenii < 3 :
-              af.ErrorStop(InputCheck(ii[0], 3, "Value"))
+              af.ErrorStop(self.InputCheck(ii[0], 3, "Value"))
             
-            if lenii == 3 :
-              if ii[1].upper() == "FIXED":
-                af.Info('  ID= %s\tPrior= %s\t%f'%(ii[0],ii[1],ii[2]))
-                continue
-              else:
-                af.ErrorStop(InputCheck(ii[0], 4, "Minimum, Maximum"))
+            # Set fixed par
+            if ii[1].upper() == "FIXED":
+              if lenii > 3 :
+                af.WarningNoWait(self.InputCheck(ii[0], 3, "Value"))
+                af.WarningWait("The rest %i values will be ignore."%(lenii-3) )
+              af.Info('  ID= %s\tPrior= %s\t =%f'%(ii[0],ii[1],ii[2]))
+              self.FixedPar[ii[0]] = ii[2]
+              self.AllPar[ii[0]] = ii[2]
+              continue
+            
+            # Initialize other input par to NaN
+            self.InputPar[ii[0]] = ii
+            self.InPar[ii[0]] = af.NaN
+            self.AllPar[ii[0]] = af.NaN
+            if lenii < 4 :
+              af.ErrorStop(self.InputCheck(ii[0], 4, "Minimum, Maximum"))
             
             # TODO replace 'RANDOM', 'MULTINEST'
             if self._ScanMethod in ['RANDOM', 'MULTINEST']:
               if lenii > 4 :
-                af.WarningNoWait(InputCheck(ii[0], 4, "Minimum, Maximum"))
-                af.WarningWait("The rest %i values will be ignore."%(4-lenii) )
+                af.WarningNoWait(self.InputCheck(ii[0], 4, "Minimum, Maximum"))
+                af.WarningWait("The rest %i values will be ignore."%(lenii-4) )
               af.Info('  ID= %s\tPrior= %s\tMin= %f\tMax= %f'%(ii[0],ii[1],ii[2],ii[3]))
               continue
                 
             if self._ScanMethod == 'GRID':
               if lenii == 4:
                 self.GridBin[ii[0]]=20
-                af.WarningNoWait(InputCheck(ii[0], 5, "Minimum, Maximum, Number of bins"))
+                af.WarningNoWait(self.InputCheck(ii[0], 5, "Minimum, Maximum, Number of bins"))
                 af.WarningWait("'Number of bins' will take default value, 20.")
               else:
                 self.GridBin[ii[0]]=ii[4]
@@ -170,14 +178,14 @@ class SCANINPUT:
                   af.WarningNoWait(InputCheck(ii[0], 5, "Minimum, Maximum, Number of bins"))
                   af.ErrorStop("'Number of bins' is not a positive integer.")
                 if lenii> 5:
-                  af.WarningNoWait(InputCheck(ii[0], 5, "Minimum, Maximum, Number of bins"))
-                  af.WarningWait("The rest %i values will be ignore."%(5-lenii) )
+                  af.WarningNoWait(self.InputCheck(ii[0], 5, "Minimum, Maximum, Number of bins"))
+                  af.WarningWait("The rest %i values will be ignore."%(lenii-5) )
               af.Info('  ID= %s\tPrior= %s\tMin= %f\tMax= %f\tNbin=%i'%(ii[0],ii[1],ii[2],ii[3],self.GridBin[ii[0]]))
               continue
             
             if self._ScanMethod == 'MCMC':
               if lenii < 6:
-                af.WarningNoWait(InputCheck(ii[0], 6, "Minimum, Maximum, Interval, Initial value"))
+                af.WarningNoWait(self.InputCheck(ii[0], 6, "Minimum, Maximum, Interval, Initial value"))
                 self.MCMCiv[ii[0]] = 1./2.
                 IniV = float(ii[3]+ii[2])/2.
                 af.WarningWait("'Initial value' will take default value, (Max-Min)/2.")
@@ -195,8 +203,8 @@ class SCANINPUT:
                   self.MCMCiv[ii[0]] = (log10(ii[5])-log10(ii[2]))/(log10(ii[3]) - log10(ii[2]))
                 IniV = ii[5]
                 if lenii > 6:
-                  af.WarningNoWait(InputCheck(ii[0], 6, "Minimum, Maximum, Interval, Initial value"))
-                  af.WarningWait("The rest %i values will be ignore."%(6-lenii) )
+                  af.WarningNoWait(self.InputCheck(ii[0], 6, "Minimum, Maximum, Interval, Initial value"))
+                  af.WarningWait("The rest %i values will be ignore."%(lenii-6) )
               af.Info('  ID= %s\tPrior= %s\tMin= %f\tMax= %f\tStep=%f\tIniV=%f'%(ii[0],ii[1],ii[2],ii[3],Step,self.MCMCiv[ii[0]]))
               continue
     
@@ -212,7 +220,6 @@ class SCANINPUT:
                 self.AllPar[jj] = prog[ii].outvar[jj]
                 self.OutPar[jj] = prog[ii].outvar[jj]
 
-            # TODO Are follwoing needed?
             for jj in prog[ii].invar:
                 if jj not in list(self.AllPar.keys()):
                     self.AllPar[jj] = prog[ii].invar[jj]
@@ -233,9 +240,10 @@ class SCANINPUT:
         # Sort parameters so that we can output them in right order
         self.OutPar = af.sortDic(self.OutPar)
 
-        af.Debug('All vars:   ',self.AllPar)
-        af.Debug('Input Pars: ',self.InPar)
-        af.Debug('Output Pars:',self.OutPar)
+        af.Debug('All vars:   ', self.AllPar)
+        af.Debug('Input Pars: ', self.InPar)
+        af.Debug('Fixed Pars: ', self.FixedPar)
+        af.Debug('Output Pars:', self.OutPar)
                 
     def getFolderName(self):
         return self._FolderName
