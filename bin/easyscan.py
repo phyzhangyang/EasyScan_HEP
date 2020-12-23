@@ -42,7 +42,7 @@ elif ES.getScanMethod() == 'GRID':
 elif ES.getScanMethod() == 'READ':
     ResultFile = 'ReadData.txt'
 if ES.getScanMethod() != 'PLOT':
-    auxfun.WriteResultInf(ES.InPar, ES.FixedPar, ES.OutPar, Constraint.Chi2, ES.getFolderName(), ES.getScanMethod(), ResultFile)
+    auxfun.WriteResultInf(ES.InPar, ES.FixedPar, ES.OutPar, Constraint.Chi2, ES.getFolderName(), ES.getScanMethod())
 
 # Logarithm of likelihood function
 def LogLikelihood(cube, ndim, nparams):
@@ -123,8 +123,7 @@ elif ES.getScanMethod() == 'MCMC':
         FlagTuneR     = ES.getFlagTuneR(),
         InitVal       = ES.getInitialValue(),
         n_print       = ES.getPrintNum(),
-        outputfiles_basename = ES.getFolderName(),
-        outputfiles_filename = ResultFile)
+        outputfiles_basename = ES.getFolderName())
 
 elif ES.getScanMethod() == 'MULTINEST':
     import pymultinest
@@ -152,8 +151,7 @@ elif ES.getScanMethod() == 'READ':
             outpar               = ES.OutPar,
             bin_num              = ES.GridBin,
             n_print              = ES.getPrintNum(),
-            outputfiles_basename = ES.getFolderName(),
-            outputfiles_filename = ResultFile )
+            outputfiles_basename = ES.getFolderName())
 
 ## recover the modified input file(s) for external programs
 if ES.getScanMethod() != 'PLOT': 

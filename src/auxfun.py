@@ -15,6 +15,8 @@ log_zero = -1e+100
 NaN = float('NaN')
 ## Define current path
 CurrentPath = os.getcwd()
+## Define name of result data file
+ResultFile = 'ScanResult.txt'
 
 ## Define screen print functions
 def ColorText(i,text,j=1):
@@ -64,10 +66,10 @@ def string2nestlist(s):
 
 ## Write information of result into file
 # TODO why 'postprocess' is return
-def WriteResultInf(InPar, FixedPar, OutPar, Constraint, Path, ScanMethod, File):
+def WriteResultInf(InPar, FixedPar, OutPar, Constraint, Path, ScanMethod):
     if ScanMethod == 'PLOT': return
     #if ScanMethod == 'POSTPROCESS': os.rename(os.path.join(Path,'ScanInf.txt'),os.path.join(Path,'ScanInf_old.txt'))
-    outfile = open(os.path.join(Path,'ScanResult.txt'),'w')  
+    outfile = open(os.path.join(Path, ResultFile),'w')  
     inf = ''
     if ScanMethod == 'MULTINEST':
       inf += 'probability,-2loglike,'

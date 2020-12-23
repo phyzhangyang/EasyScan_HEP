@@ -90,7 +90,7 @@ class PLOTER():
     def setPlotPar(self,path,ScanMethod):
         # read result
         if ScanMethod not in ['PLOT', 'POSTPROCESS', 'MULTINEST']:
-          self._data = pd.read_csv(os.path.join(path,'ScanResult.txt'), header=0, index_col=False)
+          self._data = pd.read_csv(os.path.join(path, af.ResultFile), header=0, index_col=False)
         else:
           stop
         
