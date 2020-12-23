@@ -96,8 +96,8 @@ def printPoint4MCMC(Chisq,CurChisq,MinChisq,AccRat,FlagTuneR,kcovar):
         af.Info('StepZize factor= '+str(exp(kcovar)))
 
 
-def readrun(LogLikelihood,Prior,n_dims,n_params,inpar,outpar,bin_num,n_print,outputfiles_basename,outputfiles_filename):
-    f_out = open(os.path.join(outputfiles_basename,outputfiles_filename),'a')
+def readrun(LogLikelihood,Prior,n_dims,n_params,inpar,outpar,bin_num,n_print,outputfiles_basename):
+    f_out = open(os.path.join(outputfiles_basename,af.ResultFile),'a')
     f_path = os.path.join(outputfiles_basename,"SavedFile")
     if not os.path.exists(f_path):
         os.makedirs(f_path)
@@ -148,7 +148,7 @@ def readrun(LogLikelihood,Prior,n_dims,n_params,inpar,outpar,bin_num,n_print,out
         #cubePre = list(cube)
 
 def gridrun(LogLikelihood, Prior, n_params, inpar, fixedpar, outpar, bin_num, n_print, outputfolder):
-    data_file = open(os.path.join(outputfolder, "ScanResult.txt"),'a') 
+    data_file = open(os.path.join(outputfolder, af.ResultFile),'a') 
     file_path = os.path.join(outputfolder,"SavedFile")
     
     n_dims = len(inpar)
@@ -187,7 +187,7 @@ def gridrun(LogLikelihood, Prior, n_params, inpar, fixedpar, outpar, bin_num, n_
           printPoint(Nrun+1, cube, n_dims, inpar, fixedpar, outpar, loglike, Naccept)
 
 def randomrun(LogLikelihood, Prior, n_params, inpar, fixedpar, outpar, n_live_points, n_print, outputfolder):
-    data_file = open(os.path.join(outputfolder, "ScanResult.txt"),'a') # TODO w -> a
+    data_file = open(os.path.join(outputfolder, af.ResultFile),'a')
     file_path = os.path.join(outputfolder,"SavedFile")
    
     n_dims = len(inpar)
@@ -213,9 +213,9 @@ def randomrun(LogLikelihood, Prior, n_params, inpar, fixedpar, outpar, n_live_po
         if (Nrun+1)%n_print == 0: 
             printPoint(Nrun+1, cube, n_dims, inpar, fixedpar, outpar, loglike, Naccept)
 
-def mcmcrun(LogLikelihood,Prior,n_dims,n_params,n_live_points,inpar,fixedpar,  outpar,StepSize,AccepRate,FlagTuneR,InitVal,n_print,outputfiles_basename,outputfiles_filename):
-    f_out = open(os.path.join(outputfiles_basename,outputfiles_filename),'a')
-    f_out2 = open(os.path.join(outputfiles_basename,'All_'+outputfiles_filename),'a')
+def mcmcrun(LogLikelihood,Prior,n_dims,n_params,n_live_points,inpar,fixedpar,  outpar,StepSize,AccepRate,FlagTuneR,InitVal,n_print,outputfiles_basename):
+    data_file = open(os.path.join(outputfolder, af.ResultFile),'a')
+    all_data_file = open(os.path.join(outputfolder, 'All_'+af.ResultFile),'a')
     f_path = os.path.join(outputfiles_basename,"SavedFile")
     
     # Initialise the cube
