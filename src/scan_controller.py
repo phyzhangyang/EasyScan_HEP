@@ -39,7 +39,7 @@ class SCANINPUT:
     
     def setScanMethod(self, method):
         self._ScanMethod = method.upper()
-        if self._ScanMethod not in scanner.names:
+        if self._ScanMethod not in scanner._all:
             af.ErrorStop('%s is not a supported scan method'%method)
         af.Info('Scan method       = %s'%self._ScanMethod)
         
@@ -57,7 +57,7 @@ class SCANINPUT:
         else:
             self._FolderName = os.path.join(af.CurrentPath, name)
         
-        if self._ScanMethod in scanner.names_post:
+        if self._ScanMethod == scanner._postprocess:
             if not os.path.exists(self._FolderName):
                 af.ErrorStop("The result file %s doesn't exist."%self._FolderName)
             if not os.path.exists(os.path.join(self._FolderName,'ScanInf.txt')): # TODO do not use ScanInf
@@ -93,7 +93,7 @@ class SCANINPUT:
             # Create result folder
             os.mkdir(self._FolderName)
             os.mkdir(os.path.join(self._FolderName,'SavedFile'))
-            if self._ScanMethod in scanner.names_multinest:
+            if self._ScanMethod == scanner._postprocess:
                 self.MNOutputFile = os.path.join(self._FolderName, "MultiNestData/")
                 os.mkdir(self.MNOutputFile)
         af.Info('...............................................')
@@ -237,7 +237,9 @@ class SCANINPUT:
                     self.AllPar[jj] = prog[ii].cffchi2var[jj]
                     self.OutPar[jj] = prog[ii].cffchi2var[jj]
 
-        # Sort parameters so that we can output them in right order
+        # Order parameters
+        self.InPar = af.sortDic(self.InPar)
+        self.FixedPar = af.sortDic(self.FixedPar)
         self.OutPar = af.sortDic(self.OutPar)
 
         af.Debug('All vars:   ', self.AllPar)

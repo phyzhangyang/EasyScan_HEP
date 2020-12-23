@@ -10,40 +10,16 @@ from math import exp
 import auxfun as af
 import ploter
 
+_random = "RANDOM"
+_grid = "GRID"
+_mcmc = "MCMC"
+_multinest = "MULTINEST"
+_postprocess = "POSTPROCESS"
+_plot = "Plot"
 
-class SCANNER:
-  def __init__(self, name, no_random=False, no_like=False, only_plot=False, use_AccepRate=False, postprocess=False, multinest=False):
-    self.name = name.upper()
-    self.no_random = no_random
-    self.no_like = no_like
-    self.use_AccepRate = use_AccepRate
-    self.only_plot = only_plot
-    self.postprocess = postprocess
-    self.multinest = multinest
-    if self.only_plot:
-      self.postprocess = True
-    if self.postprocess:
-      self.no_random = True
-      self.no_like = True
-
-
-scanner_random = SCANNER("RANDOM", no_like=True)
-scanner_grid = SCANNER("GRID", no_random=True, no_like=True)
-scanner_mcmc = SCANNER("MCMC", use_AccepRate=True)
-scanner_multinest = SCANNER("MULTINEST", multinest=True)
-scanner_postprocess = SCANNER("POSTPROCESS", postprocess=True)
-scanner_plot = SCANNER("Plot", only_plot=True)
-
-scanners = [scanner_random, scanner_grid, scanner_mcmc, scanner_multinest, scanner_postprocess, scanner_plot]
-
-names = list(map(lambda x:x.name, scanners))
-names_no_random = list(map(lambda x:x.name, filter(lambda y:y.no_random, scanners)))
-names_no_like   = list(map(lambda x:x.name, filter(lambda y:y.no_like,   scanners)))
-names_only_plot = list(map(lambda x:x.name, filter(lambda y:y.only_plot, scanners)))
-names_post = list(map(lambda x:x.name, filter(lambda y:y.postprocess, scanners)))
-names_multinest = list(map(lambda x:x.name, filter(lambda y:y.multinest, scanners)))
-names_use_AccepRate = list(map(lambda x:x.name, filter(lambda y:y.use_AccepRate, scanners)))
-
+_all = [_random, _grid, _mcmc, _multinest, _postprocess, _plot]
+_no_random = [_grid, _postprocess, _plot]
+_no_like   = [_random, _grid, _postprocess, _plot]
 
 def saveCube(cube, data_file, file_path, num, save_file):
   result = []
@@ -87,7 +63,7 @@ def printPoint(Numrun, cube, n_dims, inpar, fixedpar, outpar, loglike, Naccept):
     af.Info('Total    Num    = '+str(Numrun))
 
 def printPoint4MCMC(Chisq,CurChisq,MinChisq,AccRat,FlagTuneR,kcovar):
-    af.Info('.......... MCMC info ............')
+    af.Info('........... MCMC info .............')
     af.Info('Test     Chi^2 = '+str(Chisq))
     af.Info('Current  Chi^2 = '+str(CurChisq))
     af.Info('Mimimum  Chi^2 = '+str(MinChisq))
@@ -137,7 +113,8 @@ def readrun(LogLikelihood,Prior,n_dims,n_params,inpar,outpar,bin_num,n_print,out
             saveCube(cube,f_out,f_path,str(Naccept),True)
         #saveCube(cube,f_out2,f_path,str(Naccept),False)
         
-        if (Nrun+1)%n_print == 0: printPoint(Nrun+1,cube,n_dims,inpar,outpar,loglike,Naccept)
+        if (Nrun+1)%n_print == 0:
+            printPoint(Nrun+1,cube,n_dims,inpar,outpar,loglike,Naccept)
 
         #new 20180519 liang
         #cubeProtect = list(cube)
@@ -213,11 +190,13 @@ def randomrun(LogLikelihood, Prior, n_params, inpar, fixedpar, outpar, n_live_po
         if (Nrun+1)%n_print == 0: 
             printPoint(Nrun+1, cube, n_dims, inpar, fixedpar, outpar, loglike, Naccept)
 
-def mcmcrun(LogLikelihood,Prior,n_dims,n_params,n_live_points,inpar,fixedpar,  outpar,StepSize,AccepRate,FlagTuneR,InitVal,n_print,outputfiles_basename):
+def mcmcrun(LogLikelihood, Prior, n_params, n_live_points, inpar, fixedpar, outpar, StepSize, AccepRate, FlagTuneR, InitVal, n_print, outputfolder):
     data_file = open(os.path.join(outputfolder, af.ResultFile),'a')
-    all_data_file = open(os.path.join(outputfolder, 'All_'+af.ResultFile),'a')
-    f_path = os.path.join(outputfiles_basename,"SavedFile")
-    
+    all_data_file = open(os.path.join(outputfolder, af.ResultFile_MCMC),'a')
+    file_path = os.path.join(outputfolder,"SavedFile")
+        
+    n_dims = len(inpar)
+        
     # Initialise the cube
     cube = []
     for i in range(n_params):
@@ -238,7 +217,7 @@ def mcmcrun(LogLikelihood,Prior,n_dims,n_params,n_live_points,inpar,fixedpar,  o
         AllOutMCMC = cube.copy()
         AllOutMCMC.append(1)
         #"True" for saving files of initial physical point
-        saveCube(AllOutMCMC,f_out2,f_path,'0',True)
+        saveCube(AllOutMCMC, all_data_file, file_path, '0', False)
         if loglike > af.log_zero / 2.0 : break
         if n_init == 0 : 
             af.WarningNoWait('The initial point is unphysical, it will find the physical initial points randmly.')
@@ -253,7 +232,7 @@ def mcmcrun(LogLikelihood,Prior,n_dims,n_params,n_live_points,inpar,fixedpar,  o
     CurChisq = - 2.0 * loglike
     for i in range(n_params): CurObs.append( cube[i] )
     CurObs.append(0) # mult
-    printPoint(0,cube,n_dims,inpar,outpar,loglike,0)
+    printPoint(0, cube, n_dims, inpar, fixedpar, outpar, loglike, 0)
 
     # Initialize the MCMC parameters
     MinChisq = CurChisq
@@ -284,7 +263,7 @@ def mcmcrun(LogLikelihood,Prior,n_dims,n_params,n_live_points,inpar,fixedpar,  o
             loglike = LogLikelihood(cube, n_dims, n_params)
             AllOutMCMC = cube.copy()
             AllOutMCMC.append(1)
-            saveCube(AllOutMCMC,f_out2,f_path,'0',False)
+            saveCube(AllOutMCMC, all_data_file, file_path, '0', False)
             Chisq = - 2.0 * loglike
 
         Flag_accept = RangeFlag and (Chisq < CurChisq + 20) 
@@ -296,7 +275,7 @@ def mcmcrun(LogLikelihood,Prior,n_dims,n_params,n_live_points,inpar,fixedpar,  o
         if Flag_accept :
             CurObs[-1]=mult
             #"Naccept+1" due to file of Chisq have covered file of CurChisq
-            saveCube(CurObs,f_out,f_path,str(Naccept+1),True)
+            saveCube(CurObs, data_file, file_path, str(Naccept+1), True)
             CurChisq = Chisq
             for i in range(n_params): CurObs[i]   = cube[i]
             for i in range(n_dims):   CurPar[i]   = par[i]
@@ -317,9 +296,9 @@ def mcmcrun(LogLikelihood,Prior,n_dims,n_params,n_live_points,inpar,fixedpar,  o
 
         if Nrun%n_print == 0: 
             if RangeFlag:
-                printPoint(Nrun,cube,n_dims,inpar,outpar,loglike,Naccept)
+                printPoint(Nrun, cube, n_dims, inpar, fixedpar, outpar, loglike, Naccept)
                 printPoint4MCMC(Chisq,CurChisq,MinChisq,AccRat,FlagTuneR,kcovar)
 
     # save the last point
     CurObs[-1]=mult
-    saveCube(CurObs,f_out,f_path,str(Naccept),True)
+    saveCube(CurObs, data_file, file_path, str(Naccept), True)

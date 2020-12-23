@@ -1,26 +1,16 @@
 ####################################################################
 #    Class PLOT: contral plot                                      #
 ####################################################################
-# External modules
-import os
-import matplotlib
-matplotlib.use('Agg')
-import matplotlib.pyplot as plt
-import numpy as np
-import pandas as pd
-from scipy.interpolate import griddata
 # Internal modules
 import auxfun as af
-
+# External modules
+import os
+import numpy
 
 ############################################################
 #################   Plot    Class   ########################
 ############################################################
 
-
-histconf={'bins':50, 'normed':False, 'facecolor':'green', 'alpha':0.7}
-scatterconf={'s':50, 'marker':'o', 'edgecolors':'None', 'alpha':0.9}
-colorconf={'s':50, 'edgecolors':'None','cmap':plt.get_cmap('winter')}
 figconf={'figsize':(7,7), 'dpi':80}
 labelconf={'fontsize':20}
 legendconf={'fontsize':20}
@@ -88,9 +78,19 @@ class PLOTER():
 
 
     def setPlotPar(self,path,ScanMethod):
+        try:
+            import matplotlib
+        except ImportError:
+            af.ErrorStop("No matplotlib module. No plot will be generated.")
+        try:
+            import pandas
+        except ImportError:
+            af.ErrorStop("No pandas module. No plot will be generated.")
+        matplotlib.use('Agg')
+
         # read result
         if ScanMethod not in ['PLOT', 'POSTPROCESS', 'MULTINEST']:
-          self._data = pd.read_csv(os.path.join(path, af.ResultFile), header=0, index_col=False)
+          self._data = pandas.read_csv(os.path.join(path, af.ResultFile), header=0, index_col=False)
         else:
           stop
         
@@ -114,7 +114,7 @@ class PLOTER():
         if par[jj] not in self._data.columns:
           af.WarningNoWait("Parameter '%s' in [plot] section do not exist. No plot for it."%( par[jj] )  )
           return False 
-        if not np.issubdtype(self._data[par[jj]].dtype, np.number):
+        if not numpy.issubdtype(self._data[par[jj]].dtype, numpy.number):
           af.WarningNoWait("Parameter %s is not float number. No plot for it."%par[jj])
           return False 
       return True
@@ -131,17 +131,19 @@ class PLOTER():
                 # for each segment of that section
                 for vv in pp.iter_segments():
                     xy.append(vv[0])
-                paths.append(np.vstack(xy))
+                paths.append(numpy.vstack(xy))
             contours.append(paths)
     
         return contours
 
     def getPlot(self,ScanMethod):
+        import matplotlib.pyplot as plt
         if len(self._Histogram) + len(self._Scatter) + len(self._Color) + len(self._Contour) == 0:
             return
         af.Info('Start to plot the result ... ')
         FigNames=[]
         for ii in self._Histogram :
+            histconf={'bins':50, 'normed':False, 'facecolor':'green', 'alpha':0.7}
             af.Info('Generate histogram plot of parameter %s'%ii[0])
             if not self.checkPar(ii,1): continue
             f=plt.figure(**figconf)
@@ -153,6 +155,7 @@ class PLOTER():
             plt.savefig(os.path.join(self._path, ii[1]))
 
         for ii in self._Scatter :
+            scatterconf={'s':50, 'marker':'o', 'edgecolors':'None', 'alpha':0.9}
             af.Info('Generate scatter plot of parameter %s and %s'%(ii[0],ii[1]))
             if not self.checkPar(ii,2): continue
             f=plt.figure(**figconf)
@@ -175,6 +178,7 @@ class PLOTER():
                 plt.savefig(os.path.join(self._path, 'Compare_%s'%ii[2]))
 
         for ii in self._Color :
+            colorconf={'s':50, 'edgecolors':'None','cmap':plt.get_cmap('winter')}
             af.Info('Generate color plot of parameter %s and %s with color %s'%(ii[0],ii[1],ii[2]))
             if not self.checkPar(ii,3): continue
             f=plt.figure(**figconf)
@@ -188,16 +192,21 @@ class PLOTER():
             plt.savefig(os.path.join(self._path, ii[3]))
 
         for ii in self._Contour :
+            try:
+                from scipy.interpolate import griddata
+            except ImportError:
+                af.WarningNoWait("No scipy module. Contour plot will not be generated.")
+                break
             af.Info('Generate contour plot of parameter %s and %s with contour %s'%(ii[0],ii[1],ii[2]))
             if not self.checkPar(ii,3): continue
             f=plt.figure(**figconf)
             subplot=f.add_subplot(111)
 
             x = self._data[ii[0]]
-            X = np.linspace(min(x),max(x),100)
+            X = numpy.linspace(min(x),max(x),100)
             y = self._data[ii[1]]
-            Y = np.linspace(min(y),max(y),100)
-            # z = [ np.log10(abs(u)) for u in self._data[ii[2]] ]  # log10
+            Y = numpy.linspace(min(y),max(y),100)
+            # z = [ numpy.log10(abs(u)) for u in self._data[ii[2]] ]  # log10
             z = self._data[ii[2]] 
             Z = griddata(x,y,z,X,Y,interp='linear')
 
@@ -206,7 +215,7 @@ class PLOTER():
 
             ## debug
             #Cpoint = self.get_contour_verts(C)  
-            #np.savetxt(os.path.join(self._path, "contour_1_1.dat"),Cpoint[0][0])  
+            #numpy.savetxt(os.path.join(self._path, "contour_1_1.dat"),Cpoint[0][0])
 
             C = subplot.contourf(X,Y,Z,3, cmap=plt.cm.rainbow)
             
