@@ -30,25 +30,13 @@ Constraint = CONSTRAINT()
 Ploter     = PLOTER()
 ProgID     = ReadIn(sys.argv[1], ES, Programs, Constraint, Ploter)
 
-# TODO
-if ES.getScanMethod() == 'RANDOM':
-    ResultFile = 'RandomData.txt'
-elif ES.getScanMethod() == 'MCMC':
-    ResultFile = 'MCMCData.txt'
-elif ES.getScanMethod() == 'MULTINEST':
-    ResultFile = 'MultiNestData/.txt'
-elif ES.getScanMethod() == 'GRID':
-    ResultFile = 'GridData.txt'
-elif ES.getScanMethod() == 'READ':
-    ResultFile = 'ReadData.txt'
 if ES.getScanMethod() != 'PLOT':
     auxfun.WriteResultInf(ES.InPar, ES.FixedPar, ES.OutPar, Constraint.Chi2, ES.getFolderName(), ES.getScanMethod())
 
 # Logarithm of likelihood function
 def LogLikelihood(cube, ndim, nparams):
-    # Pass input value from cube to InPar
+    # Pass input value from cube to AllPar
     for i,name in enumerate(ES.InPar):
-        ES.InPar [name]=cube[i]
         ES.AllPar[name]=cube[i]
         
     # Run programs
@@ -123,7 +111,7 @@ elif ES.getScanMethod() == 'MCMC':
         FlagTuneR     = ES.getFlagTuneR(),
         InitVal       = ES.getInitialValue(),
         n_print       = ES.getPrintNum(),
-        outputfiles_basename = ES.getFolderName())
+        outputfolder  = ES.getFolderName())
 
 elif ES.getScanMethod() == 'MULTINEST':
     import pymultinest
