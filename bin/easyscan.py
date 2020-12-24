@@ -125,7 +125,7 @@ elif ES.getScanMethod() == 'MULTINEST':
         outputfiles_basename = ES.MNOutputFile,
         n_live_points        = ES.getPointNum(),
         verbose                    = True,
-        resume                     = False, #TODO
+        resume                     = True, #TODO
         importance_nested_sampling = True)
 
 elif ES.getScanMethod() == 'READ':

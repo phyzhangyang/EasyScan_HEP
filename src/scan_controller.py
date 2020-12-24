@@ -93,7 +93,7 @@ class SCANINPUT:
             # Create result folder
             os.mkdir(self._FolderName)
             os.mkdir(os.path.join(self._FolderName,'SavedFile'))
-            if self._ScanMethod == scanner._postprocess:
+            if self._ScanMethod == scanner._multinest:
                 self.MNOutputFile = os.path.join(self._FolderName, "MultiNestData/")
                 os.mkdir(self.MNOutputFile)
         af.Info('...............................................')

@@ -3,6 +3,7 @@
 ####################################################################
 # Internal modules
 import auxfun as af
+import scanner
 # External modules
 import os
 import numpy
@@ -91,9 +92,15 @@ class PLOTER():
         # read result
         if ScanMethod not in ['PLOT', 'POSTPROCESS', 'MULTINEST']:
           self._data = pandas.read_csv(os.path.join(path, af.ResultFile), header=0, index_col=False)
-        else:
+        elif ScanMethod == scanner._multinest:
+          column_names = pandas.read_csv(os.path.join(path, af.ResultFile), header=0, index_col=False).columns.str.strip()
+          print(column_names)
+          self._data = pandas.read_csv(os.path.join(path, af.ResultFile_MultiNest), header=None, names=column_names, delim_whitespace=True, index_col=False)
+          print(self._data)
+        elif ScanMethod == scanner._postprocess:
           stop
-        
+        else: # ScanMethod == scanner._plot
+          stop
         # make figure folder
         self._path = os.path.join(path,'Figures')
         if not os.path.exists(self._path):
