@@ -128,12 +128,11 @@ elif ES.getScanMethod() == 'MULTINEST':
         resume                     = True, #TODO
         importance_nested_sampling = True)
 
-elif ES.getScanMethod() == 'READ':
-    from scanner import readrun
-    readrun(
+elif ES.getScanMethod() == scanner._postprocess:
+    from scanner import postprocessrun
+    postprocessrun(
             LogLikelihood        = LogLikelihood,
             Prior                = Prior,
-            n_dims               = len(ES.InPar),
             n_params             = len(ES.AllPar)+len(Constraint.Chi2),
             inpar                = ES.InPar,
             outpar               = ES.OutPar,

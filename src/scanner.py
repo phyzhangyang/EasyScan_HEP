@@ -73,14 +73,23 @@ def printPoint4MCMC(Chisq,CurChisq,MinChisq,AccRat,FlagTuneR,kcovar):
         af.Info('StepZize factor= '+str(exp(kcovar)))
 
 
-def readrun(LogLikelihood,Prior,n_dims,n_params,inpar,outpar,bin_num,n_print,outputfiles_basename):
-    f_out = open(os.path.join(outputfiles_basename,af.ResultFile),'a')
-    f_path = os.path.join(outputfiles_basename,"SavedFile")
-    if not os.path.exists(f_path):
-        os.makedirs(f_path)
+def postprocessrun(LogLikelihood,Prior,n_dims,n_params,inpar,outpar,bin_num,n_print,outputfiles_basename):
+    data_file = open(os.path.join(outputfolder, af.ResultFile),'a') 
+    file_path = os.path.join(outputfolder,"SavedFile")
+    
+    n_dims = len(inpar)
+        
+    if not os.path.exists(file_path):
+        os.makedirs(file_path)
 
-    Ploter = ploter.PLOTER()
-    Ploter.setPlotPar(outputfiles_basename, 'READ')
+    # Read data using ploter
+    data = ploter.PLOTER()
+    data.setPlotPar(outputfiles_basename, _plot)
+    
+    if not data.checkPar([i for i in inpar],n_dims, section_name="scan"):
+      af.ErrorStop('Can not postprocess it.'%name)
+    
+    stop
     
     for i,name in enumerate(inpar):
         try:
