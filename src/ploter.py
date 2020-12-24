@@ -80,23 +80,17 @@ class PLOTER():
 
     def setPlotPar(self,path,ScanMethod):
         try:
-            import matplotlib
-        except ImportError:
-            af.ErrorStop("No matplotlib module. No plot will be generated.")
-        try:
             import pandas
         except ImportError:
+            
             af.ErrorStop("No pandas module. No plot will be generated.")
-        matplotlib.use('Agg')
 
         # read result
-        if ScanMethod not in ['PLOT', 'POSTPROCESS', 'MULTINEST']:
+        if ScanMethod not in ['PLOT', 'MULTINEST']:
           self._data = pandas.read_csv(os.path.join(path, af.ResultFile), header=0, index_col=False)
         elif ScanMethod == scanner._multinest:
           column_names = pandas.read_csv(os.path.join(path, af.ResultFile), header=0, index_col=False).columns.str.strip()
           self._data = pandas.read_csv(os.path.join(path, af.ResultFile_MultiNest), header=None, names=column_names, delim_whitespace=True, index_col=False)
-        elif ScanMethod == scanner._postprocess:
-          stop
         else: # ScanMethod == scanner._plot
           if os.path.exists(os.path.join(path, af.ResultFile_MultiNest)):
             column_names = pandas.read_csv(os.path.join(path, af.ResultFile), header=0, index_col=False).columns.str.strip()
@@ -112,7 +106,7 @@ class PLOTER():
             __import__("shutil").rmtree(self._path) 
             os.mkdir(self._path)
 
-    def checkPar(self,par,num):                  
+    def checkPar(self, par, num, section_name='plot'):                  
       for jj in range(num):
 #        try:
 #          if self._data[par[jj]].min() == self._data[par[jj]].max():
@@ -122,10 +116,10 @@ class PLOTER():
 #          af.WarningNoWait("Parameter '%s' in [plot] section do not exist. No plot for it."%( par[jj] )  )
 #          return False 
         if par[jj] not in self._data.columns:
-          af.WarningNoWait("Parameter '%s' in [plot] section do not exist. No plot for it."%( par[jj] )  )
+          af.WarningNoWait("Parameter '%s' in [%s] section do not exist."%(par[jj], section_name))
           return False 
         if not numpy.issubdtype(self._data[par[jj]].dtype, numpy.number):
-          af.WarningNoWait("Parameter %s is not float number. No plot for it."%par[jj])
+          af.WarningNoWait("Parameter %s in [%s] section is not float number."%(par[jj], section_name))
           return False 
       return True
 
@@ -147,6 +141,11 @@ class PLOTER():
         return contours
 
     def getPlot(self,ScanMethod):
+        try:
+            import matplotlib
+        except ImportError:
+            af.ErrorStop("No matplotlib module. No plot will be generated.")
+        matplotlib.use('Agg')
         import matplotlib.pyplot as plt
         if len(self._Histogram) + len(self._Scatter) + len(self._Color) + len(self._Contour) == 0:
             return

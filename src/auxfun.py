@@ -19,6 +19,7 @@ CurrentPath = os.getcwd()
 ResultFile = 'ScanResult.txt'
 ResultFile_MCMC = 'All_ScanResult.txt'
 ResultFile_MultiNest = 'MultiNestData/.txt'
+ResultFile_post = 'Previous_ScanResult.txt'
 
 ## Define screen print functions
 def ColorText(i,text,j=1):

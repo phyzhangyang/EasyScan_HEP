@@ -43,12 +43,13 @@ class SCANINPUT:
             af.ErrorStop('%s is not a supported scan method'%method)
         af.Info('Scan method       = %s'%self._ScanMethod)
         
-    def backup_result(self, FolderName):
+    def backup_result(self, FolderName, cp=False):
         if not (os.path.exists(af.CurrentPath+"/Backup")):
             os.mkdir(af.CurrentPath+"/Backup")
         BackupTime = time.strftime("_%Y_%m_%d_%H_%M_%S", time.localtime())
         BackupPath = os.path.join(af.CurrentPath, 'Backup/'+name+BackupTime)
-        os.system(r"mv %s %s" %(FolderName, BackupPath))
+        action = r'cp' if cp else r'mv'
+        os.system(action+r" %s %s" %(FolderName, BackupPath))
     
     def setFolderName(self, name):
         # Turn the result folder path into absolute path
@@ -65,15 +66,12 @@ class SCANINPUT:
             
             if self._ScanMethod == scanner._postprocess:
               # Backup previous results
-              # self.backup_result(self._FolderName) TODO
-              if not (os.path.exists(af.CurrentPath+"/Backup")):
-                  os.mkdir(af.CurrentPath+"/Backup")
-              BackupTime = time.strftime("_%Y_%m_%d_%H_%M_%S", time.localtime())
-              BackupPath = os.path.join(af.CurrentPath, 'Backup/'+name+BackupTime)
-              os.system(r"cp -r %s %s" %(self._FolderName, BackupPath))
+              self.backup_result(self._FolderName, cp=True)
+              # rm Figure and SavedFile folder
+              os.system(r"find %s -type f -name '*' | xargs rm" %os.path.join(self._FolderName,'SavedFile'))
               os.system(r"find %s -type f -name '*' | xargs rm" %os.path.join(self._FolderName,'Figure')) # TODO is this needed?
-              if self._ScanMethod == 'READ': # TODO is this needed?
-                  os.system(r"find %s -type f -name '*' | xargs rm" %os.path.join(self._FolderName,'SavedFile'))
+              # rename data file
+              os.system(r"mv %s %s"%(os.path.join(self._FolderName, af.ResultFile), os.path.join(self._FolderName, af.ResultFile_post)))
                            
         else:
             # Deal with the situation that the result folder already exists.
