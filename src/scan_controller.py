@@ -57,22 +57,23 @@ class SCANINPUT:
         else:
             self._FolderName = os.path.join(af.CurrentPath, name)
         
-        if self._ScanMethod == scanner._postprocess:
+        if self._ScanMethod in scanner._post:
             if not os.path.exists(self._FolderName):
-                af.ErrorStop("The result file %s doesn't exist."%self._FolderName)
-            if not os.path.exists(os.path.join(self._FolderName,'ScanInf.txt')): # TODO do not use ScanInf
-                af.ErrorStop("The information file %s/ScanInf.txt doesn't exist. Please give file ScanInf.txt."%self._FolderName)
+              af.ErrorStop("The result folder %s does not exist."%self._FolderName)
+            if not os.path.exists(os.path.join(self._FolderName,'ScanResult.txt')):
+              af.ErrorStop("No result data file in %s."%self._FolderName)
             
-            # Backup previous results/plots
-            # self.backup_result(self._FolderName) TODO
-            if not (os.path.exists(af.CurrentPath+"/Backup")):
-                os.mkdir(af.CurrentPath+"/Backup")
-            BackupTime = time.strftime("_%Y_%m_%d_%H_%M_%S", time.localtime())
-            BackupPath = os.path.join(af.CurrentPath, 'Backup/'+name+BackupTime)
-            os.system(r"cp -r %s %s" %(self._FolderName, BackupPath))
-            os.system(r"find %s -type f -name '*' | xargs rm" %os.path.join(self._FolderName,'Figure')) # TODO is this needed?
-            if self._ScanMethod == 'READ': # TODO is this needed?
-                os.system(r"find %s -type f -name '*' | xargs rm" %os.path.join(self._FolderName,'SavedFile'))
+            if self._ScanMethod == scanner._postprocess:
+              # Backup previous results
+              # self.backup_result(self._FolderName) TODO
+              if not (os.path.exists(af.CurrentPath+"/Backup")):
+                  os.mkdir(af.CurrentPath+"/Backup")
+              BackupTime = time.strftime("_%Y_%m_%d_%H_%M_%S", time.localtime())
+              BackupPath = os.path.join(af.CurrentPath, 'Backup/'+name+BackupTime)
+              os.system(r"cp -r %s %s" %(self._FolderName, BackupPath))
+              os.system(r"find %s -type f -name '*' | xargs rm" %os.path.join(self._FolderName,'Figure')) # TODO is this needed?
+              if self._ScanMethod == 'READ': # TODO is this needed?
+                  os.system(r"find %s -type f -name '*' | xargs rm" %os.path.join(self._FolderName,'SavedFile'))
                            
         else:
             # Deal with the situation that the result folder already exists.

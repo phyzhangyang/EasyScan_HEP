@@ -15,11 +15,12 @@ _grid = "GRID"
 _mcmc = "MCMC"
 _multinest = "MULTINEST"
 _postprocess = "POSTPROCESS"
-_plot = "Plot"
+_plot = "PLOT"
 
 _all = [_random, _grid, _mcmc, _multinest, _postprocess, _plot]
 _no_random = [_grid, _postprocess, _plot]
 _no_like   = [_random, _grid, _postprocess, _plot]
+_post = [_postprocess, _plot]
 
 def saveCube(cube, data_file, file_path, num, save_file):
   result = []
