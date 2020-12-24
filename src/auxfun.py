@@ -69,8 +69,10 @@ def string2nestlist(s):
 ## Write information of result into file
 # TODO why 'postprocess' is return
 def WriteResultInf(InPar, FixedPar, OutPar, Constraint, Path, ScanMethod):
-    if ScanMethod == 'PLOT': return
-    #if ScanMethod == 'POSTPROCESS': os.rename(os.path.join(Path,'ScanInf.txt'),os.path.join(Path,'ScanInf_old.txt'))
+    if ScanMethod == 'PLOT': 
+      return
+    if ScanMethod == 'POSTPROCESS': 
+      os.rename(os.path.join(Path,'ScanInf.txt'),os.path.join(Path,'ScanInf_old.txt')) #TODO
     inf = ''
     if ScanMethod == 'MULTINEST':
       inf += 'probability,-2loglike,'
