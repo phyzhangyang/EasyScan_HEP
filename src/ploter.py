@@ -78,7 +78,7 @@ class PLOTER():
             jj+=1
 
 
-    def setPlotPar(self,path,ScanMethod):
+    def setPlotPar(self, path, ScanMethod, postprocess=False):
         try:
             import pandas
         except ImportError:
@@ -92,11 +92,12 @@ class PLOTER():
           column_names = pandas.read_csv(os.path.join(path, af.ResultFile), header=0, index_col=False).columns.str.strip()
           self._data = pandas.read_csv(os.path.join(path, af.ResultFile_MultiNest), header=None, names=column_names, delim_whitespace=True, index_col=False)
         else: # ScanMethod == scanner._plot
+          ResultFile_name = af.ResultFile_post if postprocess else af.ResultFile
           if os.path.exists(os.path.join(path, af.ResultFile_MultiNest)):
-            column_names = pandas.read_csv(os.path.join(path, af.ResultFile), header=0, index_col=False).columns.str.strip()
+            column_names = pandas.read_csv(os.path.join(path, ResultFile_name), header=0, index_col=False).columns.str.strip()
             self._data = pandas.read_csv(os.path.join(path, af.ResultFile_MultiNest), header=None, names=column_names, delim_whitespace=True, index_col=False)
           else:
-            self._data = pandas.read_csv(os.path.join(path, af.ResultFile), header=0, index_col=False)
+            self._data = pandas.read_csv(os.path.join(path, ResultFile_name), header=0, index_col=False)
         
         # make figure folder
         self._path = os.path.join(path,'Figures')
@@ -117,6 +118,9 @@ class PLOTER():
 #          return False 
         if par[jj] not in self._data.columns:
           af.WarningNoWait("Parameter '%s' in [%s] section do not exist."%(par[jj], section_name))
+          return False 
+        if self._data.shape[0] == 0:
+          af.WarningNoWait("Parameter '%s' in [%s] section is empty."%(par[jj], section_name))
           return False 
         if not numpy.issubdtype(self._data[par[jj]].dtype, numpy.number):
           af.WarningNoWait("Parameter %s in [%s] section is not float number."%(par[jj], section_name))

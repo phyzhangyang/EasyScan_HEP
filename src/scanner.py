@@ -39,7 +39,7 @@ def saveCube(cube, data_file, file_path, num, save_file):
   data_file.write(','.join(result)+'\n')
   data_file.flush()
 
-def printPoint(Numrun, cube, n_dims, inpar, fixedpar, outpar, loglike, Naccept):
+def printPoint(Numrun, cube, n_dims, inpar, fixedpar, outpar, lnlike, Naccept):
     if Numrun == 0:
         af.Info('------------ Start Point ------------')
     else:
@@ -57,9 +57,9 @@ def printPoint(Numrun, cube, n_dims, inpar, fixedpar, outpar, loglike, Naccept):
           if '/' not in outVar: 
             af.Info('Output - %s = %s '%(name,outVar))
 
-    af.Info('loglikelihood   = '+str(loglike))
+    af.Info('LnLike   = '+str(lnlike))
     if Numrun == 0:
-      af.Info('Initial loglike = '+str(-2*loglike))
+      af.Info('Initial lnlike = '+str(-2*lnlike))
     af.Info('Accepted Num    = '+str(Naccept))
     af.Info('Total    Num    = '+str(Numrun))
 
@@ -73,7 +73,7 @@ def printPoint4MCMC(Chisq,CurChisq,MinChisq,AccRat,FlagTuneR,kcovar):
         af.Info('StepZize factor= '+str(exp(kcovar)))
 
 
-def postprocessrun(LogLikelihood,Prior,n_dims,n_params,inpar,outpar,bin_num,n_print,outputfiles_basename):
+def postprocessrun(LnLike, Prior, n_params, inpar, fixedpar, outpar, bin_num,n_print,outputfolder):
     data_file = open(os.path.join(outputfolder, af.ResultFile),'a') 
     file_path = os.path.join(outputfolder,"SavedFile")
     
@@ -83,58 +83,36 @@ def postprocessrun(LogLikelihood,Prior,n_dims,n_params,inpar,outpar,bin_num,n_pr
         os.makedirs(file_path)
 
     # Read data using ploter
-    data = ploter.PLOTER()
-    data.setPlotPar(outputfiles_basename, _plot)
-    
-    if not data.checkPar([i for i in inpar],n_dims, section_name="scan"):
-      af.ErrorStop('Can not postprocess it.'%name)
-    
-    stop
-    
-    for i,name in enumerate(inpar):
-        try:
-            Ploter._data[name]
-        except:
-            af.ErrorStop('Input parameter "%s" could not found in ScanInf.txt.'%name)
-
-    for i,name in enumerate(inpar):
-        ntotal = len(Ploter._data[name])
-        break
-
-    cube = []
-    cubePre = []
-    # Initialise the cube
-    for i in range(n_params): 
-        cube.append(0.0)
-        cubePre.append(0.0)
+    Data = ploter.PLOTER()
+    Data.setPlotPar(outputfolder, _plot, postprocess=True)
+    data =Data._data
+    if not Data.checkPar([i for i in inpar],n_dims, section_name="scan"):
+      af.ErrorStop('Can not postprocess it.')
+      
+    ntotal = data.shape[0]
+    # Initialise cube
+    cube = [af.NaN] * n_params
 
     af.Info('Begin read scan ...')
-    
     Naccept = 0
-    
     for Nrun in range(ntotal):
-        iner = Nrun
         for i,name in enumerate(inpar):
-            cube[i] = Ploter._data[name][iner]
-        
-        loglike = LogLikelihood(cube, n_dims, n_params)
-        if loglike > af.log_zero:
+            cube[i] = data[name][Nrun]
+        for i,name in enumerate(fixedpar):
+            cube[i] = data[name][Nrun]
+        for i,name in enumerate(outpar):
+            cube[i] = data[name][Nrun]
+            
+        lnlike = LnLike(cube, n_dims, n_params)
+        if lnlike > af.log_zero:
             Naccept += 1
-            saveCube(cube,f_out,f_path,str(Naccept),True)
-        #saveCube(cube,f_out2,f_path,str(Naccept),False)
+            saveCube(cube,data_file,file_path,str(Naccept),True)
         
         if (Nrun+1)%n_print == 0:
-            printPoint(Nrun+1,cube,n_dims,inpar,outpar,loglike,Naccept)
+            printPoint(Nrun+1, cube, n_dims, inpar, fixedpar, outpar, lnlike, Naccept)
+            
 
-        #new 20180519 liang
-        #cubeProtect = list(cube)
-        #if cubePre[n_dims:n_params] == cube[n_dims:n_params]:
-        #    for i in range(n_dims, n_params):
-        #        cube[i]=af.NaN
-        #cube = list(cubeProtect)
-        #cubePre = list(cube)
-
-def gridrun(LogLikelihood, Prior, n_params, inpar, fixedpar, outpar, bin_num, n_print, outputfolder):
+def gridrun(LnLike, Prior, n_params, inpar, fixedpar, outpar, bin_num, n_print, outputfolder):
     data_file = open(os.path.join(outputfolder, af.ResultFile),'a') 
     file_path = os.path.join(outputfolder,"SavedFile")
     
@@ -164,16 +142,16 @@ def gridrun(LogLikelihood, Prior, n_params, inpar, fixedpar, outpar, bin_num, n_
             cube[i+n_dims] = af.NaN
         
         Prior(cube, n_dims, n_params)
-        loglike = LogLikelihood(cube, n_dims, n_params)
+        lnlike = LnLike(cube, n_dims, n_params)
 
-        if loglike > af.log_zero:
+        if lnlike > af.log_zero:
             Naccept += 1
             saveCube(cube,data_file,file_path,str(Naccept),True)
 
         if (Nrun+1)%n_print == 0: 
-          printPoint(Nrun+1, cube, n_dims, inpar, fixedpar, outpar, loglike, Naccept)
+          printPoint(Nrun+1, cube, n_dims, inpar, fixedpar, outpar, lnlike, Naccept)
 
-def randomrun(LogLikelihood, Prior, n_params, inpar, fixedpar, outpar, n_live_points, n_print, outputfolder):
+def randomrun(LnLike, Prior, n_params, inpar, fixedpar, outpar, n_live_points, n_print, outputfolder):
     data_file = open(os.path.join(outputfolder, af.ResultFile),'a')
     file_path = os.path.join(outputfolder,"SavedFile")
    
@@ -191,16 +169,16 @@ def randomrun(LogLikelihood, Prior, n_params, inpar, fixedpar, outpar, n_live_po
           cube[j] = random()
         
         Prior(cube, n_dims, n_params)
-        loglike = LogLikelihood(cube, n_dims, n_params)
+        lnlike = LnLike(cube, n_dims, n_params)
         
-        if loglike > af.log_zero:
+        if lnlike > af.log_zero:
             Naccept += 1
             saveCube(cube, data_file, file_path, str(Naccept), True)
         
         if (Nrun+1)%n_print == 0: 
-            printPoint(Nrun+1, cube, n_dims, inpar, fixedpar, outpar, loglike, Naccept)
+            printPoint(Nrun+1, cube, n_dims, inpar, fixedpar, outpar, lnlike, Naccept)
 
-def mcmcrun(LogLikelihood, Prior, n_params, n_live_points, inpar, fixedpar, outpar, StepSize, AccepRate, FlagTuneR, InitVal, n_print, outputfolder):
+def mcmcrun(LnLike, Prior, n_params, n_live_points, inpar, fixedpar, outpar, StepSize, AccepRate, FlagTuneR, InitVal, n_print, outputfolder):
     data_file = open(os.path.join(outputfolder, af.ResultFile),'a')
     all_data_file = open(os.path.join(outputfolder, af.ResultFile_MCMC),'a')
     file_path = os.path.join(outputfolder,"SavedFile")
@@ -223,12 +201,12 @@ def mcmcrun(LogLikelihood, Prior, n_params, n_live_points, inpar, fixedpar, outp
     n_init = 0
     while True:
         Prior(cube, n_dims, n_params) # normalized to cube to real value
-        loglike = LogLikelihood(cube, n_dims, n_params)
+        lnlike = LnLike(cube, n_dims, n_params)
         AllOutMCMC = cube.copy()
         AllOutMCMC.append(1)
         #"True" for saving files of initial physical point
         saveCube(AllOutMCMC, all_data_file, file_path, '0', False)
-        if loglike > af.log_zero / 2.0 : break
+        if lnlike > af.log_zero / 2.0 : break
         if n_init == 0 : 
             af.WarningNoWait('The initial point is unphysical, it will find the physical initial points randmly.')
         n_init = n_init +1
@@ -239,10 +217,10 @@ def mcmcrun(LogLikelihood, Prior, n_params, n_live_points, inpar, fixedpar, outp
             CurPar[i] = cube[i]
 
     CurObs=[]
-    CurChisq = - 2.0 * loglike
+    CurChisq = - 2.0 * lnlike
     for i in range(n_params): CurObs.append( cube[i] )
     CurObs.append(0) # mult
-    printPoint(0, cube, n_dims, inpar, fixedpar, outpar, loglike, 0)
+    printPoint(0, cube, n_dims, inpar, fixedpar, outpar, lnlike, 0)
 
     # Initialize the MCMC parameters
     MinChisq = CurChisq
@@ -270,11 +248,11 @@ def mcmcrun(LogLikelihood, Prior, n_params, n_live_points, inpar, fixedpar, outp
             Nout=0
             for i in range(n_dims): cube[i] = par[i]
             Prior(cube, n_dims, n_params)
-            loglike = LogLikelihood(cube, n_dims, n_params)
+            lnlike = LnLike(cube, n_dims, n_params)
             AllOutMCMC = cube.copy()
             AllOutMCMC.append(1)
             saveCube(AllOutMCMC, all_data_file, file_path, '0', False)
-            Chisq = - 2.0 * loglike
+            Chisq = - 2.0 * lnlike
 
         Flag_accept = RangeFlag and (Chisq < CurChisq + 20) 
         if Flag_accept: 
@@ -306,7 +284,7 @@ def mcmcrun(LogLikelihood, Prior, n_params, n_live_points, inpar, fixedpar, outp
 
         if Nrun%n_print == 0: 
             if RangeFlag:
-                printPoint(Nrun, cube, n_dims, inpar, fixedpar, outpar, loglike, Naccept)
+                printPoint(Nrun, cube, n_dims, inpar, fixedpar, outpar, lnlike, Naccept)
                 printPoint4MCMC(Chisq,CurChisq,MinChisq,AccRat,FlagTuneR,kcovar)
 
     # save the last point

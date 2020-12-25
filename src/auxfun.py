@@ -34,7 +34,6 @@ def WarningNoWait(warinfo):
     logger.warning(ColorText(1,warinfo))
 def ErrorStop(errinfo):
     logger.error( ColorText(1,errinfo) )
-    GotoWeb()
     print(ColorText(1,'# Exiting with ERROR.'))
     sys.exit(1)
 def Info(debinfo):
@@ -68,12 +67,9 @@ def string2nestlist(s):
     return s
 
 ## Write information of result into file
-# TODO why 'postprocess' is return
 def WriteResultInf(InPar, FixedPar, OutPar, Constraint, Path, ScanMethod):
     if ScanMethod == 'PLOT': 
       return
-    if ScanMethod == 'POSTPROCESS': 
-      os.rename(os.path.join(Path,'ScanInf.txt'),os.path.join(Path,'ScanInf_old.txt')) #TODO
     inf = ''
     if ScanMethod == 'MULTINEST':
       inf += 'probability,-2loglike,'

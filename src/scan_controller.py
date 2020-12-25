@@ -44,11 +44,13 @@ class SCANINPUT:
         af.Info('Scan method       = %s'%self._ScanMethod)
         
     def backup_result(self, FolderName, cp=False):
-        if not (os.path.exists(af.CurrentPath+"/Backup")):
-            os.mkdir(af.CurrentPath+"/Backup")
+        if not os.path.exists(os.path.join(af.CurrentPath,"Backup")):
+            os.mkdir(os.path.join(af.CurrentPath,"Backup"))
         BackupTime = time.strftime("_%Y_%m_%d_%H_%M_%S", time.localtime())
-        BackupPath = os.path.join(af.CurrentPath, 'Backup/'+name+BackupTime)
-        action = r'cp' if cp else r'mv'
+        name = os.path.basename(os.path.normpath(FolderName))
+        BackupPath = os.path.join(af.CurrentPath,"Backup/%s%s"%(name, BackupTime))
+        action = r'cp -r ' if cp else r'mv '
+        af.Info('Back up previous result into %s.'%BackupPath)
         os.system(action+r" %s %s" %(FolderName, BackupPath))
     
     def setFolderName(self, name):
@@ -69,7 +71,7 @@ class SCANINPUT:
               self.backup_result(self._FolderName, cp=True)
               # rm Figure and SavedFile folder
               os.system(r"find %s -type f -name '*' | xargs rm" %os.path.join(self._FolderName,'SavedFile'))
-              os.system(r"find %s -type f -name '*' | xargs rm" %os.path.join(self._FolderName,'Figure')) # TODO is this needed?
+              os.system(r"find %s -type f -name '*' | xargs rm" %os.path.join(self._FolderName,'Figures')) # TODO is this needed?
               # rename data file
               os.system(r"mv %s %s"%(os.path.join(self._FolderName, af.ResultFile), os.path.join(self._FolderName, af.ResultFile_post)))
                            
