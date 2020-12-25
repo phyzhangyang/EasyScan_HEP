@@ -42,23 +42,29 @@ def LnLike(cube, ndim, nparams):
     # Pass input value from cube to AllPar
     for i,name in enumerate(ES.InPar):
         ES.AllPar[name]=cube[i]
-        
+    
+    PhysicalPoint = True
     # Run programs
     for ii in ProgID:
         Programs[ii].WriteInputFile(ES.AllPar)
         Programs[ii].RunProgram()
-        Phy = Programs[ii].ReadOutputFile(ES.AllPar, ES.getFolderName())
+        PhysicalPoint = Programs[ii].ReadOutputFile(ES.AllPar, ES.getFolderName())
         # Apply bound
-        if Phy: Phy = Programs[ii].ReadBound(ES.AllPar)
+        if PhysicalPoint: 
+          PhysicalPoint = Programs[ii].ReadBound(ES.AllPar)
         # If the point is unphysical, return log(0)
-        if not Phy : return af.log_zero
-
+        if not PhysicalPoint : 
+          break
+    
     # Pass fixed variables to cube
     for i,name in enumerate(ES.FixedPar) :
         cube[i+ndim]   = ES.AllPar[name]    
     # Pass output variables to cube
     for i,name in enumerate(ES.OutPar) :
         cube[i+ndim+len(ES.FixedPar)]   = ES.AllPar[name]
+
+    if not PhysicalPoint :
+      return af.log_zero
 
     loglike = - 0.5*Constraint.getChisq(ES.AllPar)
         
