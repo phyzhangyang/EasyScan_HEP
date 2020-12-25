@@ -115,14 +115,13 @@ def gridrun(LnLike, Prior, n_params, inpar, fixedpar, outpar, bin_num, n_print, 
     n_dims = len(inpar)
     
     ntotal = 1
-    cube = []
     interval = {}
     for i,name in enumerate(inpar):
         interval[name] = 1.0 / bin_num[name]
         bin_num[name] += 1
         ntotal     *= bin_num[name]
-    for i in range(n_params): 
-        cube.append(0)
+    # Initialise cube
+    cube = [af.NaN] * n_params
 
     af.Info('Begin grid scan ...')
     
@@ -153,10 +152,8 @@ def randomrun(LnLike, Prior, n_params, inpar, fixedpar, outpar, n_live_points, n
    
     n_dims = len(inpar)
     
-    cube = []
-    # Initialise the cube
-    for i in range(n_params): 
-        cube.append(0.0)
+    # Initialise cube
+    cube = [af.NaN] * n_params
 
     af.Info('Begin random scan ...')
     Naccept = 0
@@ -181,10 +178,8 @@ def mcmcrun(LnLike, Prior, n_params, n_live_points, inpar, fixedpar, outpar, Ste
         
     n_dims = len(inpar)
         
-    # Initialise the cube
-    cube = []
-    for i in range(n_params):
-        cube.append(0)
+    # Initialise cube
+    cube = [af.NaN] * n_params
 
     covar = [] # the sigma of gauss distribution, normalized to 1
     par  = []  # test par, normalized to 1
