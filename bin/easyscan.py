@@ -17,7 +17,7 @@ import os,sys
 sys.path.append(os.path.join(os.path.split(os.path.split(os.path.realpath(__file__))[0])[0], "src"))
 # Internal modules.
 import initialize
-import auxfun
+import auxfun as af
 import statfun
 import scanner
 from readin_config   import ReadIn
@@ -35,7 +35,7 @@ Ploter     = PLOTER()
 ProgID     = ReadIn(sys.argv[1], ES, Programs, Constraint, Ploter)
 
 # Write names of parameters into result file
-auxfun.WriteResultInf(ES.InPar, ES.FixedPar, ES.OutPar, Constraint.Chi2, ES.getFolderName(), ES.getScanMethod())
+af.WriteResultInf(ES.InPar, ES.FixedPar, ES.OutPar, Constraint.Chi2, ES.getFolderName(), ES.getScanMethod())
 
 # Natural logarithm of likelihood function
 def LnLike(cube, ndim, nparams):
@@ -51,7 +51,7 @@ def LnLike(cube, ndim, nparams):
         # Apply bound
         if Phy: Phy = Programs[ii].ReadBound(ES.AllPar)
         # If the point is unphysical, return log(0)
-        if not Phy : return auxfun.log_zero
+        if not Phy : return af.log_zero
 
     # Pass fixed variables to cube
     for i,name in enumerate(ES.FixedPar) :
@@ -74,7 +74,7 @@ def Prior(cube, ndim, nparams):
         cube[i] = statfun.prior(cube[i],ES.InputPar[name])
 
 # Load corresponding scan method
-if ES.getScanMethod() == scanner._random:
+if ES.getScanMethod() == af._random:
     scanner.randomrun(
         LnLike = LnLike,
         Prior         = Prior,
@@ -86,7 +86,7 @@ if ES.getScanMethod() == scanner._random:
         n_print       = ES.getPrintNum(),
         outputfolder  = ES.getFolderName())
 
-elif ES.getScanMethod() == scanner._grid:
+elif ES.getScanMethod() == af._grid:
     scanner.gridrun(
         LnLike = LnLike,
         Prior         = Prior,
@@ -98,7 +98,7 @@ elif ES.getScanMethod() == scanner._grid:
         n_print       = ES.getPrintNum(),
         outputfolder  = ES.getFolderName())
 
-elif ES.getScanMethod() == scanner._mcmc:
+elif ES.getScanMethod() == af._mcmc:
     scanner.mcmcrun(
         LnLike = LnLike,
         Prior         = Prior,
@@ -114,7 +114,7 @@ elif ES.getScanMethod() == scanner._mcmc:
         n_print       = ES.getPrintNum(),
         outputfolder  = ES.getFolderName())
 
-elif ES.getScanMethod() == scanner._multinest:
+elif ES.getScanMethod() == af._multinest:
     import pymultinest
     # See https://johannesbuchner.github.io/PyMultiNest/_modules/pymultinest/run.html
     # for more settings
@@ -130,7 +130,7 @@ elif ES.getScanMethod() == scanner._multinest:
         resume                     = True, #TODO
         importance_nested_sampling = True)
 
-elif ES.getScanMethod() == scanner._postprocess:
+elif ES.getScanMethod() == af._postprocess:
     scanner.postprocessrun(
             LnLike       = LnLike,
             n_params     = len(ES.AllPar)+len(Constraint.Chi2),
@@ -142,7 +142,7 @@ elif ES.getScanMethod() == scanner._postprocess:
             outputfolder = ES.getFolderName())
 
 ## recover the modified input file(s) for external programs
-if ES.getScanMethod() != scanner._plot: 
+if ES.getScanMethod() != af._plot: 
     for ii in Programs: Programs[ii].Recover()
 
 """ Plot """
