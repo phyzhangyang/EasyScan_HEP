@@ -7,3 +7,4 @@ utils/*_output.dat
 utils/susyhit/
 utils/micromegas/
 src/*.pyc
+Backup/*
