@@ -7,12 +7,16 @@ import auxfun as af
 # External modules
 import configparser
 
-## Check reduplicative variable name
-def checkDuplicatedName(List, name="Output variable"):
+# Check reduplicative variable name
+def checkDuplicatedName(List, name, check_forbidden=True):
     for item in List:
-        counter = List.count(item)
-        if counter>1:
-            af.ErrorStop('%s name "%s" duplicates %i times in configure file.'%(name, item, counter))
+      if check_forbidden:
+        if item in af.forbidden_names:
+          af.ErrorStop('%s name "%s" can be used as variable name.'%(name, item))
+      counter = List.count(item)
+      if counter>1:
+        af.ErrorStop('%s name "%s" duplicates %i times in configure file.'%(name, item, counter))
+
 
 def notFind(name):
   return 'Can not find "%s" in configure file. '%name
@@ -23,7 +27,7 @@ def notInteger(name):
 def takeDefault(name):
   return 'It will take default value, "%s".'%name
 
-def ReadIn(Configfile, Controller, Programs, Constraint, Ploter):
+def ReadIn(Configfile, ES, Programs, Constraint, Ploter):
     cf=configparser.ConfigParser()
     cf.read(Configfile)
 
@@ -31,11 +35,11 @@ def ReadIn(Configfile, Controller, Programs, Constraint, Ploter):
     if not ('scan' in cf.sections()) :
         af.ErrorStop(notFind('[scan] section')) 
     try:
-        Controller.setScanMethod(cf.get('scan', 'Scan method'))
+        ES.setScanMethod(cf.get('scan', 'Scan method'))
     except configparser.NoOptionError:
         af.ErrorStop(notFind('Scan method'))
     try:
-        Controller.setFolderName(cf.get('scan', 'Result folder name'))
+        ES.setFolderName(cf.get('scan', 'Result folder name'))
     except configparser.NoOptionError:
         af.ErrorStop(notFind('Result folder name')) 
 
@@ -45,7 +49,7 @@ def ReadIn(Configfile, Controller, Programs, Constraint, Ploter):
     try: 
         plot_items  = cf.options("plot")
     except configparser.NoSectionError:
-        if Controller.getScanMethod() == af._plot:
+        if ES.getScanMethod() == af._plot:
             af.ErrorStop(notFind('[plot] section')) 
     if 'histogram' in plot_items:
         Ploter.setHistogram(cf.get('plot', 'Histogram'))
@@ -55,45 +59,46 @@ def ReadIn(Configfile, Controller, Programs, Constraint, Ploter):
         Ploter.setColor(cf.get('plot', 'Color'))
     if 'contour' in plot_items:
         Ploter.setContour(cf.get('plot', 'Contour'))
-    checkDuplicatedName(Ploter._FigNames, "Figure")
-    if Controller.getScanMethod() == af._plot: return []
+    checkDuplicatedName(Ploter._FigNames, "Figure", False)
+    if ES.getScanMethod() == af._plot: return []
 
     # Back to read the basic scan parameters
     try:
-        Controller.setPointNum(cf.getint('scan', 'Number of points'))
-        if Controller.getScanMethod() in af._no_random:
+        ES.setPointNum(cf.getint('scan', 'Number of points'))
+        if ES.getScanMethod() in af._no_random:
             af.WarningNoWait('"Number of points" in configure file is not used.')
     except configparser.NoOptionError:
-        if Controller.getScanMethod() in af._no_random:
+        if ES.getScanMethod() in af._no_random:
             pass
         else:
             af.WarningWait(notFind('Number of points')+takeDefault('2')) 
     except ValueError:
         af.ErrorStop(notInteger("Number of points"))
     try:
-        Controller.setRandomSeed(cf.getint('scan', 'Random seed'))
+        ES.setRandomSeed(cf.getint('scan', 'Random seed'))
     except configparser.NoOptionError:
-        if Controller.getScanMethod() not in af._no_random:
+        if ES.getScanMethod() not in af._no_random:
            af.Info("Use current system time as random seed.")
     except ValueError:
         af.ErrorStop(notInteger("Random seed"))
 
     try:
-        Controller.setPrintNum(cf.getint('scan', 'Interval of print'))
+        ES.setPrintNum(cf.getint('scan', 'Interval of print'))
     except configparser.NoOptionError:
         af.Info(notFind('Interval of print')+takeDefault('1'))
     except ValueError:
         af.WarningNoWait(notInteger("Interval of print")+takeDefault('1'))
 
     try:
-        Controller.setInputPar(cf.get('scan', 'Input parameters'))
+        ES.setInputPar(cf.get('scan', 'Input parameters'))
     except configparser.NoOptionError:
         af.ErrorStop(notFind('Input parameters'))
+    checkDuplicatedName(list(ES.InPar.keys()), "Input parameter")
 
     try:
-        Controller.setAccepRate(cf.get('scan', 'Acceptance rate'))
+        ES.setAccepRate(cf.get('scan', 'Acceptance rate'))
     except configparser.NoOptionError:
-        if Controller.getScanMethod() == af._mcmc:
+        if ES.getScanMethod() == af._mcmc:
             af.Info(notFind('Acceptance rate')+takeDefault('0.25')) 
         else:
             pass
@@ -138,7 +143,7 @@ def ReadIn(Configfile, Controller, Programs, Constraint, Ploter):
         for key, item in Programs[ii]._OutputVar.items():
             for subitem in item:
                 outputVarNames.append(subitem[0])
-        checkDuplicatedName(outputVarNames)
+        checkDuplicatedName(outputVarNames, "Output variable")
         
         # Additional optional commands
         try:
@@ -170,10 +175,10 @@ def ReadIn(Configfile, Controller, Programs, Constraint, Ploter):
     constraint_items = []
     try:
         constraint_items  = cf.options("constraint")
-        if len(constraint_items) == 0 and (Controller.getScanMethod() not in af._no_like):
+        if len(constraint_items) == 0 and (ES.getScanMethod() not in af._no_like):
           af.ErrorStop('Section [constraint] is empty in the configure file.')
     except configparser.NoSectionError:
-        if Controller.getScanMethod() in af._no_like:
+        if ES.getScanMethod() in af._no_like:
             pass 
         else:
             af.ErrorStop(notFind('[constraint] section'))
@@ -189,9 +194,9 @@ def ReadIn(Configfile, Controller, Programs, Constraint, Ploter):
         Constraint.setFreeFormChi2(cf.get('constraint', 'FreeFormChi2'))
         if Programs:
             Programs[ProgID[0]].setFreeFormChi2(cf.get('constraint', 'FreeFormChi2')) 
-    if ('gaussian' not in constraint_items) and ('freeformchi2' not in constraint_items) and (Controller.getScanMethod() not in af._no_like):
+    if ('gaussian' not in constraint_items) and ('freeformchi2' not in constraint_items) and (ES.getScanMethod() not in af._no_like):
         af.ErrorStop('No valid iterm in [constraint] section.')
 
-    Controller.setProgram(Programs)
+    ES.setProgram(Programs)
 
     return ProgID

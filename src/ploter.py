@@ -192,12 +192,17 @@ class PLOTER():
                 plt.savefig(os.path.join(self._path, 'Compare_%s'%ii[2]))
 
         for ii in self._Color :
-            colorconf={'s':50, 'edgecolors':'None','cmap':plt.get_cmap('winter')}
+            colorconf={'edgecolors':'None','cmap':plt.get_cmap('winter')}
             af.Info('Generate color plot of parameter %s and %s with color %s'%(ii[0],ii[1],ii[2]))
             if not self.checkPar(ii,3): continue
             f=plt.figure(**figconf)
             subplot=f.add_subplot(111)
-            sc1=subplot.scatter(self._data[ii[0]],self._data[ii[1]], c= self._data[ii[2]], **colorconf)
+            weigh = 50
+            if "probability" in self._data.columns:
+              weigh = self._data["probability"] * 100 / self._data["probability"].max() + 20
+            elif "mult" in self._data.columns:
+              weigh = self._data["mult"] * 100 / self._data["mult"].max() + 20
+            sc1=subplot.scatter(self._data[ii[0]], self._data[ii[1]], c=self._data[ii[2]], s=weigh, **colorconf)
             cb1=plt.colorbar(sc1)
             cb1.set_label(ii[2], **labelconf)
             subplot.set_xlabel(ii[0], **labelconf)
