@@ -1,26 +1,16 @@
 ####################################################################
 #    Class PLOT: contral plot                                      #
 ####################################################################
+# Internal modules
+import auxfun as af
 # External modules
 import os
-import matplotlib
-matplotlib.use('Agg')
-import matplotlib.pyplot as plt
-import numpy as np
-#from matplotlib.mlab import griddata
-from scipy.interpolate import griddata
-# Internal modules
-import init as sf
-
+import numpy
 
 ############################################################
 #################   Plot    Class   ########################
 ############################################################
 
-
-histconf={'bins':50, 'normed':False, 'facecolor':'green', 'alpha':0.7}
-scatterconf={'s':50, 'marker':'o', 'edgecolors':'None', 'alpha':0.9}
-colorconf={'s':50, 'edgecolors':'None','cmap':plt.get_cmap('winter')}
 figconf={'figsize':(7,7), 'dpi':80}
 labelconf={'fontsize':20}
 legendconf={'fontsize':20}
@@ -39,7 +29,7 @@ class PLOTER():
         self._FigNames = []
 
     def setHistogram(self, hist):
-        hist=sf.string2nestlist(hist)
+        hist=af.string2nestlist(hist)
         jj=0
         for ii in hist:
             if len(ii)==1 :
@@ -51,7 +41,7 @@ class PLOTER():
             jj+=1
   
     def setScatter(self, scatter):
-        scatter = sf.string2nestlist(scatter)
+        scatter = af.string2nestlist(scatter)
         jj=0
         for ii in scatter:
             if len(ii)==2 :
@@ -63,7 +53,7 @@ class PLOTER():
             jj+=1
 
     def setColor(self, color):
-        color = sf.string2nestlist(color)
+        color = af.string2nestlist(color)
         jj=0
         for ii in color:
             if len(ii)==3 :
@@ -75,7 +65,7 @@ class PLOTER():
             jj+=1
 
     def setContour(self, Contour):
-        Contour = sf.string2nestlist(Contour)
+        Contour = af.string2nestlist(Contour)
         jj=0
         for ii in Contour:
             if len(ii)==3 :
@@ -87,83 +77,58 @@ class PLOTER():
             jj+=1
 
 
-    def setPlotPar(self,path,ScanMethod):
-        ## try this
-        # self._data =  np.loadtxt(path)
-       
-        if ScanMethod in ['READ']:
-            f_data = open(os.path.join(path,'ScanInfINPUT.txt'),'r')
-        else:
-            f_data = open(os.path.join(path,'ScanInf.txt'),'r')
+    def setPlotPar(self, path, ScanMethod, postprocess=False):
+        try:
+            import pandas
+        except ImportError:
+            
+            af.ErrorStop("No pandas module. No plot will be generated.")
 
-        path   = list(map(str,f_data.readline().split()))
-        var    = {}
-        while True:
-            plot_line = f_data.readline()
-            if not plot_line :
-                break
-            plot_line = list(map(str,plot_line.split()))
-            var["+".join(plot_line[:-1])] = int(plot_line[-1])
-    
-        self._path = os.path.join(path[0],'Figures')
+        # read result
+        if ScanMethod not in af._post: 
+          self._data = pandas.read_csv(os.path.join(path, af.ResultFile), header=0, index_col=False)
+          if ScanMethod == af._mcmc:
+            self._dataAllTry = pandas.read_csv(os.path.join(path, af.ResultFile_MCMC), header=0, index_col=False)
+          elif ScanMethod == af._multinest:
+            column_names = pandas.read_csv(os.path.join(path, af.ResultFile), header=0, index_col=False).columns.str.strip()
+            self._data = pandas.read_csv(os.path.join(path, af.ResultFile_MultiNest), header=None, names=column_names, delim_whitespace=True, index_col=False)
+        else: # ScanMethod == plot or postprocess 
+          ResultFile_name = af.ResultFile_post if postprocess else af.ResultFile
+          if os.path.exists(os.path.join(path, af.ResultFile_MultiNest)):
+            column_names = pandas.read_csv(os.path.join(path, ResultFile_name), header=0, index_col=False).columns.str.strip()
+            self._data = pandas.read_csv(os.path.join(path, af.ResultFile_MultiNest), header=None, names=column_names, delim_whitespace=True, index_col=False)
+          else:
+            self._data = pandas.read_csv(os.path.join(path, ResultFile_name), header=0, index_col=False)
+        
+        # make figure folder
+        self._path = os.path.join(path,'Figures')
         if not os.path.exists(self._path):
             os.mkdir(self._path)
         else:
             __import__("shutil").rmtree(self._path) 
             os.mkdir(self._path)
 
-        for ii in var:
-            self._data[ii] = []
-        
-        f_data = open(os.path.join(path[0],path[1]),'r')
-        while True:
-            line = f_data.readline()
-            if not line :
-                break
-            line_par = list(map(str,line.split()))
-            for ii in var:
-                try:
-                    self._data[ii].append(float( line_par[var[ii]] ))
-                except:
-                    sf.Debug('Skip parameter %s'%ii)
+    def checkPar(self, par, num, section_name='plot'):                  
+      for jj in range(num):
+#        try:
+#          if self._data[par[jj]].min() == self._data[par[jj]].max():
+#            af.WarningNoWait("Parameter %s=%f is a cosntant number. No plot for it. "%(par[jj], self._data[par[jj]].min()))
+#            return False 
+#        except KeyError:
+#          af.WarningNoWait("Parameter '%s' in [plot] section do not exist. No plot for it."%( par[jj] )  )
+#          return False 
+        if par[jj] not in self._data.columns:
+          af.WarningNoWait("Parameter '%s' in [%s] section do not exist."%(par[jj], section_name))
+          return False 
+        if self._data.shape[0] == 0:
+          af.WarningNoWait("Parameter '%s' in [%s] section is empty."%(par[jj], section_name))
+          return False 
+        if not numpy.issubdtype(self._data[par[jj]].dtype, numpy.number):
+          af.WarningNoWait("Parameter %s in [%s] section is not float number."%(par[jj], section_name))
+          return False 
+      return True
 
-        ##new 20180418 liang
-        if ScanMethod in ['MCMC']:
-            for ii in var:
-                self._dataAllTry[ii] = []
-
-            f_dataAllTry = open(os.path.join(path[0],'All_%s'%path[1]), 'r')
-            while True:
-                line = f_dataAllTry.readline()
-                if not line :
-                    break
-                line_par = map(str,line.split())
-                for ii in var:
-                    try:
-                        self._dataAllTry[ii].append(float( line_par[var[ii]] ))
-                    except:
-                        sf.Debug('Skip parameter %s'%ii)
-
-
-    def checkPar(self,par,num):                
-            for jj in range(num):
-                try:
-                    if max(self._data[par[jj]]) == min(self._data[par[jj]]):
-                        sf.ErrorStop("The parameter %s=%f is a cosntant with all samples, can not creat plot for it. Please correct in [plot] in your input file!"%(par[jj], min(self._data[par[jj]]) )  )
-                except KeyError:
-                    sf.ErrorStop("The parameter '%s' do not exist and plot for it do not be created. Please correct in [plot] in your input file!"%( par[jj] )  )
-                #new 20180416 liang
-                if len(self._data[par[jj]]) == 1:
-                    sf.ErrorStop("One sample (e.g., see parameter %s) only, can not creat plot for it. Please correct in [plot] in your input file!"%par[jj])
-                    return False 
-                try:
-                    list(map(float, self._data[par[jj]]))
-                except ValueError:
-                    sf.WarningNoWait("The parameter %s not a number, can not creat plot for it."%par[jj])
-                    return False 
-            return True
-
-    ##only debug
+    ##only for debugging
     def get_contour_verts(self,cn):
         contours = []
         # for each contour line
@@ -175,19 +140,25 @@ class PLOTER():
                 # for each segment of that section
                 for vv in pp.iter_segments():
                     xy.append(vv[0])
-                paths.append(np.vstack(xy))
+                paths.append(numpy.vstack(xy))
             contours.append(paths)
     
         return contours
 
     def getPlot(self,ScanMethod):
+        try:
+            import matplotlib
+        except ImportError:
+            af.ErrorStop("No matplotlib module. No plot will be generated.")
+        matplotlib.use('Agg')
+        import matplotlib.pyplot as plt
         if len(self._Histogram) + len(self._Scatter) + len(self._Color) + len(self._Contour) == 0:
-            sf.Info('You have close ploting the result ... ')
             return
-        sf.Info('Start to plot the result ... ')
+        af.Info('Start to plot the result ... ')
         FigNames=[]
         for ii in self._Histogram :
-            sf.Info('Generate histogram plot of parameter %s'%ii[0])
+            histconf={'bins':50, 'normed':False, 'facecolor':'green', 'alpha':0.7}
+            af.Info('Generate histogram plot of parameter %s'%ii[0])
             if not self.checkPar(ii,1): continue
             f=plt.figure(**figconf)
             subplot=f.add_subplot(111)
@@ -198,7 +169,8 @@ class PLOTER():
             plt.savefig(os.path.join(self._path, ii[1]))
 
         for ii in self._Scatter :
-            sf.Info('Generate scatter plot of parameter %s and %s'%(ii[0],ii[1]))
+            scatterconf={'s':50, 'marker':'o', 'edgecolors':'None', 'alpha':0.9}
+            af.Info('Generate scatter plot of parameter %s and %s'%(ii[0],ii[1]))
             if not self.checkPar(ii,2): continue
             f=plt.figure(**figconf)
             subplot=f.add_subplot(111)
@@ -208,7 +180,7 @@ class PLOTER():
             subplot.tick_params(which = 'both', direction = 'out')
             plt.savefig(os.path.join(self._path, ii[2]))
 
-            if ScanMethod in ['MCMC']:
+            if ScanMethod == af._mcmc:
                 f=plt.figure(**figconf)
                 subplot=f.add_subplot(111)
                 subplot.scatter(self._dataAllTry[ii[0]],self._dataAllTry[ii[1]],label='All',**scatterconf)
@@ -220,11 +192,17 @@ class PLOTER():
                 plt.savefig(os.path.join(self._path, 'Compare_%s'%ii[2]))
 
         for ii in self._Color :
-            sf.Info('Generate color plot of parameter %s and %s with color %s'%(ii[0],ii[1],ii[2]))
+            colorconf={'edgecolors':'None','cmap':plt.get_cmap('winter')}
+            af.Info('Generate color plot of parameter %s and %s with color %s'%(ii[0],ii[1],ii[2]))
             if not self.checkPar(ii,3): continue
             f=plt.figure(**figconf)
             subplot=f.add_subplot(111)
-            sc1=subplot.scatter(self._data[ii[0]],self._data[ii[1]], c= self._data[ii[2]], **colorconf)
+            weigh = 50
+            if "probability" in self._data.columns:
+              weigh = self._data["probability"] * 100 / self._data["probability"].max() + 20
+            elif "mult" in self._data.columns:
+              weigh = self._data["mult"] * 100 / self._data["mult"].max() + 20
+            sc1=subplot.scatter(self._data[ii[0]], self._data[ii[1]], c=self._data[ii[2]], s=weigh, **colorconf)
             cb1=plt.colorbar(sc1)
             cb1.set_label(ii[2], **labelconf)
             subplot.set_xlabel(ii[0], **labelconf)
@@ -233,16 +211,21 @@ class PLOTER():
             plt.savefig(os.path.join(self._path, ii[3]))
 
         for ii in self._Contour :
-            sf.Info('Generate contour plot of parameter %s and %s with contour %s'%(ii[0],ii[1],ii[2]))
+            try:
+                from scipy.interpolate import griddata
+            except ImportError:
+                af.WarningNoWait("No scipy module. Contour plot will not be generated.")
+                break
+            af.Info('Generate contour plot of parameter %s and %s with contour %s'%(ii[0],ii[1],ii[2]))
             if not self.checkPar(ii,3): continue
             f=plt.figure(**figconf)
             subplot=f.add_subplot(111)
 
             x = self._data[ii[0]]
-            X = np.linspace(min(x),max(x),100)
+            X = numpy.linspace(min(x),max(x),100)
             y = self._data[ii[1]]
-            Y = np.linspace(min(y),max(y),100)
-            # z = [ np.log10(abs(u)) for u in self._data[ii[2]] ]  # log10
+            Y = numpy.linspace(min(y),max(y),100)
+            # z = [ numpy.log10(abs(u)) for u in self._data[ii[2]] ]  # log10
             z = self._data[ii[2]] 
             Z = griddata(x,y,z,X,Y,interp='linear')
 
@@ -251,7 +234,7 @@ class PLOTER():
 
             ## debug
             #Cpoint = self.get_contour_verts(C)  
-            #np.savetxt(os.path.join(self._path, "contour_1_1.dat"),Cpoint[0][0])  
+            #numpy.savetxt(os.path.join(self._path, "contour_1_1.dat"),Cpoint[0][0])
 
             C = subplot.contourf(X,Y,Z,3, cmap=plt.cm.rainbow)
             
