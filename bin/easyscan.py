@@ -12,29 +12,33 @@
                                                                      """
 ##########################################################################
 
-## External modules.
+# External modules.
 import os,sys
 sys.path.append(os.path.join(os.path.split(os.path.split(os.path.realpath(__file__))[0])[0], "src"))
-## Internal modules.
+# Internal modules.
 import initialize
-import auxfun, statfun
+import auxfun
+import statfun
+import scanner
 from readin_config   import ReadIn
 from scan_controller import SCANINPUT
-from constraint    import CONSTRAINT
-from ploter        import PLOTER
+from constraint      import CONSTRAINT
+from ploter          import PLOTER
 
-# define basic class object
+# Create basic objects
 ES         = SCANINPUT()
 Programs   = {}
 Constraint = CONSTRAINT()
 Ploter     = PLOTER()
+
+# Set objects
 ProgID     = ReadIn(sys.argv[1], ES, Programs, Constraint, Ploter)
 
-if ES.getScanMethod() != 'PLOT':
-    auxfun.WriteResultInf(ES.InPar, ES.FixedPar, ES.OutPar, Constraint.Chi2, ES.getFolderName(), ES.getScanMethod())
+# Write names of parameters into result file
+auxfun.WriteResultInf(ES.InPar, ES.FixedPar, ES.OutPar, Constraint.Chi2, ES.getFolderName(), ES.getScanMethod())
 
-# Logarithm of likelihood function
-def LogLikelihood(cube, ndim, nparams):
+# Natural logarithm of likelihood function
+def LnLike(cube, ndim, nparams):
     # Pass input value from cube to AllPar
     for i,name in enumerate(ES.InPar):
         ES.AllPar[name]=cube[i]
@@ -70,10 +74,9 @@ def Prior(cube, ndim, nparams):
         cube[i] = statfun.prior(cube[i],ES.InputPar[name])
 
 # Load corresponding scan method
-if ES.getScanMethod() == 'RANDOM':
-    from scanner import randomrun
-    randomrun(
-        LogLikelihood = LogLikelihood,
+if ES.getScanMethod() == scanner._random:
+    scanner.randomrun(
+        LnLike = LnLike,
         Prior         = Prior,
         n_params      = len(ES.AllPar)+len(Constraint.Chi2),
         inpar         = ES.InPar,
@@ -83,10 +86,9 @@ if ES.getScanMethod() == 'RANDOM':
         n_print       = ES.getPrintNum(),
         outputfolder  = ES.getFolderName())
 
-elif ES.getScanMethod() == 'GRID':
-    from scanner import gridrun
-    gridrun(
-        LogLikelihood = LogLikelihood,
+elif ES.getScanMethod() == scanner._grid:
+    scanner.gridrun(
+        LnLike = LnLike,
         Prior         = Prior,
         n_params      = len(ES.AllPar)+len(Constraint.Chi2),
         inpar         = ES.InPar,
@@ -96,10 +98,9 @@ elif ES.getScanMethod() == 'GRID':
         n_print       = ES.getPrintNum(),
         outputfolder  = ES.getFolderName())
 
-elif ES.getScanMethod() == 'MCMC':
-    from scanner import mcmcrun
-    mcmcrun(
-        LogLikelihood = LogLikelihood,
+elif ES.getScanMethod() == scanner._mcmc:
+    scanner.mcmcrun(
+        LnLike = LnLike,
         Prior         = Prior,
         n_params      = len(ES.AllPar)+len(Constraint.Chi2),
         n_live_points = ES.getPointNum(),
@@ -113,11 +114,12 @@ elif ES.getScanMethod() == 'MCMC':
         n_print       = ES.getPrintNum(),
         outputfolder  = ES.getFolderName())
 
-elif ES.getScanMethod() == 'MULTINEST':
+elif ES.getScanMethod() == scanner._multinest:
     import pymultinest
-    # https://johannesbuchner.github.io/PyMultiNest/_modules/pymultinest/run.html
+    # See https://johannesbuchner.github.io/PyMultiNest/_modules/pymultinest/run.html
+    # for more settings
     pymultinest.run(
-        LogLikelihood        = LogLikelihood,
+        LogLikelihood        = LnLike,
         Prior                = Prior,
         n_dims               = len(ES.InPar),
         n_params             = len(ES.AllPar)+len(Constraint.Chi2),
@@ -129,19 +131,19 @@ elif ES.getScanMethod() == 'MULTINEST':
         importance_nested_sampling = True)
 
 elif ES.getScanMethod() == scanner._postprocess:
-    from scanner import postprocessrun
-    postprocessrun(
-            LogLikelihood        = LogLikelihood,
-            Prior                = Prior,
-            n_params             = len(ES.AllPar)+len(Constraint.Chi2),
+    scanner.postprocessrun(
+            LnLike       = LnLike,
+            Prior        = Prior,
+            n_params     = len(ES.AllPar)+len(Constraint.Chi2),
             inpar                = ES.InPar,
+            fixedpar      = ES.FixedPar,
             outpar               = ES.OutPar,
             bin_num              = ES.GridBin,
             n_print              = ES.getPrintNum(),
-            outputfiles_basename = ES.getFolderName())
+            outputfolder = ES.getFolderName())
 
 ## recover the modified input file(s) for external programs
-if ES.getScanMethod() != 'PLOT': 
+if ES.getScanMethod() != scanner._plot: 
     for ii in Programs: Programs[ii].Recover()
 
 """ Plot """
