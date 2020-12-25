@@ -1,5 +1,5 @@
 ####################################################################
-#    Class SCANINPUT: contral scan                                 #
+#    Class CONTROLLER: contral scan                                 #
 ####################################################################
 # External modules
 import os
@@ -10,7 +10,7 @@ import math
 # Internal modules
 import auxfun as af
 
-class SCANINPUT:
+class CONTROLLER:
     def __init__(self):
         self._FolderName = 'test'
         self._PointNum   = 2

@@ -83,7 +83,7 @@ def WriteResultInf(InPar, FixedPar, OutPar, Constraint, Path, ScanMethod):
       return
     inf = ''
     if ScanMethod == _multinest:
-      inf += 'probability,-2loglike,'
+      inf += 'probability,-2lnlike,'
     inf += ','.join(list(InPar.keys())+list(FixedPar.keys())+list(OutPar.keys())+list(Constraint.keys()))
     if ScanMethod == _mcmc:
       inf += ",mult"
@@ -128,6 +128,11 @@ def parseMath(par):
 
         #print key, expr, cal; raw_input("math") 
         par[key] = cal
+
+# names that can not be used for variable
+forbidden_names = safe_list + _all + ['abs', 'float', 'int',
+                  'mult', 'probability', '-2lnlike'] 
+
 
 # Sort parameters so that we can output them in right order
 def sortDic(Dic):

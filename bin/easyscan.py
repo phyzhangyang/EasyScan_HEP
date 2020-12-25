@@ -21,12 +21,12 @@ import auxfun as af
 import statfun
 import scanner
 from readin_config   import ReadIn
-from scan_controller import SCANINPUT
+from scan_controller import CONTROLLER
 from constraint      import CONSTRAINT
 from ploter          import PLOTER
 
 # Create basic objects
-ES         = SCANINPUT()
+ES         = CONTROLLER()
 Programs   = {}
 Constraint = CONSTRAINT()
 Ploter     = PLOTER()
