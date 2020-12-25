@@ -68,7 +68,7 @@ class CONTROLLER:
               self.backup_result(self._FolderName, cp=True)
               # rm Figure and SavedFile folder
               os.system(r"find %s -type f -name '*' | xargs rm" %os.path.join(self._FolderName,'SavedFile'))
-              os.system(r"find %s -type f -name '*' | xargs rm" %os.path.join(self._FolderName,'Figures')) # TODO is this needed?
+              os.system(r"find %s -type f -name '*' | xargs rm" %os.path.join(self._FolderName,'Figures'))
               # rename data file
               if not os.path.exists(os.path.join(self._FolderName,af.ResultFile_post)):
                 if not os.path.exists(os.path.join(self._FolderName,af.ResultFile)):
