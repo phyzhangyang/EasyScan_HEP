@@ -85,14 +85,14 @@ class PLOTER():
             af.ErrorStop("No pandas module. No plot will be generated.")
 
         # read result
-        if ScanMethod not in af._post:
+        if ScanMethod not in af._post: 
           self._data = pandas.read_csv(os.path.join(path, af.ResultFile), header=0, index_col=False)
           if ScanMethod == af._mcmc:
             self._dataAllTry = pandas.read_csv(os.path.join(path, af.ResultFile_MCMC), header=0, index_col=False)
-        elif ScanMethod == af._multinest:
-          column_names = pandas.read_csv(os.path.join(path, af.ResultFile), header=0, index_col=False).columns.str.strip()
-          self._data = pandas.read_csv(os.path.join(path, af.ResultFile_MultiNest), header=None, names=column_names, delim_whitespace=True, index_col=False)
-        else: # ScanMethod == af._plot
+          elif ScanMethod == af._multinest:
+            column_names = pandas.read_csv(os.path.join(path, af.ResultFile), header=0, index_col=False).columns.str.strip()
+            self._data = pandas.read_csv(os.path.join(path, af.ResultFile_MultiNest), header=None, names=column_names, delim_whitespace=True, index_col=False)
+        else: # ScanMethod == plot or postprocess 
           ResultFile_name = af.ResultFile_post if postprocess else af.ResultFile
           if os.path.exists(os.path.join(path, af.ResultFile_MultiNest)):
             column_names = pandas.read_csv(os.path.join(path, ResultFile_name), header=0, index_col=False).columns.str.strip()
