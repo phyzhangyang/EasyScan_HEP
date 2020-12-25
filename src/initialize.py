@@ -42,6 +42,8 @@ logging.getLogger('easyscan').setLevel(vars(logging)[options.logging])
                               
 logger=logging.getLogger('easyscan.main')
 
+flag_resume = False
+
 ## Check whether the configure file exists
 try:
     open(sys.argv[1],'r')

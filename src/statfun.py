@@ -17,4 +17,4 @@ def prior(x,par):
         return float(par[2])
     # TODO add log_flat, gauss
     else:
-        sf.ErrorStop( 'Not ready. Only "flat" and "log" prior can be used.' )
+        sf.ErrorStop( 'Not ready. Choose prior from ["flat", "log", "fixed"].' )

@@ -73,7 +73,7 @@ def printPoint4MCMC(Chisq,CurChisq,MinChisq,AccRat,FlagTuneR,kcovar):
         af.Info('StepZize factor= '+str(exp(kcovar)))
 
 
-def postprocessrun(LnLike, Prior, n_params, inpar, fixedpar, outpar, bin_num,n_print,outputfolder):
+def postprocessrun(LnLike, n_params, inpar, fixedpar, outpar, bin_num,n_print,outputfolder):
     data_file = open(os.path.join(outputfolder, af.ResultFile),'a') 
     file_path = os.path.join(outputfolder,"SavedFile")
     
@@ -97,10 +97,6 @@ def postprocessrun(LnLike, Prior, n_params, inpar, fixedpar, outpar, bin_num,n_p
     Naccept = 0
     for Nrun in range(ntotal):
         for i,name in enumerate(inpar):
-            cube[i] = data[name][Nrun]
-        for i,name in enumerate(fixedpar):
-            cube[i] = data[name][Nrun]
-        for i,name in enumerate(outpar):
             cube[i] = data[name][Nrun]
             
         lnlike = LnLike(cube, n_dims, n_params)

@@ -133,7 +133,6 @@ elif ES.getScanMethod() == scanner._multinest:
 elif ES.getScanMethod() == scanner._postprocess:
     scanner.postprocessrun(
             LnLike       = LnLike,
-            Prior        = Prior,
             n_params     = len(ES.AllPar)+len(Constraint.Chi2),
             inpar                = ES.InPar,
             fixedpar      = ES.FixedPar,
