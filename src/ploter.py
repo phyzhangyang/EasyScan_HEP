@@ -3,7 +3,6 @@
 ####################################################################
 # Internal modules
 import auxfun as af
-import scanner
 # External modules
 import os
 import numpy
@@ -86,12 +85,14 @@ class PLOTER():
             af.ErrorStop("No pandas module. No plot will be generated.")
 
         # read result
-        if ScanMethod not in ['PLOT', 'MULTINEST']:
+        if ScanMethod not in af._post:
           self._data = pandas.read_csv(os.path.join(path, af.ResultFile), header=0, index_col=False)
-        elif ScanMethod == scanner._multinest:
+          if ScanMethod == af._mcmc:
+            self._dataAllTry = pandas.read_csv(os.path.join(path, af.ResultFile_MCMC), header=0, index_col=False)
+        elif ScanMethod == af._multinest:
           column_names = pandas.read_csv(os.path.join(path, af.ResultFile), header=0, index_col=False).columns.str.strip()
           self._data = pandas.read_csv(os.path.join(path, af.ResultFile_MultiNest), header=None, names=column_names, delim_whitespace=True, index_col=False)
-        else: # ScanMethod == scanner._plot
+        else: # ScanMethod == af._plot
           ResultFile_name = af.ResultFile_post if postprocess else af.ResultFile
           if os.path.exists(os.path.join(path, af.ResultFile_MultiNest)):
             column_names = pandas.read_csv(os.path.join(path, ResultFile_name), header=0, index_col=False).columns.str.strip()
@@ -179,7 +180,7 @@ class PLOTER():
             subplot.tick_params(which = 'both', direction = 'out')
             plt.savefig(os.path.join(self._path, ii[2]))
 
-            if ScanMethod in ['MCMC']:
+            if ScanMethod == af._mcmc:
                 f=plt.figure(**figconf)
                 subplot=f.add_subplot(111)
                 subplot.scatter(self._dataAllTry[ii[0]],self._dataAllTry[ii[1]],label='All',**scatterconf)

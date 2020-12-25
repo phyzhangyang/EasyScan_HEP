@@ -9,7 +9,6 @@ from math import log10
 import math
 # Internal modules
 import auxfun as af
-import scanner
 
 class SCANINPUT:
     def __init__(self):
@@ -39,7 +38,7 @@ class SCANINPUT:
     
     def setScanMethod(self, method):
         self._ScanMethod = method.upper()
-        if self._ScanMethod not in scanner._all:
+        if self._ScanMethod not in af._all:
             af.ErrorStop('%s is not a supported scan method'%method)
         af.Info('Scan method       = %s'%self._ScanMethod)
         
@@ -60,11 +59,11 @@ class SCANINPUT:
         else:
             self._FolderName = os.path.join(af.CurrentPath, name)
         
-        if self._ScanMethod in scanner._post:
+        if self._ScanMethod in af._post:
             if not os.path.exists(self._FolderName):
               af.ErrorStop("The result folder %s does not exist."%self._FolderName)
 
-            if self._ScanMethod == scanner._postprocess:
+            if self._ScanMethod == af._postprocess:
               # Backup previous results
               self.backup_result(self._FolderName, cp=True)
               # rm Figure and SavedFile folder
@@ -80,7 +79,7 @@ class SCANINPUT:
                 if af.flag_resume:
                   # TODO Add resume
                   af.ErrorStop("no resume function")
-            else: # scanner._plot
+            else: # af._plot
               if not os.path.exists(os.path.join(self._FolderName,af.ResultFile)):
                 af.ErrorStop("No result data file in %s."%self._FolderName)
                            
@@ -103,7 +102,7 @@ class SCANINPUT:
             # Create result folder
             os.mkdir(self._FolderName)
             os.mkdir(os.path.join(self._FolderName,'SavedFile'))
-            if self._ScanMethod == scanner._multinest:
+            if self._ScanMethod == af._multinest:
                 self.MNOutputFile = os.path.join(self._FolderName, "MultiNestData/")
                 os.mkdir(self.MNOutputFile)
         af.Info('...............................................')
@@ -149,7 +148,7 @@ class SCANINPUT:
         for ii in inputvar:
             lenii = len(ii)
             
-            if self._ScanMethod == scanner._postprocess:
+            if self._ScanMethod == af._postprocess:
               self.InPar[ii[0]] = af.NaN
               self.AllPar[ii[0]] = af.NaN
               af.Info('  ID= %s, read from previous '%(ii[0]))
@@ -175,15 +174,14 @@ class SCANINPUT:
             if lenii < 4 :
               af.ErrorStop(self.InputCheck(ii[0], 4, "Minimum, Maximum"))
             
-            # TODO replace 'RANDOM', 'MULTINEST'
-            if self._ScanMethod in ['RANDOM', 'MULTINEST']:
+            if self._ScanMethod in [af._random, af._multinest]:
               if lenii > 4 :
                 af.WarningNoWait(self.InputCheck(ii[0], 4, "Minimum, Maximum"))
                 af.WarningWait("The rest %i values will be ignore."%(lenii-4) )
               af.Info('  ID= %s\tPrior= %s\tMin= %f\tMax= %f'%(ii[0],ii[1],ii[2],ii[3]))
               continue
                 
-            if self._ScanMethod == 'GRID':
+            if self._ScanMethod == af._grid:
               if lenii == 4:
                 self.GridBin[ii[0]]=20
                 af.WarningNoWait(self.InputCheck(ii[0], 5, "Minimum, Maximum, Number of bins"))
@@ -199,7 +197,7 @@ class SCANINPUT:
               af.Info('  ID= %s\tPrior= %s\tMin= %f\tMax= %f\tNbin=%i'%(ii[0],ii[1],ii[2],ii[3],self.GridBin[ii[0]]))
               continue
             
-            if self._ScanMethod == 'MCMC':
+            if self._ScanMethod == af._mcmc:
               if lenii < 6:
                 af.WarningNoWait(self.InputCheck(ii[0], 6, "Minimum, Maximum, Interval, Initial value"))
                 self.MCMCiv[ii[0]] = 1./2.

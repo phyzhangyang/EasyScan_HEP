@@ -10,17 +10,6 @@ from math import exp
 import auxfun as af
 import ploter
 
-_random = "RANDOM"
-_grid = "GRID"
-_mcmc = "MCMC"
-_multinest = "MULTINEST"
-_postprocess = "POSTPROCESS"
-_plot = "PLOT"
-
-_all = [_random, _grid, _mcmc, _multinest, _postprocess, _plot]
-_no_random = [_grid, _postprocess, _plot]
-_no_like   = [_random, _grid, _postprocess, _plot]
-_post = [_postprocess, _plot]
 
 def saveCube(cube, data_file, file_path, num, save_file):
   result = []
@@ -84,7 +73,7 @@ def postprocessrun(LnLike, n_params, inpar, fixedpar, outpar, bin_num,n_print,ou
 
     # Read data using ploter
     Data = ploter.PLOTER()
-    Data.setPlotPar(outputfolder, _plot, postprocess=True)
+    Data.setPlotPar(outputfolder, af._plot, postprocess=True)
     data =Data._data
     if not Data.checkPar([i for i in inpar],n_dims, section_name="scan"):
       af.ErrorStop('Can not postprocess it.')

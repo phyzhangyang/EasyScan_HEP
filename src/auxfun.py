@@ -10,12 +10,20 @@ from collections import OrderedDict
 from initialize import logger
 from initialize import flag_resume
 
-## Define 'negetive infinity'
 log_zero = -1e+100
-## Define 'not a number'
 NaN = float('NaN')
-## Define current path
 CurrentPath = os.getcwd()
+# Name of scanner
+_random = "RANDOM"
+_grid = "GRID"
+_mcmc = "MCMC"
+_multinest = "MULTINEST"
+_postprocess = "POSTPROCESS"
+_plot = "PLOT"
+_all = [_random, _grid, _mcmc, _multinest, _postprocess, _plot]
+_no_random = [_grid, _postprocess, _plot]
+_no_like   = [_random, _grid, _postprocess, _plot]
+_post = [_postprocess, _plot]
 ## Define name of result data file
 ResultFile = 'ScanResult.txt'
 ResultFile_MCMC = 'All_ScanResult.txt'
@@ -71,18 +79,18 @@ def string2nestlist(s):
 
 ## Write information of result into file
 def WriteResultInf(InPar, FixedPar, OutPar, Constraint, Path, ScanMethod):
-    if ScanMethod == 'PLOT': 
+    if ScanMethod == _plot: 
       return
     inf = ''
-    if ScanMethod == 'MULTINEST':
+    if ScanMethod == _multinest:
       inf += 'probability,-2loglike,'
     inf += ','.join(list(InPar.keys())+list(FixedPar.keys())+list(OutPar.keys())+list(Constraint.keys()))
-    if ScanMethod == 'MCMC':
+    if ScanMethod == _mcmc:
       inf += ",mult"
     outfile = open(os.path.join(Path, ResultFile),'w')
     outfile.write(inf+'\n')
     outfile.close()
-    if ScanMethod == 'MCMC':
+    if ScanMethod == _mcmc:
       outfile = open(os.path.join(Path, ResultFile_MCMC),'w')
       outfile.write(inf+'\n')
       outfile.close()
