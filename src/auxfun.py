@@ -8,6 +8,7 @@ import time, os, sys
 from collections import OrderedDict
 # Internal modules
 from initialize import logger
+from initialize import flag_resume
 
 ## Define 'negetive infinity'
 log_zero = -1e+100
@@ -20,6 +21,8 @@ ResultFile = 'ScanResult.txt'
 ResultFile_MCMC = 'All_ScanResult.txt'
 ResultFile_MultiNest = 'MultiNestData/.txt'
 ResultFile_post = 'Previous_ScanResult.txt'
+
+flag_resume = flag_resume
 
 ## Define screen print functions
 def ColorText(i,text,j=1):

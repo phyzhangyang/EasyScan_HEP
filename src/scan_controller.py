@@ -63,9 +63,7 @@ class SCANINPUT:
         if self._ScanMethod in scanner._post:
             if not os.path.exists(self._FolderName):
               af.ErrorStop("The result folder %s does not exist."%self._FolderName)
-            if not os.path.exists(os.path.join(self._FolderName,'ScanResult.txt')):
-              af.ErrorStop("No result data file in %s."%self._FolderName)
-            
+
             if self._ScanMethod == scanner._postprocess:
               # Backup previous results
               self.backup_result(self._FolderName, cp=True)
@@ -73,7 +71,18 @@ class SCANINPUT:
               os.system(r"find %s -type f -name '*' | xargs rm" %os.path.join(self._FolderName,'SavedFile'))
               os.system(r"find %s -type f -name '*' | xargs rm" %os.path.join(self._FolderName,'Figures')) # TODO is this needed?
               # rename data file
-              os.system(r"mv %s %s"%(os.path.join(self._FolderName, af.ResultFile), os.path.join(self._FolderName, af.ResultFile_post)))
+              if not os.path.exists(os.path.join(self._FolderName,af.ResultFile_post)):
+                if not os.path.exists(os.path.join(self._FolderName,af.ResultFile)):
+                  af.ErrorStop("No result data file in %s."%self._FolderName)
+                else:
+                  os.system(r"mv %s %s"%(os.path.join(self._FolderName, af.ResultFile), os.path.join(self._FolderName, af.ResultFile_post)))
+              else:
+                if af.flag_resume:
+                  # TODO Add resume
+                  af.ErrorStop("no resume function")
+            else: # scanner._plot
+              if not os.path.exists(os.path.join(self._FolderName,af.ResultFile)):
+                af.ErrorStop("No result data file in %s."%self._FolderName)
                            
         else:
             # Deal with the situation that the result folder already exists.
@@ -139,6 +148,12 @@ class SCANINPUT:
         af.Info('Input parameters   =  ')
         for ii in inputvar:
             lenii = len(ii)
+            
+            if self._ScanMethod == scanner._postprocess:
+              self.InPar[ii[0]] = af.NaN
+              self.AllPar[ii[0]] = af.NaN
+              af.Info('  ID= %s, read from previous '%(ii[0]))
+              continue
             
             if lenii < 3 :
               af.ErrorStop(self.InputCheck(ii[0], 3, "Value"))
