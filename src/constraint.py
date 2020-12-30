@@ -10,10 +10,10 @@ class CONSTRAINT:
         #self._Limit=[]
         self._FreeFormChi2=[]
         self.Chi2={}
+        self.Chi2['Chi2'] = af.NaN 
     
     def setGaussian(self,var):
         var = af.string2nestlist(var)
-        self.Chi2['Chi2'] = af.NaN 
         af.Info('Gaussian Constraint:')
         for ii in var:
             if len(ii) in [3]:
@@ -72,7 +72,7 @@ class CONSTRAINT:
             else:
                 af.ErrorStop( 'The "FreeFormChi2" constraint on "%s" need 1 item or 2 items( VarID [, Name] ).'%(ii[0]) )
 
-            self.Chi2 = af.sortDic(self.Chi2)
+        self.Chi2 = af.sortDic(self.Chi2)
 
     def getChisq(self,par):
         chisq = 0.0
