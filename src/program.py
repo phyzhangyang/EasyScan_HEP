@@ -696,10 +696,12 @@ class PROGRAM:
                 try:
                     ## new 20180425 liang
                     #par[jj[0]] = float(re.split(r'[ \t]+',labeline[0].strip())[int(jj[4]-1)])
-                    if jj[4] > 0:
-                        par[jj[0]] = re.split(r'[ \t]+',labeline[0].strip())[int(jj[4]-1)]
-                    else:
-                        par[jj[0]] = re.split(r'[ \t]+',labeline[0].strip())[int(jj[4])]
+#                    if jj[4] > 0:
+#                        par[jj[0]] = re.split(r'[ \t]+',labeline[0].strip())[int(jj[4]-1)]
+#                    else:
+#                        par[jj[0]] = re.split(r'[ \t]+',labeline[0].strip())[int(jj[4])]
+                    # TODO: why jj[4] <= 0?
+                    par[jj[0]] = float(re.split(r'[ \t]+',labeline[0].strip())[int(jj[4]-1)])
                     af.Debug('Output - %s='%jj[0],par[jj[0]])
                 except:
                     af.Debug('Can not read the output var',jj[0])
