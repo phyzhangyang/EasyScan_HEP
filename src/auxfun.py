@@ -26,7 +26,7 @@ _all = [_random, _grid, _mcmc, _multinest, _postprocess, _plot, _read]
 _no_random = [_grid, _postprocess, _plot, _read]
 _no_like   = [_random, _grid, _postprocess, _plot, _read]
 _post = [_postprocess, _plot]
-## Define name of result data file
+# Define name of result data file
 ResultFile = 'ScanResult.txt'
 ResultFile_MCMC = 'All_ScanResult.txt'
 ResultFile_MultiNest = 'MultiNestData/.txt'
@@ -34,7 +34,7 @@ ResultFile_post = 'Previous_ScanResult.txt'
 
 flag_resume = flag_resume
 
-## Define screen print functions
+# Define screen print functions
 def ColorText(i,text,j=1):
     return '\033[%i;3%i;2m %s\033[0m' %(j,i,text)
 def GotoWeb():
@@ -57,7 +57,7 @@ def Debug(debinfo,debvalue=''):
     else:
         logger.debug( ColorText(5, str(debinfo)+': '+str(debvalue) ) )
 
-## Transform str into int and float
+# Transform str into int and float
 def autotype(s):
     if type(s) is not str:
         return s
@@ -68,18 +68,27 @@ def autotype(s):
     except ValueError:
         return s
 
-## Transform str into list
+# Check if input is a number
+def is_number(s):
+    try:
+        float(s)
+        return True
+    except ValueError:
+        return False
+
+
+# Transform str into list
 def string2list(s):
     s = [ autotype(ss.strip()) for ss in s.split('\n') ]
     return s
 
-## Parse string of input variable and output variable in configure file to list of items.
+# Parse string of input variable and output variable in configure file to list of items.
 def string2nestlist(s):
     s = [x.split(',') for x in s.split('\n')]
     s = [[autotype(x.strip()) for x in ss] for ss in s]
     return s
 
-## Write information of result into file
+# Write information of result into file
 def WriteResultInf(InPar, FixedPar, OutPar, Constraint, Path, ScanMethod):
     if ScanMethod == _plot: 
       return
@@ -97,7 +106,7 @@ def WriteResultInf(InPar, FixedPar, OutPar, Constraint, Path, ScanMethod):
       outfile.write(inf+'\n')
       outfile.close()
     
-## Evaluate a math string
+# Evaluate a math string
 # http://lybniz2.sourceforge.net/safeeval.html
 # Make a list of safe functions
 safe_list = ['acos', 'asin', 'atan', 'atan2', 'ceil', 'cos', 'cosh',

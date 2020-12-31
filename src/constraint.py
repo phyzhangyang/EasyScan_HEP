@@ -81,9 +81,11 @@ class CONSTRAINT:
         af.parseMath(par)
 
         for ii in self._Gaussian:
-            #ichisq = af.NaN 
-            #ichisq = -1.0*af.log_zero
-            if   ii[3].lower() == 'symm':
+            
+            if not af.is_number(par[ii[0]]):
+              return af.log_zero
+              
+            if ii[3].lower() == 'symm':
                 ichisq =     (ii[1] - par[ii[0]])**2/ii[2]**2
             elif ii[3].lower() == 'upper':
                 if par[ii[0]] <= ii[1] :
