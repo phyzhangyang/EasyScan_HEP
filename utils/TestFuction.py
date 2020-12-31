@@ -9,4 +9,4 @@ data = loadtxt(r"TestFuction_input.dat")
 
 f = sin(data[0])**2 + cos(data[1])**2
 
-open("TestFuction_output.dat",'w').write(str(f))
+open("TestFuction_output.dat",'w').write("test "+str(f))

@@ -371,9 +371,9 @@ class PROGRAM:
         outputvar=af.string2nestlist(outputvar)
         for ii in outputvar:
             if ii[1] not in self._OutFileID:
-                af.ErrorStop( 'ID for output variable "%s" in program "%s" is wrong.'%(ii[0],self._ProgName, ii[1]))
+                af.ErrorStop( 'ID of output variable "%s" in program "%s" is wrong.'%(ii[0],self._ProgName, ii[1]))
             if ii[2].upper() not in ['FILE', 'POSITION', 'LABEL', 'SLHA']:
-                af.ErrorStop( 'For output variable "%s" in program "%s", EasyScan_HEP not supporting method="%s" now!'%(ii[0],self._ProgName, ii[2]) )
+                af.ErrorStop( 'Method "%s" of output variable "%s" in program "%s" is not supported'%(ii[2],ii[0],self._ProgName))
             
             self.outvar[ii[0]] = af.NaN
             
@@ -681,7 +681,7 @@ class PROGRAM:
             ## For 'Position' method
             for jj in self._OutPosVar[ii]:
                 try:
-                    par[jj[0]] = float(ouvar[jj[3]-1][jj[4]-1])
+                    par[jj[0]] = af.autotype(ouvar[jj[3]-1][jj[4]-1])
                     af.Debug('Output - %s='%jj[0],par[jj[0]])
                 except:
                     af.Info('Can not read the output var %s'%jj)
@@ -701,7 +701,7 @@ class PROGRAM:
 #                    else:
 #                        par[jj[0]] = re.split(r'[ \t]+',labeline[0].strip())[int(jj[4])]
                     # TODO: why jj[4] <= 0?
-                    par[jj[0]] = float(re.split(r'[ \t]+',labeline[0].strip())[int(jj[4]-1)])
+                    par[jj[0]] = af.autotype(re.split(r'[ \t]+',labeline[0].strip())[int(jj[4]-1)])
                     af.Debug('Output - %s='%jj[0],par[jj[0]])
                 except:
                     af.Debug('Can not read the output var',jj[0])
@@ -723,10 +723,10 @@ class PROGRAM:
                             continue
                         if jj[3].upper() == 'BLOCK' and ''.join(ks) ==  ''.join(kk[0:len(ks)]):
                             ks_flag  = True
-                            par[jj[0]] = float(ouvar[kki][len(ks)])
+                            par[jj[0]] = af.autotype(ouvar[kki][len(ks)])
                         if jj[3].upper() == 'DECAY' and ''.join(ks).replace('.0','') ==  ''.join(kk[1:len(ks)+1]):
                             ks_flag  = True
-                            par[jj[0]] = float(ouvar[kki][0])
+                            par[jj[0]] = af.autotype(ouvar[kki][0])
                     if jj[3].upper() == kk[0].upper() and ''.join(blk) == ''.join(kk[1:len(blk)+1]) :
                         blk_flag = True
                         if jj[3].upper() == 'DECAY' and jj[5] == 0:
@@ -734,7 +734,7 @@ class PROGRAM:
                                 af.Debug('Can not read the output var',jj)
                                 return False
                             else:
-                                par[jj[0]]=float(ouvar[kki][2])
+                                par[jj[0]]=af.autotype(ouvar[kki][2])
                                 ks_flag  = True
                             break
                 af.Debug('Output - %s='%jj[0],par[jj[0]])
