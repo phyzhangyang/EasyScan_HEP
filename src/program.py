@@ -407,7 +407,7 @@ class PROGRAM:
             for jj in self._OutLabelVar[ii]:
                 if len(jj) != 5 :
                     af.ErrorStop( 'For output variable "%s" in program "%s" with "Label" method, 5 items ( Name ID,  Input file ID,  Method, Label name,  Input variable column number ) need to be provived.'%(jj[0],self._ProgName) )
-                af.Info('  varID= %s \tfileID= %s \tMethod= %s \tLabe=l %s \tColumn= %s'%(jj[0],jj[1],jj[2],jj[3],jj[4]))
+                af.Info('  varID= %s \tfileID= %s \tMethod= %s \tLabel= %s \tColumn= %s'%(jj[0],jj[1],jj[2],jj[3],jj[4]))
 
             ## For 'slha' method
             self._OutSLHAVar[ii] = [x for x in outputvar if (x[1] == ii) and (x[2].lower() == 'slha')]
