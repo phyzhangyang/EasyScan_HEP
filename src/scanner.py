@@ -106,7 +106,10 @@ def gridrun(LnLike, Prior, n_params, inpar, fixedpar, outpar, bin_num, n_print, 
     ntotal = 1
     interval = {}
     for i,name in enumerate(inpar):
-        interval[name] = 1.0 / bin_num[name]
+        try:
+            interval[name] = 1.0 / bin_num[name]
+        except ZeroDivisionError:
+            af.ErrorStop('The number of intervals in grid scanning could not be zero.')
         bin_num[name] += 1
         ntotal     *= bin_num[name]
     # Initialise cube
