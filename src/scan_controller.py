@@ -135,7 +135,14 @@ class CONTROLLER:
         if self._PrintNum < 1 :
             af.ErrorStop('"Interval of print" should be larger than 0')
         af.Info('Interval of print = %s'%self._PrintNum)
-
+        af.Info('  If all elements defined in "Output variable" are read by easyscan successfully,')
+        af.Info('  easyscan would show information as following every interval')
+        af.Info('  ------------ Num: # ------------')
+        af.Info('  Input  -        =   ')
+        af.Info('  Output -        =   ')
+        af.Info('  LnLike          =   ')
+        af.Info('  Accepted Num    =   ')
+        af.Info('  Total    Num    =   ')
 
     def InputCheck(self, name, num, items):
         return 'Input parameter "%s" need %i iterms [ID, Prior, %s]'%(name, num, items)
