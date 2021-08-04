@@ -87,9 +87,9 @@ def ReadIn(Configfile, ES, Programs, Constraint, Ploter):
     except configparser.NoOptionError:
         af.Info(notFind('Interval of print')+takeDefault('1'))
         ES.setPrintNum('1')
-    except configparser.NoOptionError:
     except ValueError:
         af.WarningNoWait(notInteger("Interval of print")+takeDefault('1'))
+        ES.setPrintNum('1')
 
     try:
         ES.setInputPar(cf.get('scan', 'Input parameters'))
