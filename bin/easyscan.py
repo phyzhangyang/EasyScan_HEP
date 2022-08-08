@@ -80,7 +80,18 @@ def Prior(cube, ndim, nparams):
         cube[i] = statfun.prior(cube[i],ES.InputPar[name])
 
 # Load corresponding scan method
-if ES.getScanMethod() == af._random:
+if ES.getScanMethod() == af._onepoint:
+    scanner.onepoint(
+        LnLike = LnLike,
+        Prior         = Prior,
+        n_params      = len(ES.AllPar)+len(Constraint.Chi2),
+        inpar         = ES.InPar,
+        fixedpar      = ES.FixedPar,
+        outpar        = ES.OutPar,
+        InitVal       = ES.getInitialValueII(),
+        outputfolder  = ES.getFolderName())
+
+elif ES.getScanMethod() == af._random:
     scanner.randomrun(
         LnLike = LnLike,
         Prior         = Prior,
@@ -154,6 +165,3 @@ if ES.getScanMethod() != af._plot:
 """ Plot """
 Ploter.setPlotPar(ES.getFolderName(), ES._ScanMethod)
 Ploter.getPlot(ES._ScanMethod)
-
-
-

@@ -81,10 +81,10 @@ class PLOTER():
         try:
             import pandas
         except ImportError:
-            
             af.ErrorStop("No pandas module. No plot will be generated.")
 
         # read result
+        af.Info("Read data for PLOT in the file %s"%os.path.join(path, af.ResultFile))
         if ScanMethod not in af._post: 
           self._data = pandas.read_csv(os.path.join(path, af.ResultFile), header=0, index_col=False)
           if ScanMethod == af._mcmc:

@@ -14,6 +14,7 @@ log_zero = -1e+100
 NaN = float('NaN')
 CurrentPath = os.getcwd()
 # Name of scanner
+_onepoint = "ONEPOINT"
 _random = "RANDOM"
 _grid = "GRID"
 _mcmc = "MCMC"
@@ -22,8 +23,8 @@ _plot = "PLOT"
 _postprocess = "POSTPROCESS"
 _read = "READ"
 
-_all = [_random, _grid, _mcmc, _multinest, _postprocess, _plot, _read]
-_no_random = [_grid, _postprocess, _plot, _read]
+_all = [_onepoint, _random, _grid, _mcmc, _multinest, _postprocess, _plot, _read]
+_no_random = [_onepoint, _grid, _postprocess, _plot, _read]
 _no_like   = [_random, _grid, _postprocess, _plot, _read]
 _post = [_postprocess, _plot]
 # Define name of result data file
@@ -108,20 +109,21 @@ def WriteResultInf(InPar, FixedPar, OutPar, Constraint, Path, ScanMethod):
     
 # Evaluate a math string
 # http://lybniz2.sourceforge.net/safeeval.html
-# Make a list of safe functions
-safe_list = ['acos', 'asin', 'atan', 'atan2', 'ceil', 'cos', 'cosh',
-             'degrees', 'e', 'exp', 'fabs', 'floor', 'fmod', 'frexp', 
-             'hypot', 'ldexp', 'log', 'log10', 'modf', 'pi', 'pow', 
-             'radians', 'sin', 'sinh', 'sqrt', 'tan', 'tanh']
-# Use the list to filter the local namespace
-safe_dict = dict([ (k, globals().get(k, None)) for k in safe_list ])
-# Add any needed builtins back in.
-safe_dict['abs'] = abs
-safe_dict['float'] = float 
-safe_dict['int'] = int 
+import math 
+# Make a list of safe functions, add any needed builtins back in.
+safe_dict = {'abs':abs, 'float':float, 'int':int,
+             'acos':math.acos, 'asin':math.asin, 'atan':math.atan, 'atan2':math.atan2, 
+             'ceil':math.ceil, 'cos':math.cos, 'cosh':math.cosh, 'degrees':math.degrees, 
+             'e':math.e, 'exp':math.exp, 'fabs':math.fabs, 'floor':math.floor, 'fmod':math.fmod, 'frexp':math.frexp, 
+             'hypot':math.hypot, 'ldexp':math.ldexp, 'log':math.log, 'log10':math.log10, 
+             'modf':math.modf, 'pi':math.pi, 'pow':math.pow, 'radians':math.radians, 
+             'sin':math.sin, 'sinh':math.sinh, 'sqrt':math.sqrt, 
+             'tan':math.tan, 'tanh':math.tanh,
+             '__builtins__': None}
+# names that can not be used for variable
+forbidden_names = [*safe_dict] + _all + ['mult', 'probability', '-2lnlike'] 
 def parseMath(par):
     safe_dict.update(par)
-    safe_dict.update({"__builtins__": None})
     for key,value in par.items():
         expr = ','.join(key.split(';'))
         try:
@@ -139,11 +141,6 @@ def parseMath(par):
 
         #print key, expr, cal; raw_input("math") 
         par[key] = cal
-
-# names that can not be used for variable
-forbidden_names = safe_list + _all + ['abs', 'float', 'int',
-                  'mult', 'probability', '-2lnlike'] 
-
 
 # Sort parameters so that we can output them in right order
 def sortDic(Dic):

@@ -31,6 +31,7 @@ class CONTROLLER:
         self.GridBin = {} # Number of bins
         self.MCMCss = {}  # Step size
         self.MCMCiv = {}  # Initial value
+        self.ONEPOINTiv = {}  # Initial value
 
         self.MNOutputFile = 'test/MultiNestData/'
     
@@ -178,9 +179,18 @@ class CONTROLLER:
             self.InputPar[ii[0]] = ii
             self.InPar[ii[0]] = af.NaN
             self.AllPar[ii[0]] = af.NaN
+
+            if self._ScanMethod in [af._onepoint]:
+              if lenii > 3 :
+                af.WarningNoWait(self.InputCheck(ii[0], 3, "Value"))
+                af.WarningWait("The rest %i values will be ignore."%(lenii-3) )
+              af.Info('  ID= %s\tPrior= %s\tValue= %f'%(ii[0],ii[1],ii[2]))
+              self.ONEPOINTiv[ii[0]] = ii[2]
+              continue
+
             if lenii < 4 :
               af.ErrorStop(self.InputCheck(ii[0], 4, "Minimum, Maximum"))
-            
+
             if self._ScanMethod in [af._random, af._multinest]:
               if lenii > 4 :
                 af.WarningNoWait(self.InputCheck(ii[0], 4, "Minimum, Maximum"))
@@ -285,6 +295,8 @@ class CONTROLLER:
         return self.MCMCss
     def getInitialValue(self):
         return self.MCMCiv
+    def getInitialValueII(self):
+        return self.ONEPOINTiv
 
     def getFlagTuneR(self):
         return self._FlagTuneR

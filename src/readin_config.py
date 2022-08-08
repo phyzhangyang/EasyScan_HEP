@@ -6,6 +6,7 @@ from program import PROGRAM
 import auxfun as af
 # External modules
 import configparser
+import sys 
 
 # Check reduplicative variable name
 def checkDuplicatedName(List, name, check_forbidden=True):
@@ -158,6 +159,8 @@ def ReadIn(Configfile, ES, Programs, Constraint, Ploter):
             af.Info('Delete output file(s) of %s before execute it. '%ii)
         try:
             Programs[ii].setBound(cf.get(ii, 'Bound'))
+        except SystemExit:
+            sys.exit(1)  
         except:
             af.Info('No Bound.')
         

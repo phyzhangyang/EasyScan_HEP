@@ -95,7 +95,37 @@ def postprocessrun(LnLike, n_params, inpar, fixedpar, outpar, bin_num,n_print,ou
         
         if (Nrun+1)%n_print == 0:
             printPoint(Nrun+1, cube, n_dims, inpar, fixedpar, outpar, lnlike, Naccept)
-            
+
+def onepoint(LnLike, Prior, n_params, inpar, fixedpar, outpar, InitVal, outputfolder):
+    data_file = open(os.path.join(outputfolder, af.ResultFile),'a')
+    file_path = os.path.join(outputfolder,"SavedFile")
+        
+    n_dims = len(inpar)
+        
+    # Initialise cube
+    cube = [af.NaN] * n_params
+    af.Info(InitVal)
+
+    for i,name in enumerate(inpar):
+        cube[i] = InitVal[name]
+
+    af.Info('Begin onepoint mode ...')
+    n_init = 0
+    Naccept = 1  
+    Prior(cube, n_dims, n_params) # normalized to cube to real value
+    lnlike = LnLike(cube, n_dims, n_params)
+
+    if lnlike > af.log_zero:   
+        n_init = n_init +1
+    if n_init == 0: 
+        af.WarningNoWait('The initial point is unphysical.')
+
+    CurObs=[]
+    CurChisq = - 2.0 * lnlike
+    for i in range(n_params): 
+        CurObs.append( cube[i] )
+    printPoint(1, cube, n_dims, inpar, fixedpar, outpar, lnlike, 1)
+    saveCube(CurObs, data_file, file_path, str(Naccept), True)
 
 def gridrun(LnLike, Prior, n_params, inpar, fixedpar, outpar, bin_num, n_print, outputfolder):
     data_file = open(os.path.join(outputfolder, af.ResultFile),'a') 
