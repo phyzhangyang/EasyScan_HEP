@@ -8,6 +8,7 @@ import os
 import sys
 import optparse
 import logging
+logging.getLogger("matplotlib").setLevel(logging.WARNING)
 import logging.config
     
 print('\033[1;36;2m')

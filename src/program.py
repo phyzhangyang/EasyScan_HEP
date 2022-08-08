@@ -794,49 +794,37 @@ class PROGRAM:
                     return
                 af.ErrorStop( 'The "Bound" in program "%s" must have at least 3 items.'%self._ProgName )
             elif len(ii) == 3:
-                if ii[1] not in ["<=", ">=", ">", "<", "==", "!="]:
-                    af.ErrorStop( 'The second item "%s" in "Bound" in program "%s" must be "<=", ">=", ">", "<", "==", "!=" or a real number at 3 items.'%(ii[1], self._ProgName) )
-                try:
-                    float(ii[2]) 
+                if type(af.autotype(ii[2])) not in [type(1),type(1.0)]:  
+                    af.ErrorStop('For "Bound" in program "%s", "%s" should be int or float when there are 3 items.'%(self._ProgName, ii[2])) 
+                try: 
+                    float(ii[1]) 
                 except: 
-                    self.boundvar[ii[2]] = af.NaN
+                    if ii[1] not in ["<=", ">=", ">", "<", "==", "!="]: 
+                        af.ErrorStop( 'The second item "%s" in "Bound" in program "%s" must be int, float, "<=", ">=", ">", "<", "==", or "!=" at 3 items.'%(ii[1], self._ProgName) ) 
 
-                self.boundvar[ii[0]] = af.NaN
-
-                af.Info('    NameID= %s \tOperator= %s \tLimit= %s'%(ii[0],ii[1],ii[2]))
-
-            elif len(ii) in [4,5]:
-                if ii[2].lower() not in ["upper", "lower"]:
-                    af.ErrorStop( 'The third item "%s" in "Bound" in program "%s" must be "lower" or "upper" at 4 items.'%(ii[2], self._ProgName) )
+                if ii[1] in ["<=", ">=", ">", "<", "==", "!="]:
+                    af.Info('    varID= %s \tLimit: %s \tValue: %s'%(ii[0],ii[1],ii[2]))
+                else:
+                    af.Info('    varID= %s \tMin= %s \tMax= %s'%(ii[0],ii[1],ii[2]))
+                self.boundvar[ii[0]] = af.NaN 
+            else: 
+                if ii[2].lower() not in ["max", "min"]: 
+                    af.ErrorStop( 'For "Bound" in program "%s", the third item "%s" must be "MAX" or "MIN" when there are 4 items.'%(self._ProgName, ii[2]) ) 
                 if not (ii[3].startswith('/home') or ii[3].startswith('~')):
                     ii[3]=os.path.join(af.CurrentPath, ii[3])
                 try:
                     open(ii[3])
                 except:
-                    af.ErrorStop('Can not find/open the limit file "%s" in "Bound" in program "%s".'%(ii[3],self._ProgName))
+                    af.ErrorStop('Can not find/open the bound file "%s" in "Bound" in program "%s".'%(ii[3],self._ProgName))
                 try:
-                    boundfile = numpy.loadtxt(ii[3])
+                    boundata = numpy.loadtxt(ii[3])
                 except:
-                    af.ErrorStop('Find string in the limit file "%s" in "Bound" in program "%s".'%(ii[3],self._ProgName))
-                try:
-                    numpy.shape(boundfile)[1]
-                except:
-                    af.ErrorStop('Only one row or column in the limit file "%s" in "Bound" in program "%s".'%(ii[3],self._ProgName))
-                if numpy.shape(boundfile)[1] < 2:
-                    af.ErrorStop('Less than two columns in the limit file "%s" in "Bound" in program "%s".'%(ii[3],self._ProgName))
-                af.Info('    NameID= %s \tNameID= %s \tBound= %s \tBoundFile= %s'%(ii[0],ii[1],ii[2],ii[3]))
-
-
-                ## new 20180429 liang
-                if len(ii) == 4:
-                    jj = ii + ['Bound_%s_%s_%s'%(ii[0], ii[1], ii[2])]
-                else:
-                    jj = ii
-
-                self.boundvar[jj[4]] = af.NaN
-
-            else: 
-                af.ErrorStop( 'The "Bound" in program "%s" have at most 5 items.'%self._ProgName )
+                    af.ErrorStop('Find string or irregular column and row in the bould file "%s" in "Bound" in program "%s".'%(ii[3],self._ProgName)) 
+                if len(numpy.shape(boundata)) < 2: 
+                    af.ErrorStop('There should be more than one row and more than one column in the bound file "%s" in "Bound" in program "%s".'%(ii[3], self._ProgName)) 
+                af.Info('    varID1= %s (for comparison) when varID2= %s given that "%s" in the bound File "%s"'%(ii[0],ii[1],ii[2],ii[3]))
+                self.boundvar[ii[0]] = af.NaN 
+                self.boundvar[ii[1]] = af.NaN 
 
     ## for "Bound" in [programX]
     ## ReadBound() have survived conditions in SetBound()
@@ -855,40 +843,52 @@ class PROGRAM:
         ## new 20180429 liang
         phy=True
         for ii in self._BoundVar:
+            physub = True
             if len(ii)== 3:
-                af.Debug('"%s=%f" compare to the limit "%s" in "Bound" for program %s'%(ii[0], par[ii[0]], ii[1:], self._ProgName))
+                af.Debug('"%s=%.3E" compare to the limit "%s" in "Bound" for program %s'%(ii[0], par[ii[0]], ii[1:], self._ProgName))
                 try:
-                    float(ii[2])
+                    float(ii[1])
+                    physub = eval("%e >= %e and %e <= %e"%(par[ii[0]], ii[1], par[ii[0]], ii[2]))
                 except:
-                    phy = phy and eval("%f%s%f"%(par[ii[0]], ii[1], par[ii[2]]))
+                    physub = eval("%e%s%e"%(par[ii[0]], ii[1], ii[2])) 
+                if physub:
+                    af.Debug('"%s=%.3E" satisfy "%s" in "Bound" for program %s'%(ii[0], par[ii[0]], ii[1:], self._ProgName))
                 else:
-                    phy = phy and eval("%f%s%s"%(par[ii[0]], ii[1], ii[2]))
-            elif len(ii) in [4,5]:
-                if len(ii) == 4:
-                    jj = ii + ['Bound_%s_%s_%s'%(ii[0], ii[1], ii[2])]
-                else:
-                    jj = ii
+                    af.Debug('"%s=%.3E" unsatisfy "%s" in "Bound" for program %s'%(ii[0], par[ii[0]], ii[1:], self._ProgName))
+                phy = phy and physub 
+            else: 
                 if not (ii[3].startswith('/home') or ii[3].startswith('~')):
                     ii[3]=os.path.join(af.CurrentPath, ii[3])
-                boundfile = numpy.loadtxt(ii[3])
-                x=boundfile[:,0]
-                y=boundfile[:,1]
-                if par[ii[0]] < numpy.amin(x) or par[ii[0]] > numpy.amax(x):
-                    af.WarningNoWait('"%s" less(greater) than min(max) of the first column in limit file "%s" with method "%s" in "Bound" in program "%s".'%(ii[0], ii[3], ii[2], self._ProgName))
-                    if ii[2].lower() == 'lower':
-                        yinter = af.log_zero
-                    elif ii[2].lower() == 'upper':
-                        yinter = -1.0*af.log_zero
-                    af.WarningNoWait('    So we set "%s=%e"'%(jj[4], yinter))
+                boundata = numpy.loadtxt(ii[3]) 
+                x=boundata[:,0]
+                y=boundata[:,1]
+                inp = af.NaN 
+                if par[ii[1]] < numpy.amin(x) or par[ii[1]] > numpy.amax(x):
+                    af.WarningNoWait('"%s=%.3E" is less than the minimal value (%.3E) or greater than the maximum value (%.3E) of the first column in file "%s" in "Bound" in program "%s". This point is seen as ALLOW.'%(ii[1], par[ii[1]], numpy.amin(x), numpy.amax(x), ii[3], self._ProgName))
+                    if ii[2].lower() == 'max':
+                        inp = af.log_zero 
+                    else:
+                        inp = -1.0*af.log_zero 
                 else:
-                    yinter = numpy.interp(par[ii[0]], x, y)
-                par[jj[4]] = yinter 
-                af.Debug('"x-axis: %s=%f, y-axis: %s=%f" compare to the %s limit "y-interplotion: %s=%f" by interplotion in "Bound" for program %s'%(ii[0], par[ii[0]], ii[1], par[ii[1]], ii[2].lower(), ii[1], yinter, self._ProgName))
+                    inp = numpy.interp(par[ii[1]], x, y) 
+                if eval("%e <= %e"%(par[ii[0]], inp)):
+                    af.Debug('"%s=%.3E" is less than or equal to the interpolated value %.3E at "%s=%.3E" in file "%s" in "Bound" for program %s'%(ii[0], par[ii[0]], inp, ii[1], par[ii[1]], ii[3], self._ProgName))
+                else:
+                    af.Debug('"%s=%.3E" is greater than or equal to the interpolated value %.3E at "%s=%.3E" in file "%s" in "Bound" for program %s'%(ii[0], par[ii[0]], inp, ii[1], par[ii[1]], ii[3], self._ProgName))
+                if ii[2].lower() == "max":
+                    physub = eval("%e <= %e"%(par[ii[0]], inp))
+                else:
+                    physub = eval("%e >= %e"%(par[ii[0]], inp))
+                if physub:
+                    af.Debug('"%s=%.3E" satisfy "%s" in "Bound" for program %s'%(ii[0], par[ii[0]], ii[1:], self._ProgName))
+                else:
+                    af.Debug('"%s=%.3E" unsatisfy "%s" in "Bound" for program %s'%(ii[0], par[ii[0]], ii[1:], self._ProgName))
+                phy = phy and physub 
 
-                if ii[2].lower() == "upper":
-                    phy = phy and eval("%f%s%s"%(par[ii[1]], '<=', par[jj[4]]))
-                elif ii[2].lower() == "lower":
-                    phy = phy and eval("%f%s%s"%(par[ii[1]], '>=', par[jj[4]]))
+        if phy:
+            af.Debug('This point is allowed in "Bound" for program %s'%(self._ProgName))
+        else:
+            af.Debug('This point is excluded in "Bound" for program %s'%(self._ProgName))
 
         return phy 
 
