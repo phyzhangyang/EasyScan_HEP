@@ -13,10 +13,10 @@ import auxfun as af
 class CONTROLLER:
     def __init__(self):
         self._FolderName = 'test'
-        self._PointNum   = 2
+        self._PointNum   = 1000
         self._ScanMethod = 'random'
         self._RandomSeed = -1
-        self._PrintNum   = 10
+        self._PrintNum   = 1
         self._AccepRate  = 0.25
         self._FlagTuneR  = False
         
@@ -200,9 +200,9 @@ class CONTROLLER:
                 
             if self._ScanMethod == af._grid:
               if lenii == 4:
-                self.GridBin[ii[0]]=20
+                self.GridBin[ii[0]]=30
                 af.WarningNoWait(self.InputCheck(ii[0], 5, "Minimum, Maximum, Number of bins"))
-                af.WarningWait("'Number of bins' will take default value, 20.")
+                af.WarningWait("'Number of bins' will take default value, 30.")
               else:
                 self.GridBin[ii[0]]=ii[4]
                 if self.GridBin[ii[0]] < 0 or type(ii[4]) != int:
@@ -223,7 +223,7 @@ class CONTROLLER:
                 if lenii < 5:
                   self.MCMCss[ii[0]] = 1./30.
                   Step = float(ii[3]-ii[2])/30.
-                  af.WarningWait("'Interval' will take default value, (Max-Min)/30.")
+                  af.WarningWait("'Interval' will take default value, 30.")
               else:
                 # The scan range is normalized to 1
                 self.MCMCss[ii[0]] = 1.0/float(ii[4])
