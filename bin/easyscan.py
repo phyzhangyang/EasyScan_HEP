@@ -56,18 +56,17 @@ def LnLike(cube, ndim, nparams):
         if not PhysicalPoint : 
           break
     
+    if not PhysicalPoint :
+      return af.log_zero
+
+    loglike = - 0.5*Constraint.getChisq(ES.AllPar)
+
     # Pass fixed variables to cube
     for i,name in enumerate(ES.FixedPar) :
         cube[i+ndim]   = ES.AllPar[name]    
     # Pass output variables to cube
     for i,name in enumerate(ES.OutPar) :
         cube[i+ndim+len(ES.FixedPar)]   = ES.AllPar[name]
-
-    if not PhysicalPoint :
-      return af.log_zero
-
-    loglike = - 0.5*Constraint.getChisq(ES.AllPar)
-        
     # Pass constraint likelihood to cube
     for i,name in enumerate(Constraint.Chi2) :
         cube[i+ndim+len(ES.FixedPar)+len(ES.OutPar)]   = Constraint.Chi2[name]
