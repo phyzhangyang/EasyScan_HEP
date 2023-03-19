@@ -58,16 +58,29 @@ def Debug(debinfo,debvalue=''):
     else:
         logger.debug( ColorText(5, str(debinfo)+': '+str(debvalue) ) )
 
-# Transform str into int and float
+# Transform str into int or float if possible
 def autotype(s):
     if type(s) is not str:
         return s
+    else:
+        if s.isdigit():
+            return int(s)
+        else:
+            try:
+                return float(s)
+            except ValueError:
+                return s
+
+# Transform str to int or float forcely 
+def forcetype(s):
+    if type(s) is not str:
+        ErrorStop("%s is not str"%s)
     if s.isdigit():
         return int(s)
     try:
         return float(s)
-    except ValueError:
-        return s
+    except:
+        ErrorStop("%s is not int or float. Please check settings for Output variable in [program]."%s)
 
 # Check if input is a number
 def is_number(s):
