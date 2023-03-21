@@ -3,8 +3,10 @@
 ####################################################################
 # Internal modules
 import auxfun as af
+from scan_controller import CONTROLLER 
 # External modules
 import os
+import time
 import numpy
 
 ############################################################
@@ -77,28 +79,49 @@ class PLOTER():
             jj+=1
 
 
-    def setPlotPar(self, path, ScanMethod, postprocess=False):
+    def setPlotPar(self, path, ScanMethod, postprocess=False, ScanFile="", Plot=True):
         try:
             import pandas
         except ImportError:
             af.ErrorStop("No pandas module. No plot will be generated.")
 
         # read result
-        af.Info("Read data for PLOT in the file %s"%os.path.join(path, af.ResultFile))
-        if ScanMethod not in af._post: 
-          self._data = pandas.read_csv(os.path.join(path, af.ResultFile), header=0, index_col=False)
-          if ScanMethod == af._mcmc:
-            self._dataAllTry = pandas.read_csv(os.path.join(path, af.ResultFile_MCMC), header=0, index_col=False)
-          elif ScanMethod == af._multinest:
-            column_names = pandas.read_csv(os.path.join(path, af.ResultFile), header=0, index_col=False).columns.str.strip()
-            self._data = pandas.read_csv(os.path.join(path, af.ResultFile_MultiNest), header=None, names=column_names, delim_whitespace=True, index_col=False)
+        af.Info("Read data for ONEPOINTBATCH or PLOT ...")
+        datafile = ""
+        if ScanMethod not in af._post:
+            # define datafile
+            if ScanMethod == af._onepointbatch:
+                if Plot:
+                    datafile = os.path.join(path, af.ResultFile) 
+                else:
+                    datafile = ScanFile
+            elif ScanMethod == af._multinest:
+                datafile = os.path.join(path, af.ResultFile_MultiNest)
+            else:
+                datafile = os.path.join(path, af.ResultFile)
+            # read data from file
+            if ScanMethod == af._multinest:
+                column_names = pandas.read_csv(os.path.join(path, af.ResultFile), header=0, index_col=False).columns.values.tolist()
+                self._data = pandas.read_csv(datafile, header=None, names=column_names, delim_whitespace=True, index_col=False)
+            else:
+                self._data = pandas.read_csv(datafile, header=0, index_col=False, sep="[,\s\t]+", engine='python')
+            # read specific data for mcmc
+            if ScanMethod == af._mcmc:
+                self._dataAllTry = pandas.read_csv(os.path.join(path, af.ResultFile_MCMC), header=0, index_col=False)
         else: # ScanMethod == plot or postprocess 
-          ResultFile_name = af.ResultFile_post if postprocess else af.ResultFile
-          if os.path.exists(os.path.join(path, af.ResultFile_MultiNest)):
-            column_names = pandas.read_csv(os.path.join(path, ResultFile_name), header=0, index_col=False).columns.str.strip()
-            self._data = pandas.read_csv(os.path.join(path, af.ResultFile_MultiNest), header=None, names=column_names, delim_whitespace=True, index_col=False)
-          else:
-            self._data = pandas.read_csv(os.path.join(path, ResultFile_name), header=0, index_col=False)
+            ResultFile_name = af.ResultFile_post if postprocess else af.ResultFile
+            if os.path.exists(os.path.join(path, af.ResultFile_MultiNest)):
+                column_names = pandas.read_csv(os.path.join(path, ResultFile_name), header=0, index_col=False).columns.values.tolist()
+                datafile = os.path.join(path, af.ResultFile_MultiNest)
+                self._data = pandas.read_csv(datafile, header=None, names=column_names, delim_whitespace=True, index_col=False)
+            else:
+                datafile = os.path.join(path, ResultFile_name)
+                self._data = pandas.read_csv(datafile, header=0, index_col=False)
+        
+        # check whether data is empty
+        if self._data.shape[0] == 0:
+            af.ErrorStop("Your data file %s is empty."%(datafile))
+            return False 
         
         # make figure folder
         self._path = os.path.join(path,'Figures')
@@ -108,7 +131,9 @@ class PLOTER():
             __import__("shutil").rmtree(self._path) 
             os.mkdir(self._path)
 
-    def checkPar(self, par, num, section_name='plot'):                  
+        af.Info("Read data for ONEPOINTBATCH or PLOT successfully in the file %s"%datafile)
+
+    def checkPar(self, par, num, section_name='plot', severe=False):                  
       for jj in range(num):
 #        try:
 #          if self._data[par[jj]].min() == self._data[par[jj]].max():
@@ -117,15 +142,16 @@ class PLOTER():
 #        except KeyError:
 #          af.WarningNoWait("Parameter '%s' in [plot] section do not exist. No plot for it."%( par[jj] )  )
 #          return False 
-        if par[jj] not in self._data.columns:
-          af.WarningNoWait("Parameter '%s' in [%s] section do not exist."%(par[jj], section_name))
-          return False 
-        if self._data.shape[0] == 0:
-          af.WarningNoWait("Parameter '%s' in [%s] section is empty."%(par[jj], section_name))
-          return False 
+        if par[jj] not in self._data.columns.values.tolist():
+            if severe:
+                af.ErrorStop("The parameter named '%s' of [%s] of the configure file could not be found in headers from your data file."%(par[jj], section_name))
+            af.WarningNoWait("The parameter named '%s' of [%s] of the configure file could not be found in headers from your data file."%(par[jj], section_name))
+            return False 
         if not numpy.issubdtype(self._data[par[jj]].dtype, numpy.number):
-          af.WarningNoWait("Parameter %s in [%s] section is not float number."%(par[jj], section_name))
-          return False 
+            if severe:
+                af.ErrorStop("Column '%s' from your data file involves a non-number."%(par[jj]))
+            af.WarningNoWait("Column '%s' from your data file involves a non-number."%(par[jj]))
+            return False 
       return True
 
     ##only for debugging
@@ -198,9 +224,9 @@ class PLOTER():
             f=plt.figure(**figconf)
             subplot=f.add_subplot(111)
             weigh = 50
-            if "probability" in self._data.columns:
+            if "probability" in self._data.columns.values.tolist():
               weigh = self._data["probability"] * 100 / self._data["probability"].max() + 20
-            elif "mult" in self._data.columns:
+            elif "mult" in self._data.columns.values.tolist():
               weigh = self._data["mult"] * 100 / self._data["mult"].max() + 20
             sc1=subplot.scatter(self._data[ii[0]], self._data[ii[1]], c=self._data[ii[2]], s=weigh, **colorconf)
             cb1=plt.colorbar(sc1)

@@ -6,7 +6,7 @@ from program import PROGRAM
 import auxfun as af
 # External modules
 import configparser
-import sys 
+import sys,time 
 
 # Check reduplicative variable name
 def checkDuplicatedName(List, name, check_forbidden=True):
@@ -72,7 +72,7 @@ def ReadIn(Configfile, ES, Programs, Constraint, Ploter):
         if ES.getScanMethod() in af._no_random:
             pass
         else:
-            af.WarningWait(notFind('Number of points')+takeDefault('2')) 
+            af.WarningWait(notFind('Number of points')+takeDefault('10')) 
     except ValueError:
         af.ErrorStop(notInteger("Number of points"))
     try:
@@ -96,6 +96,9 @@ def ReadIn(Configfile, ES, Programs, Constraint, Ploter):
         ES.setInputPar(cf.get('scan', 'Input parameters'))
     except configparser.NoOptionError:
         af.ErrorStop(notFind('Input parameters'))
+    if ES.getScanMethod() in [af._onepoint, af._onepointbatch]:
+        ES.InPar = ES.FixedPar
+        ES.FixedPar = {}
     checkDuplicatedName(list(ES.InPar.keys()), "Input parameter")
 
     try:

@@ -13,7 +13,7 @@ import auxfun as af
 class CONTROLLER:
     def __init__(self):
         self._FolderName = 'test'
-        self._PointNum   = 1000
+        self._PointNum   = 10 
         self._ScanMethod = 'random'
         self._RandomSeed = -1
         self._PrintNum   = 1
@@ -21,6 +21,7 @@ class CONTROLLER:
         self._FlagTuneR  = False
         
         self._Prog    = {}
+        self._ScanFile = '' # OnePointBatch
         self.AllPar   = {}
         self.InPar    = {}
         self.FixedPar    = {}
@@ -31,14 +32,20 @@ class CONTROLLER:
         self.GridBin = {} # Number of bins
         self.MCMCss = {}  # Step size
         self.MCMCiv = {}  # Initial value
-        self.ONEPOINTiv = {}  # Initial value
 
         self.MNOutputFile = 'test/MultiNestData/'
     
         self._Count   = 0
     
     def setScanMethod(self, method):
-        self._ScanMethod = method.upper()
+        self._ScanMethod = method.upper().split('/')
+        if len(self._ScanMethod) == 1:
+            self._ScanMethod = self._ScanMethod[0]
+        else:
+            self._ScanMethod = "ONEPOINTBATCH"
+            self._ScanFile = os.path.join(os.path.sep, *method.split('/')[1:])
+            if not os.path.exists(self._ScanFile):
+                af.ErrorStop('%s can not be found'%self._ScanFile)
         if self._ScanMethod not in af._all:
             af.ErrorStop('%s is not a supported scan method'%method)
         af.Info('Scan method       = %s'%self._ScanMethod)
@@ -145,7 +152,7 @@ class CONTROLLER:
         af.Info('  Accepted Num    =   ')
         af.Info('  Total    Num    =   ')
 
-    def InputCheck(self, name, num, items):
+    def InputParInfo(self, name, num, items):
         return 'Input parameter "%s" need %i iterms [ID, Prior, %s]'%(name, num, items)
         
     def setInputPar(self, inputvar):
@@ -163,16 +170,17 @@ class CONTROLLER:
               continue
             
             if lenii < 3 :
-              af.ErrorStop(self.InputCheck(ii[0], 3, "Value"))
+              af.ErrorStop(self.InputParInfo(ii[0], 3, "Value"))
             
             # Set fixed par
             if ii[1].upper() == "FIXED":
               if lenii > 3 :
-                af.WarningNoWait(self.InputCheck(ii[0], 3, "Value"))
+                af.WarningNoWait(self.InputParInfo(ii[0], 3, "Value"))
                 af.WarningWait("The rest %i values will be ignore."%(lenii-3) )
               af.Info('  ID= %s\tPrior= %s\t =%f'%(ii[0],ii[1],ii[2]))
               self.FixedPar[ii[0]] = ii[2]
               self.AllPar[ii[0]] = ii[2]
+              self.InputPar[ii[0]] = ii
               continue
             
             # Initialize other input par to NaN
@@ -182,18 +190,17 @@ class CONTROLLER:
 
             if self._ScanMethod in [af._onepoint]:
               if lenii > 3 :
-                af.WarningNoWait(self.InputCheck(ii[0], 3, "Value"))
+                af.WarningNoWait(self.InputParInfo(ii[0], 3, "Value"))
                 af.WarningWait("The rest %i values will be ignore."%(lenii-3) )
               af.Info('  ID= %s\tPrior= %s\tValue= %f'%(ii[0],ii[1],ii[2]))
-              self.ONEPOINTiv[ii[0]] = ii[2]
               continue
 
             if lenii < 4 :
-              af.ErrorStop(self.InputCheck(ii[0], 4, "Minimum, Maximum"))
+              af.ErrorStop(self.InputParInfo(ii[0], 4, "Minimum, Maximum"))
 
             if self._ScanMethod in [af._random, af._multinest]:
               if lenii > 4 :
-                af.WarningNoWait(self.InputCheck(ii[0], 4, "Minimum, Maximum"))
+                af.WarningNoWait(self.InputParInfo(ii[0], 4, "Minimum, Maximum"))
                 af.WarningWait("The rest %i values will be ignore."%(lenii-4) )
               af.Info('  ID= %s\tPrior= %s\tMin= %f\tMax= %f'%(ii[0],ii[1],ii[2],ii[3]))
               continue
@@ -201,22 +208,22 @@ class CONTROLLER:
             if self._ScanMethod == af._grid:
               if lenii == 4:
                 self.GridBin[ii[0]]=30
-                af.WarningNoWait(self.InputCheck(ii[0], 5, "Minimum, Maximum, Number of bins"))
+                af.WarningNoWait(self.InputParInfo(ii[0], 5, "Minimum, Maximum, Number of bins"))
                 af.WarningWait("'Number of bins' will take default value, 30.")
               else:
                 self.GridBin[ii[0]]=ii[4]
                 if self.GridBin[ii[0]] < 0 or type(ii[4]) != int:
-                  af.WarningNoWait(InputCheck(ii[0], 5, "Minimum, Maximum, Number of bins"))
+                  af.WarningNoWait(InputParInfo(ii[0], 5, "Minimum, Maximum, Number of bins"))
                   af.ErrorStop("'Number of bins' is not a positive integer.")
                 if lenii> 5:
-                  af.WarningNoWait(self.InputCheck(ii[0], 5, "Minimum, Maximum, Number of bins"))
+                  af.WarningNoWait(self.InputParInfo(ii[0], 5, "Minimum, Maximum, Number of bins"))
                   af.WarningWait("The rest %i values will be ignore."%(lenii-5) )
               af.Info('  ID= %s\tPrior= %s\tMin= %f\tMax= %f\tNbin=%i'%(ii[0],ii[1],ii[2],ii[3],self.GridBin[ii[0]]))
               continue
             
             if self._ScanMethod == af._mcmc:
               if lenii < 6:
-                af.WarningNoWait(self.InputCheck(ii[0], 6, "Minimum, Maximum, Interval, Initial value"))
+                af.WarningNoWait(self.InputParInfo(ii[0], 6, "Minimum, Maximum, Interval, Initial value"))
                 self.MCMCiv[ii[0]] = 1./2.
                 IniV = float(ii[3]+ii[2])/2.
                 af.WarningWait("'Initial value' will take default value, (Max-Min)/2.")
@@ -234,7 +241,7 @@ class CONTROLLER:
                   self.MCMCiv[ii[0]] = (log10(ii[5])-log10(ii[2]))/(log10(ii[3]) - log10(ii[2]))
                 IniV = ii[5]
                 if lenii > 6:
-                  af.WarningNoWait(self.InputCheck(ii[0], 6, "Minimum, Maximum, Interval, Initial value"))
+                  af.WarningNoWait(self.InputParInfo(ii[0], 6, "Minimum, Maximum, Interval, Initial value"))
                   af.WarningWait("The rest %i values will be ignore."%(lenii-6) )
               af.Info('  ID= %s\tPrior= %s\tMin= %f\tMax= %f\tStep=%f\tIniV=%f'%(ii[0],ii[1],ii[2],ii[3],Step,self.MCMCiv[ii[0]]))
               continue
@@ -284,6 +291,8 @@ class CONTROLLER:
         return self._PointNum
     def getScanMethod(self):
         return self._ScanMethod
+    def getScanFile(self):
+        return self._ScanFile
     def getRandomSeed(self):
         return self._RandomSeed
     def getPrintNum(self):
@@ -295,8 +304,6 @@ class CONTROLLER:
         return self.MCMCss
     def getInitialValue(self):
         return self.MCMCiv
-    def getInitialValueII(self):
-        return self.ONEPOINTiv
 
     def getFlagTuneR(self):
         return self._FlagTuneR

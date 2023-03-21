@@ -15,6 +15,7 @@ NaN = float('NaN')
 CurrentPath = os.getcwd()
 # Name of scanner
 _onepoint = "ONEPOINT"
+_onepointbatch = "ONEPOINTBATCH"
 _random = "RANDOM"
 _grid = "GRID"
 _mcmc = "MCMC"
@@ -23,9 +24,9 @@ _plot = "PLOT"
 _postprocess = "POSTPROCESS"
 _read = "READ"
 
-_all = [_onepoint, _random, _grid, _mcmc, _multinest, _postprocess, _plot, _read]
-_no_random = [_onepoint, _grid, _postprocess, _plot, _read]
-_no_like   = [_random, _grid, _postprocess, _plot, _read]
+_all = [_onepoint, _onepointbatch, _random, _grid, _mcmc, _multinest, _postprocess, _plot, _read]
+_no_random = [_onepoint, _onepointbatch, _grid, _postprocess, _plot, _read]
+_no_like   = [_onepoint, _onepointbatch, _random, _grid, _postprocess, _plot, _read]
 _post = [_postprocess, _plot]
 # Define name of result data file
 ResultFile = 'ScanResult.txt'
