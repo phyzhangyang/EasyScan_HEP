@@ -13,7 +13,7 @@
 ##########################################################################
 
 # External modules.
-import os,sys
+import os,sys,time
 sys.path.append(os.path.join(os.path.split(os.path.split(os.path.realpath(__file__))[0])[0], "src"))
 # Internal modules.
 import initialize
@@ -42,7 +42,7 @@ def LnLike(cube, ndim, nparams):
     # Pass input value from cube to AllPar
     for i,name in enumerate(ES.InPar):
         ES.AllPar[name]=cube[i]
-    
+ 
     PhysicalPoint = True
     # Run programs
     for ii in ProgID:
@@ -75,19 +75,29 @@ def LnLike(cube, ndim, nparams):
 
 # Prior function
 def Prior(cube, ndim, nparams):
-    for i,name in enumerate(ES.InPar):  
+    for i,name in enumerate(ES.InPar): 
         cube[i] = statfun.prior(cube[i],ES.InputPar[name])
 
 # Load corresponding scan method
 if ES.getScanMethod() == af._onepoint:
-    scanner.onepoint(
+    scanner.onepointrun(
         LnLike = LnLike,
         Prior         = Prior,
         n_params      = len(ES.AllPar)+len(Constraint.Chi2),
         inpar         = ES.InPar,
         fixedpar      = ES.FixedPar,
         outpar        = ES.OutPar,
-        InitVal       = ES.getInitialValueII(),
+        outputfolder  = ES.getFolderName())
+
+elif ES.getScanMethod() == af._onepointbatch:
+    scanner.onepointbatchrun(
+        LnLike = LnLike,
+        n_params      = len(ES.AllPar)+len(Constraint.Chi2),
+        inpar         = ES.InPar,
+        fixedpar      = ES.FixedPar,
+        outpar        = ES.OutPar,
+        scanfile      = ES.getScanFile(),
+        n_print       = ES.getPrintNum(),
         outputfolder  = ES.getFolderName())
 
 elif ES.getScanMethod() == af._random:
@@ -153,7 +163,6 @@ elif ES.getScanMethod() == af._postprocess:
             inpar                = ES.InPar,
             fixedpar      = ES.FixedPar,
             outpar               = ES.OutPar,
-            bin_num              = ES.GridBin,
             n_print              = ES.getPrintNum(),
             outputfolder = ES.getFolderName())
 
