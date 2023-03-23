@@ -1,4 +1,4 @@
-all: susyhit gm2calc feynhiggs
+all: susyhit gm2calc feynhiggs higgsbounds
 
 # SUSYHIT
 SUSYHIT = ./susyhit
@@ -12,13 +12,13 @@ susyhit:
 FeynHiggs = ./FeynHiggs
 feynhiggs:
 	[ -d $(FeynHiggs) ] || (wget --no-check-certificate https://wwwth.mpp.mpg.de/members/heinemey/feynhiggs/newversion/FeynHiggs-2.19.0.tar.gz && tar -xf FeynHiggs-2.19.0.tar.gz && mv FeynHiggs-2.19.0 $(FeynHiggs) && rm FeynHiggs-2.19.0.tar.gz)	
-	[ -f $(FeynHiggs)/bin/gm2calc.x ] || (cd $(FeynHiggs) && cmake . && make)
+	[ -f $(FeynHiggs)/"$CONF_MACH-$CONF_OS"/lib64/libFH.a ] || (cd $(FeynHiggs) && ./configure && make && make install)
 
 # HiggsBounds
 HiggsBounds = ./HiggsBounds
 higgsbounds:
-	[ -d $(HiggsBounds) ] || (wget https://higgsbounds.hepforge.org/downloads?f=HiggsBounds-5.3.2beta.tar.gz && tar -xf downloads?f=HiggsBounds-5.3.2beta.tar.gz && mv HiggsBounds-5.3.2beta $(HiggsBounds) && rm downloads?f=HiggsBounds-5.3.2beta.tar.gz)	
-	[ -f $(HiggsBounds)/bin/gm2calc.x ] || (cd $(HiggsBounds) && cmake . && make)
+	[ -d $(HiggsBounds) ] || (wget https://gitlab.com/higgsbounds/higgsbounds/-/archive/5.10.2/higgsbounds-5.10.2.tar.gz && tar -xf higgsbounds-5.10.2.tar.gz && mv higgsbounds $(HiggsBounds) && rm higgsbounds-5.10.2.tar.gz)	
+	[ -f $(HiggsBounds)/build/example_programs/HBSLHAinputblocksfromFH ] || (cd $(HiggsBounds) && mkdir build && cd build && cmake -DFeynHiggs_ROOT=../../FeynHiggs/ .. && make)
 
 
 # GM2Calc
@@ -32,4 +32,4 @@ gm2calc:
 
 .PHONY: clean
 clean: 
-	rm -rf $(SUSYHIT) $(GM2Calc)
+	rm -rf $(SUSYHIT) $(FeynHiggs) $(HiggsBounds) $(GM2Calc)
