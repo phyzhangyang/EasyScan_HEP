@@ -12,7 +12,7 @@ susyhit:
 FeynHiggs = ./FeynHiggs
 feynhiggs:
 	[ -d $(FeynHiggs) ] || (wget --no-check-certificate https://wwwth.mpp.mpg.de/members/heinemey/feynhiggs/newversion/FeynHiggs-2.19.0.tar.gz && tar -xf FeynHiggs-2.19.0.tar.gz && mv FeynHiggs-2.19.0 $(FeynHiggs) && rm FeynHiggs-2.19.0.tar.gz)	
-	[ -f $(FeynHiggs)/"$CONF_MACH-$CONF_OS"/lib64/libFH.a ] || (cd $(FeynHiggs) && ./configure && make && make install)
+	[ -f $(FeynHiggs)/"$(shell uname -m)-$(shell uname -s)"/lib64/libFH.a ] || (cd $(FeynHiggs) && ./configure && make && make install)
 
 # HiggsBounds
 HiggsBounds = ./HiggsBounds
