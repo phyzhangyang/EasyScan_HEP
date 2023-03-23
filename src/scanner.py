@@ -263,9 +263,9 @@ def mcmcrun(LnLike, Prior, n_params, n_live_points, inpar, fixedpar, outpar, Ste
     # Initialize the MCMC parameters
     MinChisq = CurChisq
     Chisq = CurChisq
-    Nrun= 0
-    Naccept = 0
-    Nout=0
+    Nrun= 1
+    Naccept = 1
+    Nout=1
     mult = 1
     kcovar = 0 
     while Naccept < n_live_points:
@@ -315,7 +315,7 @@ def mcmcrun(LnLike, Prior, n_params, n_live_points, inpar, fixedpar, outpar, Ste
 
         AccRat = float(Naccept)/float(Nrun)
 
-        if FlagTuneR and Nrun < 1000: 
+        if FlagTuneR and Nrun < 1000 and Nrun > 10 : 
             kcovar = kcovar + 1.0/(float(Nrun)**0.7)*(AccRat - AccepRate)
         else: 
             kcovar = 1
