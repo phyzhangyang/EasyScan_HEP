@@ -6,7 +6,7 @@ Block MODSEL  # Select model (with the second parameter):
 #            AMSB                                    :  3
 #            Bottom-up RGE for general MSSM input at EWSB scale: -1
 #            (a specific SuSpect option)
-    1    0   #  mSUGRA 
+    1    0   #  mSUGRA
 #
 Block SU_ALGO  # !Optional SUSPECT v>=2.3* block: algorithm control parameters
 # !IF block absent (or if any parameter undefined), defaut values are taken  
@@ -14,7 +14,7 @@ Block SU_ALGO  # !Optional SUSPECT v>=2.3* block: algorithm control parameters
      3    1   # 1: g_1(gut) = g_2(gut) consistently calculated from input
 #   (other possibility is 0: High scale input =HIGH in block EXTPAR below)
      4    2   # RGE accuracy: 1: moderate, 2: accurate (but slower)  
-     6    0   #  1: M_Hu, M_Hd input (default in constrained models)
+     6    1   #  1: M_Hu, M_Hd input (default in constrained models)
 #        (other possibility 0: MA_pole, MU(EWSB) input instead)
      7    2   #  choice for sparticles masses rad. corr. (=/= h):
 #               2 ->all (recommended, defaut); 1->no R.C. in squarks & gauginos.
@@ -35,7 +35,7 @@ Block SMINPUTS   # Standard Model inputs (if any undefined, defaut values taken)
      3      0.1172  # alpha_s(mZ) SM, MSbar
 #     4     91.187   # mZ pole mass 
      5      4.25    # Mb(mb) SM MSbar
-     6      172.5      # Mtop(pole)
+     6      173.63529533028526      # Mtop(pole)
      7    1.7771     # Mtau(pole)
 #
 Block MINPAR  # specific model input parameters
@@ -66,31 +66,31 @@ Block MINPAR  # specific model input parameters
 #     11   1.      # cHd : weight of m0 for Hd 
 #
 Block EXTPAR  # general MSSM input (! IF uncommented, values replace MINPAR ones)
-         0     1.0E+03   # EWSB_scale          
-         1     ES_m1     # M_1                 
-         2     3.0E+03   # M_2                 
-         3     3.0E+03   # M_3                 
-        11     4.5E+03   # A_t                 
-        12     3.0E+03   # A_b                 
-        13     3.0E+03   # A_tau               
-        14     3.0E+03   # A_u                 
-        15     3.0E+03   # A_d                 
-        16     3.0E+03   # A_e                 
-        23     ES_mu     # mu(EWSB)            
-        26     3.0E+03   # MA_pole                  
-        25     10.0      # tanbeta(MZ)         
-        31     3.0E+03   # M_eL                
-        32     3.0E+03   # M_muL               
-        33     3.0E+03   # M_tauL              
-        34     3.0E+03   # M_eR                
-        35     3.0E+03   # M_muR               
-        36     3.0E+03   # M_tauR              
-        41     3.0E+03   # M_q1L               
-        42     3.0E+03   # M_q2L               
-        43     3.0E+03   # M_q3L               
-        44     3.0E+03   # M_uR                
-        45     3.0E+03   # M_cR                
-        46     3.0E+03   # M_tR                
-        47     3.0E+03   # M_dR                
-        48     3.0E+03   # M_sR                
-        49     3.0E+03   # M_bR                
+#         0      4.65294922E+02   # EWSB_scale
+         1     243.5875763103331   # M_1
+         2     274.92465918582735   # M_2
+         3     2105.500464325105   # M_3
+        11    5277.511470242395   # A_t
+        12    3174.8119437546666   # A_b
+        13    2573.859302227152   # A_tau
+        14    2626.495670555246   # A_u
+        15    2626.495670555246   # A_d
+        16    2573.859302227152   # A_e
+        23     684.9357952983657   # mu(EWSB)
+        26     2894.427727701379   # MA_pole
+        25     22.71566311732831   # tanbeta(MZ)
+        31     261.53208405647615   # M_eL
+        32     261.53208405647615   # M_muL
+        33     261.53208405647615   # M_tauL
+        34     531.4659863308448   # M_eR
+        35     531.4659863308448   # M_muR
+        36     531.4659863308448   # M_tauR
+        41     4413.9896613196415   # M_q1L
+        42     4413.9896613196415   # M_q2L
+        43     951.8180524605425   # M_q3L
+        44     4413.9896613196415   # M_uR
+        45     4413.9896613196415   # M_cR
+        46     2633.0363149805607   # M_tR
+        47     4413.9896613196415   # M_dR
+        48     4413.9896613196415   # M_sR
+        49     3991.3607625744676   # M_bR                
