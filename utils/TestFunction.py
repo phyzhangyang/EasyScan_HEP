@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 # Test function
-# Used by the bin/example.ini
+# Used by the bin/example_*.ini
 # Yang, 2019.01.23
 from numpy import loadtxt, sin, cos
 
@@ -9,6 +9,7 @@ data = loadtxt(r"TestFunction_input.dat")
 
 f = sin(data[0])**2 + cos(data[1])**2
 
+#open("TestFunction_output.dat",'w').write(str(f))
 open("TestFunction_output.dat",'w').write("test "+str(f))
 #open("TestFunction_output.dat",'w').write(
 #"201  201# %s\n"%str(f)
