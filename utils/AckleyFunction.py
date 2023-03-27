@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 # Ackley function
 # Yang, 2019.01.23
 from numpy import loadtxt, sqrt, exp, cos, pi

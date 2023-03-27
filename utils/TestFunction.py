@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 # Test function
 # Used by the bin/example_*.ini
 # Yang, 2019.01.23
