@@ -1,0 +1,31 @@
+import ../events_bg.lhco as bg
+import ../MG5/events_alp.lhco as sn 
+
+set bg.type = background
+set sn.type = signal
+
+
+set main.stacking_method = normalize2one
+#unit: fb(-1)
+set main.lumi = 10
+set main.normalize = lumi
+
+#unit: pb
+set bg.xsection = 0.000734 
+set sn.xsection = replace_1
+
+set bg.linestyle = dashed
+set sn.linestyle = solid
+set bg.linewidth = 4
+set sn.linewidth = 4
+
+###########################
+# cut PT
+###########################
+
+
+select N(a) == 2
+select PT(a[1]) > 500
+select PT(a[2]) > 300
+
+submit alp_simulation
