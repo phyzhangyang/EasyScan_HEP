@@ -17,7 +17,7 @@ feynhiggs:
 # HiggsBounds
 HiggsBounds = ./HiggsBounds
 higgsbounds:
-	[ -d $(HiggsBounds) ] || (wget https://gitlab.com/higgsbounds/higgsbounds/-/archive/5.10.2/higgsbounds-5.10.2.tar.gz && tar -xf higgsbounds-5.10.2.tar.gz && mv higgsbounds-5.10.2 $(HiggsBounds) && rm higgsbounds-5.10.2.tar.gz)	
+	[ -d $(HiggsBounds) ] || (wget https://gitlab.com/higgsbounds/higgsbounds/-/archive/5.10.2/higgsbounds-5.10.2.tar.gz && tar -xf higgsbounds-5.10.2.tar.gz && rm higgsbounds-5.10.2.tar.gz && mv higgsbounds-* $(HiggsBounds))	
 	[ -f $(HiggsBounds)/build/example_programs/HBSLHAinputblocksfromFH ] || (cd $(HiggsBounds) && mkdir build && cd build && cmake -DFeynHiggs_ROOT=../../FeynHiggs/ .. && make)
 
 

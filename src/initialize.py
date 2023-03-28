@@ -29,6 +29,9 @@ parser.add_option("-l", "--logging", default='INFO',
         help="logging level (DEBUG|INFO|WARNING|ERROR|CRITICAL) [%default]")
 parser.add_option("-d","--debug", action="store_true", default=False,
         dest='debug', help='force to launch debug mode')
+parser.add_option("-r","--resume", action="store_true", default=False,
+        dest='resume', help='launch resume mode')
+        
 (options, args) = parser.parse_args()
 if len(args) == 0:
     args = ''
@@ -43,7 +46,7 @@ logging.getLogger('easyscan').setLevel(vars(logging)[options.logging])
                               
 logger=logging.getLogger('easyscan.main')
 
-flag_resume = False
+resume = options.resume
 
 ## Check whether the configure file exists
 try:
