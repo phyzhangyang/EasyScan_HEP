@@ -8,7 +8,7 @@ import time, os, sys
 from collections import OrderedDict
 # Internal modules
 from initialize import logger
-from initialize import flag_resume
+from initialize import resume
 
 log_zero = -1e+100
 NaN = float('NaN')
@@ -34,7 +34,6 @@ ResultFile_MCMC = 'All_ScanResult.txt'
 ResultFile_MultiNest = 'MultiNestData/.txt'
 ResultFile_post = 'Previous_ScanResult.txt'
 
-flag_resume = flag_resume
 
 # Define screen print functions
 def ColorText(i,text,j=1):
@@ -105,12 +104,13 @@ def string2nestlist(s):
 
 # Write information of result into file
 def WriteResultInf(InPar, FixedPar, OutPar, Constraint, Path, ScanMethod):
-    if ScanMethod == _plot: 
+    if ScanMethod == _plot or resume: 
       return
     inf = ''
     if ScanMethod == _multinest:
       inf += 'probability,-2lnlike,'
     inf += ','.join(list(InPar.keys())+list(FixedPar.keys())+list(OutPar.keys())+list(Constraint.keys()))
+
     if ScanMethod == _mcmc:
       inf += ",mult"
     outfile = open(os.path.join(Path, ResultFile),'w')

@@ -11,6 +11,11 @@ import auxfun as af
 import ploter
 import time
 
+def getFilelength(datafile):
+  with open(datafile, 'r') as f:
+    num_lines = sum(1 for line in f)
+  return num_lines
+  
 def saveCube(cube, data_file, file_path, num, save_file):
   result = []
   for ii in cube:
@@ -202,9 +207,13 @@ def randomrun(LnLike, Prior, n_params, inpar, fixedpar, outpar, n_live_points, n
     # Initialise cube
     cube = [af.NaN] * n_params
 
+    Naccept = getFilelength(os.path.join(outputfolder, af.ResultFile))
+    if Naccept >= n_live_points:
+      af.ErrorStop('There are already %s samples in the data file.'%Naccept)
+    
     af.Info('Begin random scan ...')
-    Naccept = 0
-    for Nrun in range(n_live_points) :
+    
+    for Nrun in range(Naccept, n_live_points) :
         for j in range(n_dims):
           cube[j] = random()
         
