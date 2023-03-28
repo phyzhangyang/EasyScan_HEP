@@ -67,7 +67,8 @@ class CONTROLLER:
         else:
             self._FolderName = os.path.join(af.CurrentPath, name)
         
-        if self._ScanMethod in af._post:
+
+        if ( self._ScanMethod in af._post) or af.resume:
             if not os.path.exists(self._FolderName):
               af.ErrorStop("The result folder %s does not exist."%self._FolderName)
 
@@ -83,14 +84,11 @@ class CONTROLLER:
                   af.ErrorStop("No result data file in %s."%self._FolderName)
                 else:
                   os.system(r"mv %s %s"%(os.path.join(self._FolderName, af.ResultFile), os.path.join(self._FolderName, af.ResultFile_post)))
-              else:
-                if af.flag_resume:
-                  # TODO Add resume
-                  af.ErrorStop("no resume function")
-            else: # af._plot
+            else: # af._plot or af.resume
               if not os.path.exists(os.path.join(self._FolderName,af.ResultFile)):
                 af.ErrorStop("No result data file in %s."%self._FolderName)
-                           
+              if self._ScanMethod == af._multinest:
+                self.MNOutputFile = os.path.join(self._FolderName, "MultiNestData/")
         else:
             # Deal with the situation that the result folder already exists.
             if os.path.exists(self._FolderName):

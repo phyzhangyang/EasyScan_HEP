@@ -25,6 +25,8 @@ from scan_controller import CONTROLLER
 from constraint      import CONSTRAINT
 from ploter          import PLOTER
 
+print(af.resume,"flag_resume")
+
 # Create basic objects
 ES         = CONTROLLER()
 Programs   = {}
@@ -153,7 +155,7 @@ elif ES.getScanMethod() == af._multinest:
         outputfiles_basename = ES.MNOutputFile,
         n_live_points        = ES.getPointNum(),
         verbose                    = True,
-        resume                     = True, #TODO
+        resume                     = af.resume,
         importance_nested_sampling = True)
 
 elif ES.getScanMethod() == af._postprocess:
