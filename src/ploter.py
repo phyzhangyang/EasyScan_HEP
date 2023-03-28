@@ -183,7 +183,7 @@ class PLOTER():
         af.Info('Start to plot the result ... ')
         FigNames=[]
         for ii in self._Histogram :
-            histconf={'bins':50, 'normed':False, 'facecolor':'green', 'alpha':0.7}
+            histconf={'bins':50, 'density':False, 'facecolor':'green', 'alpha':0.7}
             af.Info('Generate histogram plot of parameter %s'%ii[0])
             if not self.checkPar(ii,1): continue
             f=plt.figure(**figconf)
@@ -253,7 +253,8 @@ class PLOTER():
             Y = numpy.linspace(min(y),max(y),100)
             # z = [ numpy.log10(abs(u)) for u in self._data[ii[2]] ]  # log10
             z = self._data[ii[2]] 
-            Z = griddata(x,y,z,X,Y,interp='linear')
+            X,Y = numpy.meshgrid(X,Y)
+            Z = griddata((x,y),z,(X,Y),method='linear')
 
             #C = subplot.contour(X,Y,Z, 3,linewidths=2)
             #plt.clabel(C, inline=True, fontsize=8)
