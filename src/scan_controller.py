@@ -156,6 +156,15 @@ class CONTROLLER:
     def setInputPar(self, inputvar):
         inputvar = af.string2nestlist(inputvar)
 
+        if self._ScanMethod == af._mcmc and af.resume:
+          with open(os.path.join(self._FolderName, af.ResultFile), 'r') as f:
+            lines = f.readlines()
+            if len(lines) < 2:
+              af.ErrorStop('The data file is empty. Please start a new scan instead of using the resume mode.')
+            var_names = lines[0].strip().split(',')
+            var_values = [float(x) for x  in lines[-1].strip().split(',')]
+            InitVal_resume = dict(zip(var_names, var_values))  
+
         # inputvar is list of list of input parameters define in section [scan]
         af.Info('Input parameters   =  ')
         for ii in inputvar:
@@ -221,30 +230,37 @@ class CONTROLLER:
             
             if self._ScanMethod == af._mcmc:
 
-              if lenii > 5:
-                # The scan range is normalized to 1
-                self.MCMCss[ii[0]] = 1.0/float(ii[4])
-                Step = float(ii[3]-ii[2])/float(ii[4])
+              if af.resume:
+                if ii[1].lower() == 'flat':
+                  self.MCMCiv[ii[0]] = float(InitVal_resume[ii[0]]-ii[2])/float(ii[3]-ii[2])
+                elif ii[1].lower() == 'log':
+                  self.MCMCiv[ii[0]] = (log10(InitVal_resume[ii[0]])-log10(ii[2]))/(log10(ii[3]) - log10(ii[2]))
+                else:
+                  af.ErrorStop('Not ready. Choose prior from ["flat", "log", "fixed"].')
+                IniV = InitVal_resume[ii[0]]
+              elif lenii == 6:
                 if ii[1].lower() == 'flat':
                   self.MCMCiv[ii[0]] = float(ii[5]-ii[2])/float(ii[3]-ii[2])
                 elif ii[1].lower() == 'log':
                   self.MCMCiv[ii[0]] = (log10(ii[5])-log10(ii[2]))/(log10(ii[3]) - log10(ii[2]))
                 IniV = ii[5]
-                if lenii > 6:
-                  af.WarningNoWait(self.InputParInfo(ii[0], 6, "Minimum, Maximum, Interval, Initial value"))
-                  af.WarningWait("The rest %i values will be ignore."%(lenii-6) )
-              else:
+              elif lenii == 5:
                 af.WarningNoWait(self.InputParInfo(ii[0], 6, "Minimum, Maximum, Interval, Initial value"))
                 self.MCMCiv[ii[0]] = 1./2.
                 IniV = float(ii[3]+ii[2])/2.
                 af.WarningWait("'Initial value' will take default value, (Max-Min)/2.")
-                if lenii < 5:
-                  self.MCMCss[ii[0]] = 1./30.
-                  Step = float(ii[3]-ii[2])/30.
-                  af.WarningWait("'Interval' will take default value, 30.")
-                else:
-                  self.MCMCss[ii[0]] = 1.0/float(ii[4])
-                  Step = float(ii[3]-ii[2])/float(ii[4])
+              else: # lenii > 6
+                  af.WarningNoWait(self.InputParInfo(ii[0], 6, "Minimum, Maximum, Interval, Initial value"))
+                  af.WarningWait("The rest %i values will be ignore."%(lenii-6) )
+
+              if lenii >= 5:
+                # The scan range is normalized to 1
+                self.MCMCss[ii[0]] = 1.0/float(ii[4])
+                Step = float(ii[3]-ii[2])/float(ii[4])
+              else: # lenii == 4
+                self.MCMCss[ii[0]] = 1./30.
+                Step = float(ii[3]-ii[2])/30.
+                af.WarningWait("'Interval' will take default value, 30.")
               af.Info('  ID= %s\tPrior= %s\tMin= %f\tMax= %f\tStep=%f\tIniV=%f'%(ii[0],ii[1],ii[2],ii[3],Step,self.MCMCiv[ii[0]]))
               continue
     

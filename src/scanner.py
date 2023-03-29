@@ -270,7 +270,7 @@ def mcmcrun(LnLike, Prior, n_params, n_live_points, inpar, fixedpar, outpar, Ste
         AllOutMCMC.append(1)
         #"True" for saving files of initial physical point
         saveCube(AllOutMCMC, all_data_file, file_path, '0', False)
-        if lnlike > af.log_zero / 2.0 : break
+        if lnlike > af.log_zero * 0.1 : break
         if n_init == 0 : 
             af.WarningNoWait('The initial point is unphysical, it will find the physical initial points randmly.')
         n_init = n_init +1
@@ -286,11 +286,28 @@ def mcmcrun(LnLike, Prior, n_params, n_live_points, inpar, fixedpar, outpar, Ste
     CurObs.append(0) # mult
     printPoint(0, cube, n_dims, inpar, fixedpar, outpar, lnlike, 0)
 
+    if af.resume:
+      if lnlike < af.log_zero * 10. :
+            af.ErrorStop('Cannot use resume mode because the last point in the previous scan is unphysical.')
+      Nrun= getFilelength(os.path.join(outputfolder, af.ResultFile_MCMC))
+      # If Nrun <= 2, it will already give error in scan_controller
+      with open(os.path.join(outputfolder, af.ResultFile), 'r+') as f:
+        # remove the last point from previous scan
+        lines = f.readlines()
+        f.seek(0)
+        f.truncate()
+        f.writelines(lines[:-1])
+      Naccept = getFilelength(os.path.join(outputfolder, af.ResultFile))
+      if Naccept >= n_live_points:
+        af.ErrorStop('There are already %s living samples in the data file.'%Naccept)
+    else:
+      Nrun= 1
+      Naccept = 1      
+      
+    
     # Initialize the MCMC parameters
     MinChisq = CurChisq
     Chisq = CurChisq
-    Nrun= 1
-    Naccept = 1
     Nout=1
     mult = 1
     kcovar = 0 
