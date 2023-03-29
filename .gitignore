@@ -3,8 +3,12 @@ EASYSCAN.LOG
 src/__pycache__
 src/easyscan_logging.conf
 example*/*
-utils/*_output.dat
-utils/susyhit/
-utils/micromegas/
+MSSM_MW/
+utils/TestFunction_output.dat
+utils/MSSM_mW/FeynHiggs/
+utils/MSSM_mW/GM2Calc/
+utils/MSSM_mW/HiggsBounds/
+utils/MSSM_mW/higgsbounds.log
+utils/MSSM_mW/susyhit/
 src/*.pyc
 Backup/*
