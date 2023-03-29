@@ -225,9 +225,9 @@ class PLOTER():
             subplot=f.add_subplot(111)
             weigh = 50
             if "probability" in self._data.columns.values.tolist():
-              weigh = self._data["probability"] * 100 / self._data["probability"].max() + 20
-            elif "mult" in self._data.columns.values.tolist():
-              weigh = self._data["mult"] * 100 / self._data["mult"].max() + 20
+              weigh = self._data["probability"] * 30. / self._data["probability"].max() + 20.
+            elif "dwell" in self._data.columns.values.tolist():
+              weigh = self._data["dwell"] * 50. / self._data["dwell"].max() + 20.
             sc1=subplot.scatter(self._data[ii[0]], self._data[ii[1]], c=self._data[ii[2]], s=weigh, **colorconf)
             cb1=plt.colorbar(sc1)
             cb1.set_label(ii[2], **labelconf)
