@@ -2,12 +2,12 @@
 EasyScan_HEP
 =======
 
-:EasyScan_HEP: A tool for easily connecting programs to scan parameter space of high energy physics models
+:EasyScan_HEP: A tool for connecting programs to scan the parameter space of physics models
 :Author: Yang Zhang， Liangliang Shang
-:Version: 0.1.0
+:Version: 1.0.0
 :GitHub: https://github.com/phyzhangyang/EasyScan_HEP
 :Website: https://easyscanhep.hepforge.org
-:Documentation: https://arxiv.org/pdf/190X.XXXXX.pdf
+:Documentation: https://arxiv.org/pdf/2304.XXXXX.pdf
 
 
 Installation instructions
@@ -31,11 +31,11 @@ using random sampler, where *x* and *y* are input parameters in range *[0,\pi]* 
 
 Three other example configuration files in *templates* folder (*example_grid.ini*, *example_mcmc.ini* and *example_multinest.ini*) exhibit briefly usages of other samplers in EasyScan_HEP.
 
-Configuration file *templates/LDM_MSSM.ini* is an simply physical examples. Relevant programs need to be installed beforehand, using
+Configuration file *templates/scan_MSSM_for_mW.ini* is an simply physical examples. Relevant programs need to be installed beforehand, using
 ::
-    cd utils
+    cd utils/MSSM_mW
     make
+    
 and then it can be executed with 
 ::
-    ./bin/easyscan.py templates/LDM_MSSM.ini
-
+    ./bin/easyscan.py templates/scan_MSSM_for_mW.ini
