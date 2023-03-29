@@ -257,7 +257,6 @@ def mcmcrun(LnLike, Prior, n_params, n_live_points, inpar, fixedpar, outpar, Ste
     par  = []  # test par, normalized to 1
     CurPar=[]  # current par, normalized to 1 
     for i,name in enumerate(inpar):
-        print (StepSize[name])
         covar.append(StepSize[name])
         cube[i] = InitVal[name]
         par.append(cube[i])
