@@ -25,8 +25,6 @@ from scan_controller import CONTROLLER
 from constraint      import CONSTRAINT
 from ploter          import PLOTER
 
-print(af.resume,"flag_resume")
-
 # Create basic objects
 ES         = CONTROLLER()
 Programs   = {}
