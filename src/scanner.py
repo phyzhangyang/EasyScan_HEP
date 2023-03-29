@@ -177,9 +177,17 @@ def gridrun(LnLike, Prior, n_params, inpar, fixedpar, outpar, bin_num, n_print, 
 
     af.Info('Begin grid scan ...')
     
-    Naccept = 0
+    if af.resume:
+      try:
+        Naccept = int(open(os.path.join(outputfolder, "Nrun.txt"),'r').read().strip()) + 1
+      except: 
+        af.ErrorStop('Can not use resume mode because of Nrun.txt.')
+      if Naccept >= ntotal:
+        af.ErrorStop('There are already %s living samples in the data file.'%Naccept)
+    else:
+      Naccept = 0
 
-    for Nrun in range(ntotal):
+    for Nrun in range(Naccept, ntotal):
         iner = 1
         for i,name in enumerate(inpar):
             cube[i] = ( int(Nrun/iner) )%bin_num[name] * interval[name]
@@ -194,10 +202,14 @@ def gridrun(LnLike, Prior, n_params, inpar, fixedpar, outpar, bin_num, n_print, 
         if lnlike > af.log_zero:
             Naccept += 1
             saveCube(cube,data_file,file_path,str(Naccept),True)
-
+        # for resume
+        open(os.path.join(outputfolder, "Nrun.txt"),'w').write(str(Nrun)) 
+        
         if (Nrun+1)%n_print == 0: 
           printPoint(Nrun+1, cube, n_dims, inpar, fixedpar, outpar, lnlike, Naccept)
 
+        
+        
 def randomrun(LnLike, Prior, n_params, inpar, fixedpar, outpar, n_live_points, n_print, outputfolder):
     data_file = open(os.path.join(outputfolder, af.ResultFile),'a')
     file_path = os.path.join(outputfolder,"SavedFile")
@@ -207,13 +219,17 @@ def randomrun(LnLike, Prior, n_params, inpar, fixedpar, outpar, n_live_points, n
     # Initialise cube
     cube = [af.NaN] * n_params
 
+    # For resume 
+    # If it is a new scan, Naccept == 1, otherwise Naccept >= 2
     Naccept = getFilelength(os.path.join(outputfolder, af.ResultFile))
     if Naccept >= n_live_points:
-      af.ErrorStop('There are already %s samples in the data file.'%Naccept)
-    
+      af.ErrorStop('There are already %s living samples in the data file.'%Naccept)
+    elif Naccept == 0 :
+      af.ErrorStop('The data file is empty. Please start a new scan instead of using the resume mode.')
+
     af.Info('Begin random scan ...')
     
-    for Nrun in range(Naccept, n_live_points) :
+    for Nrun in range(Naccept-1, n_live_points) :
         for j in range(n_dims):
           cube[j] = random()
         
@@ -241,6 +257,7 @@ def mcmcrun(LnLike, Prior, n_params, n_live_points, inpar, fixedpar, outpar, Ste
     par  = []  # test par, normalized to 1
     CurPar=[]  # current par, normalized to 1 
     for i,name in enumerate(inpar):
+        print (StepSize[name])
         covar.append(StepSize[name])
         cube[i] = InitVal[name]
         par.append(cube[i])

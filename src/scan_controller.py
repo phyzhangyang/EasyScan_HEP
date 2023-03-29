@@ -233,7 +233,6 @@ class CONTROLLER:
                 if lenii > 6:
                   af.WarningNoWait(self.InputParInfo(ii[0], 6, "Minimum, Maximum, Interval, Initial value"))
                   af.WarningWait("The rest %i values will be ignore."%(lenii-6) )
-              af.Info('  ID= %s\tPrior= %s\tMin= %f\tMax= %f\tStep=%f\tIniV=%f'%(ii[0],ii[1],ii[2],ii[3],Step,self.MCMCiv[ii[0]]))
               else:
                 af.WarningNoWait(self.InputParInfo(ii[0], 6, "Minimum, Maximum, Interval, Initial value"))
                 self.MCMCiv[ii[0]] = 1./2.
@@ -246,7 +245,7 @@ class CONTROLLER:
                 else:
                   self.MCMCss[ii[0]] = 1.0/float(ii[4])
                   Step = float(ii[3]-ii[2])/float(ii[4])
-
+              af.Info('  ID= %s\tPrior= %s\tMin= %f\tMax= %f\tStep=%f\tIniV=%f'%(ii[0],ii[1],ii[2],ii[3],Step,self.MCMCiv[ii[0]]))
               continue
     
     def setProgram(self,prog):
