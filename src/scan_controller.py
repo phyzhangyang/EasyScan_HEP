@@ -220,16 +220,8 @@ class CONTROLLER:
               continue
             
             if self._ScanMethod == af._mcmc:
-              if lenii < 6:
-                af.WarningNoWait(self.InputParInfo(ii[0], 6, "Minimum, Maximum, Interval, Initial value"))
-                self.MCMCiv[ii[0]] = 1./2.
-                IniV = float(ii[3]+ii[2])/2.
-                af.WarningWait("'Initial value' will take default value, (Max-Min)/2.")
-                if lenii < 5:
-                  self.MCMCss[ii[0]] = 1./30.
-                  Step = float(ii[3]-ii[2])/30.
-                  af.WarningWait("'Interval' will take default value, 30.")
-              else:
+
+              if lenii > 5:
                 # The scan range is normalized to 1
                 self.MCMCss[ii[0]] = 1.0/float(ii[4])
                 Step = float(ii[3]-ii[2])/float(ii[4])
@@ -242,6 +234,19 @@ class CONTROLLER:
                   af.WarningNoWait(self.InputParInfo(ii[0], 6, "Minimum, Maximum, Interval, Initial value"))
                   af.WarningWait("The rest %i values will be ignore."%(lenii-6) )
               af.Info('  ID= %s\tPrior= %s\tMin= %f\tMax= %f\tStep=%f\tIniV=%f'%(ii[0],ii[1],ii[2],ii[3],Step,self.MCMCiv[ii[0]]))
+              else:
+                af.WarningNoWait(self.InputParInfo(ii[0], 6, "Minimum, Maximum, Interval, Initial value"))
+                self.MCMCiv[ii[0]] = 1./2.
+                IniV = float(ii[3]+ii[2])/2.
+                af.WarningWait("'Initial value' will take default value, (Max-Min)/2.")
+                if lenii < 5:
+                  self.MCMCss[ii[0]] = 1./30.
+                  Step = float(ii[3]-ii[2])/30.
+                  af.WarningWait("'Interval' will take default value, 30.")
+                else:
+                  self.MCMCss[ii[0]] = 1.0/float(ii[4])
+                  Step = float(ii[3]-ii[2])/float(ii[4])
+
               continue
     
     def setProgram(self,prog):
