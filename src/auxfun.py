@@ -112,7 +112,7 @@ def WriteResultInf(InPar, FixedPar, OutPar, Constraint, Path, ScanMethod):
     inf += ','.join(list(InPar.keys())+list(FixedPar.keys())+list(OutPar.keys())+list(Constraint.keys()))
 
     if ScanMethod == _mcmc:
-      inf += ",mult"
+      inf += ",dwell"
     outfile = open(os.path.join(Path, ResultFile),'w')
     outfile.write(inf+'\n')
     outfile.close()
@@ -135,7 +135,7 @@ safe_dict = {'abs':abs, 'float':float, 'int':int,
              'tan':math.tan, 'tanh':math.tanh,
              '__builtins__': None}
 # names that can not be used for variable
-forbidden_names = [*safe_dict] + _all + ['mult', 'probability', '-2lnlike'] 
+forbidden_names = [*safe_dict] + _all + ['dwell', 'probability', '-2lnlike'] 
 def parseMath(par):
     safe_dict.update(par)
     for key,value in par.items():

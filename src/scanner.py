@@ -282,7 +282,7 @@ def mcmcrun(LnLike, Prior, n_params, n_live_points, inpar, fixedpar, outpar, Ste
     CurObs=[]
     CurChisq = - 2.0 * lnlike
     for i in range(n_params): CurObs.append( cube[i] )
-    CurObs.append(0) # mult
+    CurObs.append(0) # dwell
     printPoint(0, cube, n_dims, inpar, fixedpar, outpar, lnlike, 0)
 
     if af.resume:
@@ -308,7 +308,7 @@ def mcmcrun(LnLike, Prior, n_params, n_live_points, inpar, fixedpar, outpar, Ste
     MinChisq = CurChisq
     Chisq = CurChisq
     Nout=1
-    mult = 1
+    dwell = 1
     kcovar = 0 
     while Naccept < n_live_points:
 
@@ -341,7 +341,7 @@ def mcmcrun(LnLike, Prior, n_params, n_live_points, inpar, fixedpar, outpar, Ste
             else:
                 Flag_accept = random() < exp(CurChisq-Chisq) 
         if Flag_accept :
-            CurObs[-1]=mult
+            CurObs[-1]=dwell
             #"Naccept+1" due to file of Chisq have covered file of CurChisq
             saveCube(CurObs, data_file, file_path, str(Naccept+1), True)
             CurChisq = Chisq
@@ -350,10 +350,10 @@ def mcmcrun(LnLike, Prior, n_params, n_live_points, inpar, fixedpar, outpar, Ste
             
             if Chisq < MinChisq : MinChisq = Chisq
             Naccept += 1
-            mult = 1
+            dwell = 1
         else:
             if RangeFlag:
-                mult +=1
+                dwell +=1
 
         AccRat = float(Naccept)/float(Nrun)
 
@@ -364,9 +364,9 @@ def mcmcrun(LnLike, Prior, n_params, n_live_points, inpar, fixedpar, outpar, Ste
 
         if Nrun%n_print == 0: 
             if RangeFlag:
-                printPoint(Nrun, cube, n_dims, inpar, fixedpar, outpar, lnlike, Naccept)
+                printPoint(Nrun, cube, n_dims, inpar, fixedpar, outpar, lnlike, Naccept-1)
                 printPoint4MCMC(Chisq,CurChisq,MinChisq,AccRat,FlagTuneR,kcovar)
 
     # save the last point
-    CurObs[-1]=mult
+    CurObs[-1]=dwell
     saveCube(CurObs, data_file, file_path, str(Naccept), True)
