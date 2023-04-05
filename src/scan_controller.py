@@ -214,9 +214,9 @@ class CONTROLLER:
                 
             if self._ScanMethod == af._grid:
               if lenii == 4:
-                self.GridBin[ii[0]]=30
+                self.GridBin[ii[0]]=10
                 af.WarningNoWait(self.InputParInfo(ii[0], 5, "Minimum, Maximum, Number of bins"))
-                af.WarningWait("'Number of bins' will take default value, 30.")
+                af.WarningWait("'Number of bins' will take default value, 10.")
               else:
                 self.GridBin[ii[0]]=ii[4]
                 if self.GridBin[ii[0]] < 0 or type(ii[4]) != int:
@@ -258,9 +258,9 @@ class CONTROLLER:
                 self.MCMCss[ii[0]] = 1.0/float(ii[4])
                 Step = float(ii[3]-ii[2])/float(ii[4])
               else: # lenii == 4
-                self.MCMCss[ii[0]] = 1./30.
-                Step = float(ii[3]-ii[2])/30.
-                af.WarningWait("'Interval' will take default value, 30.")
+                self.MCMCss[ii[0]] = 1./10.
+                Step = float(ii[3]-ii[2])/10.
+                af.WarningWait("'Interval' will take default value, 10.")
               af.Info('  ID= %s\tPrior= %s\tMin= %f\tMax= %f\tStep=%f\tIniV=%f'%(ii[0],ii[1],ii[2],ii[3],Step,self.MCMCiv[ii[0]]))
               continue
     
