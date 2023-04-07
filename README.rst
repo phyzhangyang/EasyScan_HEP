@@ -4,7 +4,7 @@ EasyScan_HEP
 
 :EasyScan_HEP: A tool for connecting programs to scan the parameter space of physics models
 :Author: Yang Zhang， Liangliang Shang
-:Version: 1.0.0
+:Version: 1.0
 :GitHub: https://github.com/phyzhangyang/EasyScan_HEP
 :Website: https://easyscanhep.hepforge.org
 :Documentation: https://arxiv.org/pdf/2304.XXXXX.pdf
