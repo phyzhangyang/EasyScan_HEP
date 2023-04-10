@@ -7,7 +7,7 @@ EasyScan_HEP
 :Version: 1.0
 :GitHub: https://github.com/phyzhangyang/EasyScan_HEP
 :Website: https://easyscanhep.hepforge.org
-:Documentation: https://arxiv.org/pdf/2304.XXXXX.pdf
+:Documentation: https://arxiv.org/pdf/2304.03636.pdf
 
 
 Installation instructions
