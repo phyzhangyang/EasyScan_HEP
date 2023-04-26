@@ -41,9 +41,9 @@ and then it can be executed with
     ./bin/easyscan.py templates/scan_MSSM_for_mW.ini
 
 The directory structure information
-	- bin/..........................................Executable file.
+	- bin/ .........................................Executable file.
 		- easyscan.py.
-	- src/\DTcomment{Internal functions}.
+	- src/ .........................................Internal functions.
 		- easyscan\_logging.conf.
 		- program.py.
 		- initialize.py.
@@ -54,13 +54,13 @@ The directory structure information
 		- statfun.py.
 		- ploter.py.
 		- auxfun.py.
-	- utils/........................................Auxiliary functions.
+	- utils/ .......................................Auxiliary functions.
 		- TestFunction.py.
 		- TestFunction\_input.dat.
 		- OnePointBatch.in.
 		- MSSM\_mW.
 		- ALP\_simulation.
-	- templates/....................................Example configuration files.
+	- templates/ ...................................Example configuration files.
 		- example\_random.ini.
 		- example\_grid.ini.
 		- example\_mcmc.ini.
