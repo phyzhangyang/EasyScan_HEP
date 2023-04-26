@@ -41,8 +41,7 @@ and then it can be executed with
     ./bin/easyscan.py templates/scan_MSSM_for_mW.ini
 
 The directory structure information
-- \es.
-	- bin/\DTcomment{Executable file}.
+	- bin/..........................................Executable file.
 		- easyscan.py.
 	- src/\DTcomment{Internal functions}.
 		- easyscan\_logging.conf.
@@ -55,13 +54,13 @@ The directory structure information
 		- statfun.py.
 		- ploter.py.
 		- auxfun.py.
-	- utils/\DTcomment{Auxiliary functions}.
+	- utils/........................................Auxiliary functions.
 		- TestFunction.py.
 		- TestFunction\_input.dat.
 		- OnePointBatch.in.
 		- MSSM\_mW.
 		- ALP\_simulation.
-	- templates/\DTcomment{Example configuration files}.
+	- templates/....................................Example configuration files.
 		- example\_random.ini.
 		- example\_grid.ini.
 		- example\_mcmc.ini.
@@ -72,44 +71,7 @@ The directory structure information
 		- example\_plot.ini.
 		- scan\_MSSM\_for\_mW.ini.
 		- bound.txt.
-	- README.rst \DTcomment{Readme}.
-	- LICENSE \DTcomment{Apache license}.
-	- EasyScan\_HEP.pdf \DTcomment{Document}.
+	- README.rst ...................................Readme.
+	- LICENSE ......................................Apache license.
+	- EasyScan\_HEP.pdf ............................Document.
 
-.. raw:: latex
-\dirtree{%
-		.1 \es.
-		.2 bin/\DTcomment{Executable file}.
-		.3 easyscan.py.
-		.2 src/\DTcomment{Internal functions}.
-		.3 easyscan\_logging.conf.
-		.3 program.py.
-		.3 initialize.py.
-		.3 readin\_config.py.
-        .3 scanner.py.
-        .3 scan\_controller.py.
-        .3 constraint.py.
-	    .3 statfun.py.
-	   	.3 ploter.py.
-	    .3 auxfun.py.
-		.2 utils/\DTcomment{Auxiliary functions}.
-		.3 TestFunction.py.
-		.3 TestFunction\_input.dat.
-        .3 OnePointBatch.in.
-		.3 MSSM\_mW.
-		.3 ALP\_simulation.
-		.2 templates/\DTcomment{Example configuration files}.
-	    .3 example\_random.ini.
-	    .3 example\_grid.ini.
-	    .3 example\_mcmc.ini.
-	    .3 example\_mcmc\_bound.ini.
-	    .3 example\_multinest.ini.
-	    .3 example\_onepoint.ini.
-	    .3 example\_onepointbatch.ini.
-	    .3 example\_plot.ini.
-	    .3 scan\_MSSM\_for\_mW.ini.
-	    .3 bound.txt.
-		.2 README.rst \DTcomment{Readme}.
-		.2 LICENSE \DTcomment{Apache license}.
-		.2 EasyScan\_HEP.pdf \DTcomment{Document}.
-	}
