@@ -60,7 +60,6 @@ Package content:
 		- TestFunction\_input.dat
 		- OnePointBatch.in
 		- MSSM\_mW
-		- ALP\_simulation
 	- templates
 		- example\_random.ini
 		- example\_grid.ini
