@@ -40,38 +40,38 @@ and then it can be executed with
 ::
     ./bin/easyscan.py templates/scan_MSSM_for_mW.ini
 
-The directory structure information
-	- bin/ .........................................Executable file.
-		- easyscan.py.
-	- src/ .........................................Internal functions.
-		- easyscan\_logging.conf.
-		- program.py.
-		- initialize.py.
-		- readin\_config.py.
-		- scanner.py.
-		- scan\_controller.py.
-		- constraint.py.
-		- statfun.py.
-		- ploter.py.
-		- auxfun.py.
-	- utils/ .......................................Auxiliary functions.
-		- TestFunction.py.
-		- TestFunction\_input.dat.
-		- OnePointBatch.in.
-		- MSSM\_mW.
-		- ALP\_simulation.
-	- templates/ ...................................Example configuration files.
-		- example\_random.ini.
-		- example\_grid.ini.
-		- example\_mcmc.ini.
-		- example\_mcmc\_bound.ini.
-		- example\_multinest.ini.
-		- example\_onepoint.ini.
-		- example\_onepointbatch.ini.
-		- example\_plot.ini.
-		- scan\_MSSM\_for\_mW.ini.
-		- bound.txt.
-	- README.rst ...................................Readme.
-	- LICENSE ......................................Apache license.
-	- EasyScan\_HEP.pdf ............................Document.
+Package content:
 
+	- bin
+		- easyscan.py
+	- src
+		- easyscan\_logging.conf
+		- program.py
+		- initialize.py
+		- readin\_config.py
+		- scanner.py
+		- scan\_controller.py
+		- constraint.py
+		- statfun.py
+		- ploter.py
+		- auxfun.py
+	- utils
+		- TestFunction.py
+		- TestFunction\_input.dat
+		- OnePointBatch.in
+		- MSSM\_mW
+		- ALP\_simulation
+	- templates
+		- example\_random.ini
+		- example\_grid.ini
+		- example\_mcmc.ini
+		- example\_mcmc\_bound.ini
+		- example\_multinest.ini
+		- example\_onepoint.ini
+		- example\_onepointbatch.ini
+		- example\_plot.ini
+		- scan\_MSSM\_for\_mW.ini
+		- bound.txt
+	- README.rst 
+	- LICENSE 
+	
