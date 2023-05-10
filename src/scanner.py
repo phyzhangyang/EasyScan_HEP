@@ -241,7 +241,7 @@ def randomrun(LnLike, Prior, n_params, inpar, fixedpar, outpar, n_live_points, n
             saveCube(cube, data_file, file_path, str(Naccept), True)
         
         if (Nrun+1)%n_print == 0: 
-            printPoint(Nrun+1, cube, n_dims, inpar, fixedpar, outpar, lnlike, Naccept)
+            printPoint(Nrun+1, cube, n_dims, inpar, fixedpar, outpar, lnlike, Naccept-1)
 
 def mcmcrun(LnLike, Prior, n_params, n_live_points, inpar, fixedpar, outpar, StepSize, AccepRate, FlagTuneR, InitVal, n_print, outputfolder):
     data_file = open(os.path.join(outputfolder, af.ResultFile),'a')
