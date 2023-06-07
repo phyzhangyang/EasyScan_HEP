@@ -724,7 +724,7 @@ class PROGRAM:
                         if jj[3].upper() == 'BLOCK' and ''.join(ks) ==  ''.join(kk[0:len(ks)]):
                             ks_flag  = True
                             par[jj[0]] = af.forcetype(ouvar[kki][len(ks)])
-                        if jj[3].upper() == 'DECAY' and ''.join(ks).replace('.0','') ==  ''.join(kk[1:len(ks)+1]):
+                        if jj[3].upper() == 'DECAY' and sorted(''.join(ks).replace('.0','')) ==  sorted(''.join(kk[1:len(ks)+1])):
                             ks_flag  = True
                             par[jj[0]] = af.forcetype(ouvar[kki][0])
                     if jj[3].upper() == kk[0].upper() and ''.join(blk) == ''.join(kk[1:len(blk)+1]) :
