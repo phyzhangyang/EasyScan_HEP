@@ -17,7 +17,7 @@ EasyScan_HEP is a Python3 code with dependencies on *numpy*, *scipy* and *Config
 :: 
     sudo apt install python3-pip python3-tk 
     
-    sudo pip3 install numpy scipy matplotlib ConfigParser pandas pymultinest
+    pip3 install numpy scipy matplotlib ConfigParser pandas pymultinest
 
 The "easyscan.py" in folder "bin" is the main program, which is executed with configuration file through the command line,
 ::
