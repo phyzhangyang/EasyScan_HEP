@@ -19,6 +19,9 @@ class CONTROLLER:
         self._PrintNum   = 1
         self._AccepRate  = 0.25
         self._FlagTuneR  = False
+        self._parallel_threads = 1
+        self._parallel_mode = False
+        self._parallel_folder = ''
         
         self._Prog    = {}
         self._ScanFile = '' # OnePointBatch
@@ -136,19 +139,43 @@ class CONTROLLER:
         self._FlagTuneR = True
         af.Info('Acceptance rate   = %s'%self._AccepRate)
 
+    def setParallelThreads(self, parallel_threads):
+        self._parallel_threads = int(parallel_threads)
+        if self._parallel_threads <= 0:
+            af.ErrorStop('"Parallel threads" must be larger than 0.')
+        self._parallel_mode = True
+        af.Info('Parallel threads   = %s'%self._parallel_threads)
+
+    def setParallelFolder(self, parallel_folder):
+        self._parallel_folder = parallel_folder
+        if not os.path.isdir(parallel_folder):
+            af.ErrorStop('Parallel folder: %s do not exist.'%parallel_folder)
+        af.Info('Parallel folder   = %s'%parallel_folder)
+        
+        for ii in range(self._parallel_threads):
+            i_folder = 'p%i_%s'%(ii,parallel_folder)
+            print(parallel_folder, i_folder)
+            try:
+                f.Info('  Copying %s'%i_folder)
+                shutil.copytree(parallel_folder, i_folder)
+            except FileExistsError:
+                af.Info('  %s already exist.'%i_folder)    
+            except Exception as e:
+                af.ErrorStop('  Error in copying %s: %s'%(i_folder, str(e)))
+
     def setPrintNum(self, nprint):
         self._PrintNum = int(nprint)
         if self._PrintNum < 1 :
             af.ErrorStop('"Interval of print" should be larger than 0')
         af.Info('Interval of print = %s'%self._PrintNum)
-        af.Info('  If all elements defined in "Output variable" are read by easyscan successfully,')
-        af.Info('  easyscan would show information as following every interval')
-        af.Info('  ------------ Num: # ------------')
-        af.Info('  Input  -        =   ')
-        af.Info('  Output -        =   ')
-        af.Info('  LnLike          =   ')
-        af.Info('  Accepted Num    =   ')
-        af.Info('  Total    Num    =   ')
+        af.Debug('  If all elements defined in "Output variable" are read by easyscan successfully,')
+        af.Debug('  easyscan would show information as following every interval')
+        af.Debug('  ------------ Num: # ------------')
+        af.Debug('  Input  -        =   ')
+        af.Debug('  Output -        =   ')
+        af.Debug('  LnLike          =   ')
+        af.Debug('  Accepted Num    =   ')
+        af.Debug('  Total    Num    =   ')
 
     def InputParInfo(self, name, num, items):
         return 'Input parameter "%s" need %i iterms [ID, Prior, %s]'%(name, num, items)
@@ -317,6 +344,9 @@ class CONTROLLER:
         return self._PrintNum
     def getDebugFlag(self):
         return self._DebugFlag
+    
+    def getParallelMode(self):
+        return self._parallel_mode
     
     def getStepSize(self):
         return self.MCMCss
