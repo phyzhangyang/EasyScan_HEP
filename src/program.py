@@ -48,6 +48,8 @@ class PROGRAM:
         self._outputclean = True
         self._timelimit = 60
 
+        self.parallel_mode = True
+
     def setProgName(self, name):
         self._ProgName=name
         af.Info('...............................................')
@@ -75,8 +77,13 @@ class PROGRAM:
                 if ii[0] == '':
                     break
                 af.ErrorStop('The input file of %s need two items (File ID, File path).'%self._ProgName)
-            if not (ii[1].startswith('/home') or ii[1].startswith('~')):
-                ii[1]=os.path.join(af.CurrentPath, ii[1])
+                
+            if ii[1].startswith('/home') or ii[1].startswith('~') :
+                if self.parallel_mode:
+                    af.ErrorStop('In parallel mode, it must be relative path for output file %s'%self._OutFileID )
+            else:
+                if not self.parallel_mode:
+                    ii[1] = os.path.join(af.CurrentPath, ii[1])
             self._InputFile[ii[0]]=ii[1]
             af.Info('  fileID= %s \tFile= %s'%(ii[0],ii[1]))
 
@@ -359,8 +366,12 @@ class PROGRAM:
         af.Debug('OutFileID',self._OutFileID)
         af.Info('Output file     = ')
         for ii in outputfile:
-            if not (ii[1].startswith('/home') or ii[1].startswith('~')):
-                ii[1] = os.path.join(af.CurrentPath, ii[1])
+            if ii[1].startswith('/home') or ii[1].startswith('~') :
+                if self.parallel_mode:
+                    af.ErrorStop('In parallel mode, it must be relative path for output file %s'%self._OutFileID )
+            else:
+                if not self.parallel_mode:
+                    ii[1] = os.path.join(af.CurrentPath, ii[1])
             self._OutputFile[ii[0]]=ii[1]
             af.Info('  ID= %s \tFile= %s'%(ii[0],ii[1]))
 
@@ -463,7 +474,7 @@ class PROGRAM:
     def getOutputVar(self):
         return self._OutputVar
 
-    def WriteInputFile(self,par):
+    def WriteInputFile(self,par,i_process):
         if self._InFileID ==['']:
             return
             
@@ -471,10 +482,12 @@ class PROGRAM:
 
         ## self._InFileID is list of file ID in Input file in [programX]
         for ii in self._InFileID:
+            i_InputFile = i_process + self._InputFile[ii]
             ## For 'File' method
             #file_flag = False
             file_flag = True
             for jj in self._InFilVar[ii]:
+                af.ErrorStop("This part has not been modified for parallel mode.")
                 #file_flag = True
                 if jj[3].lower()=='previous':
                     file_flag = False 
@@ -496,16 +509,16 @@ class PROGRAM:
             if file_flag:
                 try:
                     if len(self._InRepVar[ii])>0:
-                        infile = open(self._InputFile[ii]+'.ESbackup','r').read()
+                        infile = open(i_InputFile+'.ESbackup','r').read()
                     else:
-                        infile = open(self._InputFile[ii],'r').read()
+                        infile = open(i_InputFile,'r').read()
                 except:
-                    af.ErrorStop('Can not open the input file "%s" in program "%s".'%(self._InputFile[ii], self._ProgName))
+                    af.ErrorStop('Can not open the input file "%s" in program "%s".'%(i_InputFile, self._ProgName))
             else:
                 try:
-                    infile = open(self._InputFile[ii],'r').read()
+                    infile = open(i_InputFile,'r').read()
                 except:
-                    af.ErrorStop('Can not open the input file "%s" in program "%s", which is obtained from previous program(s).'%(self._InputFile[ii],self._ProgName))
+                    af.ErrorStop('Can not open the input file "%s" in program "%s", which is obtained from previous program(s).'%(i_InputFile,self._ProgName))
         
             ## For 'Replace' method
             for jj in self._InRepVar[ii]:
@@ -513,16 +526,16 @@ class PROGRAM:
                 if True:
                     match = re.findall(r"\b%s\b"%jj[3],infile)
                     if len(match)==0:
-                        af.ErrorStop('For input variable "%s" in program "%s" with "Replace" method, can not find "%s" in coressponding input file "%s", which is obtained from previous program(s).'%(jj[0],self._ProgName,jj[3],self._InputFile[ii]) )
+                        af.ErrorStop('For input variable "%s" in program "%s" with "Replace" method, can not find "%s" in coressponding input file "%s", which is obtained from previous program(s).'%(jj[0],self._ProgName,jj[3],i_InputFile) )
                 ## jj[3] is something being replaced and par is a dictionary and par[jj[0]] (value) will replace jj[3].
                 ## "\b" will make sure ES_lam in ES_lamT would not be replaced
                 infile = re.sub(r"\b%s\b"%jj[3],str(par[jj[0]]),infile)
             if len(self._InRepVar[ii])>0:
-                open(self._InputFile[ii],'w').write(infile)
+                open(i_InputFile,'w').write(infile)
                 
             ## inlines is a list of all lines
             ## invars is a list of list of words for all lines
-            inlines = open(self._InputFile[ii]).readlines()
+            inlines = open(i_InputFile).readlines()
             ## new 20180425 liang
             #invar = [ss.split() for ss in inlines]
             invar = [re.split(r'[ \t,]+', ss.strip()) for ss in inlines]
@@ -602,14 +615,20 @@ class PROGRAM:
                      af.ErrorStop("Keep format unchanged Failed! Check src/program.py at Line about 559.") 
                  #outlines.append( "  ".join(invar[xxi])+"\n" )
                  outlines.append( "".join(newList))
-            open(self._InputFile[ii],'w').writelines(outlines)
+            open(i_InputFile,'w').writelines(outlines)
 
-    def RunProgram(self):
-        af.Debug('Be about to run Program %s'%self._ProgName)
+    def RunProgram(self, i_processing='', parallel_folder = ''):
+        af.Debug('Be about to run Program %s in process %s'%(self._ProgName,i_processing))
         cwd=self._ComPath
+        
+        
+        if cwd.endswith(parallel_folder):
+            cwd = cwd[:-len(parallel_folder)] + i_processing + cwd[-len(parallel_folder):]
+        print(cwd)
+        
         # remove output file
         if self._outputclean:
-            self.RemoveOutputFile()
+            self.RemoveOutputFile(parallel_folder)
         for cmd in self._Command:
           af.Debug('Runing Program %s with command'%self._ProgName,cmd)
 
@@ -655,27 +674,29 @@ class PROGRAM:
 #
 #        return p.returncode
 
-    def RemoveOutputFile(self):
+    def RemoveOutputFile(self,i_process):
         for ii in self._OutFileID:
-            af.Debug('Remove remaining output file %s before running program %s'%(self._OutputFile[ii], self._ProgName))
-            if not os.path.exists(self._OutputFile[ii]):
-                af.Debug('No remaining output file %s for program %s'%(self._OutputFile[ii], self._ProgName))
+            i_OutputFile = i_process+self._OutputFile[ii]
+            af.Debug('Remove remaining output file %s before running program %s'%(i_OutputFile, self._ProgName))
+            if not os.path.exists(i_OutputFile):
+                af.Debug('No remaining output file %s for program %s'%(i_OutputFile, self._ProgName))
                 return False
             else:
-                os.remove(self._OutputFile[ii])
-                af.Debug('Successful remaining output file %s for program %s'%(self._OutputFile[ii], self._ProgName))
+                os.remove(i_OutputFile)
+                af.Debug('Successful remaining output file %s for program %s'%(i_OutputFile, self._ProgName))
 
-    def ReadOutputFile(self,par,path):
+    def ReadOutputFile(self,par,path,i_process):
         for ii in self._OutFileID:
-            if not os.path.exists(self._OutputFile[ii]):
-                af.Debug('No output file "%s" for program %s'%(self._OutputFile[ii], self._ProgName))
+            i_OutputFile = i_process+self._OutputFile[ii]
+            if not os.path.exists(i_OutputFile):
+                af.Debug('No output file "%s" for program %s'%(i_OutputFile, self._ProgName))
                 return False
             ## For 'File' method
             for jj in self._OutFileVar[ii]:
-                par[jj[0]] = self._OutputFile[ii]
+                par[jj[0]] = i_OutputFile
         
             if len(self._OutPosVar[ii])+ len(self._OutLabelVar[ii]) + len(self._OutSLHAVar[ii])>0 :
-                oulines = open(self._OutputFile[ii]).readlines()
+                oulines = open(i_OutputFile).readlines()
                 ouvar = [re.split(r'[ \t,]+', ss.strip()) for ss in oulines]
             
             ## For 'Position' method
@@ -691,7 +712,7 @@ class PROGRAM:
             for jj in self._OutLabelVar[ii]:
                 labeline = [xx for xx in oulines if re.search(str(jj[3]),xx)]
                 if len(labeline)>1:
-                    af.ErrorStop( 'For output variable "%s" in program "%s" with "Label" method, there is %d "%s" in output file "%s". Please choose other method.'%(jj[0],self._ProgName,len(labelinum),jj[3],self._OutputFile[ii]) )
+                    af.ErrorStop( 'For output variable "%s" in program "%s" with "Label" method, there is %d "%s" in output file "%s". Please choose other method.'%(jj[0],self._ProgName,len(labelinum),jj[3],i_OutputFile) )
 
                 try:
                     ## new 20180425 liang

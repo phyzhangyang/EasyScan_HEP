@@ -10,6 +10,9 @@ from math import exp
 import auxfun as af
 import ploter
 import time
+import multiprocessing
+
+lock = multiprocessing.Lock()
 
 def getFilelength(datafile):
   with open(datafile, 'r') as f:
@@ -29,15 +32,15 @@ def saveCube(cube, data_file, file_path, num, save_file):
         result.append(str(af.NaN))
       else:
         result.append(str(ii))
-                
-  data_file.write(','.join(result)+'\n')
-  data_file.flush()
+  with lock:
+      data_file.write(','.join(result)+'\n')
+      data_file.flush()
 
-def printPoint(Numrun, cube, n_dims, inpar, fixedpar, outpar, lnlike, Naccept):
-    if Numrun == 0:
-        af.Info('------------ Start Point ------------')
+def printPoint(Numrun, cube, n_dims, inpar, fixedpar, outpar, lnlike, Naccept, i_process=0):
+    if Numrun == 1:
+        af.Info('------------ Start point in process-%i ------'%i_process)
     else:
-        af.Info('------------ Num: %i ------------'%Numrun)
+        af.Info('------------ Num: %i in process-%i ----------'%(Numrun,i_process))
     for i,name in enumerate(inpar):
         af.Info('Input  - %s = %s '%(name,cube[i]))
     for i,name in enumerate(fixedpar):
@@ -52,7 +55,7 @@ def printPoint(Numrun, cube, n_dims, inpar, fixedpar, outpar, lnlike, Naccept):
             af.Info('Output - %s = %s '%(name,outVar))
 
     af.Info('LnLike   = '+str(lnlike))
-    if Numrun == 0:
+    if Numrun == 1:
       af.Info('Initial lnlike = '+str(-2*lnlike))
     af.Info('Accepted Num    = '+str(Naccept))
     af.Info('Total    Num    = '+str(Numrun))
@@ -208,7 +211,7 @@ def gridrun(LnLike, Prior, n_params, inpar, fixedpar, outpar, bin_num, n_print, 
         if (Nrun+1)%n_print == 0: 
           printPoint(Nrun+1, cube, n_dims, inpar, fixedpar, outpar, lnlike, Naccept)
 
-        
+
         
 def randomrun(LnLike, Prior, n_params, inpar, fixedpar, outpar, n_live_points, n_print, outputfolder):
     data_file = open(os.path.join(outputfolder, af.ResultFile),'a')
@@ -226,22 +229,44 @@ def randomrun(LnLike, Prior, n_params, inpar, fixedpar, outpar, n_live_points, n
       af.ErrorStop('There are already %s living samples in the data file.'%Naccept)
     elif Naccept == 0 :
       af.ErrorStop('The data file is empty. Please start a new scan instead of using the resume mode.')
-
+    Naccept -= 1 
+    
     af.Info('Begin random scan ...')
     
-    for Nrun in range(Naccept-1, n_live_points) :
-        for j in range(n_dims):
-          cube[j] = random()
+    num_processes = 5
+
+    def per_run(i_process, i_accept, i_tot):
+        for Nrun in range(i_accept, i_tot) :
+            for j in range(n_dims):
+                cube[j] = random()
+            
+            Prior(cube, n_dims, n_params)
+            lnlike = LnLike(cube, n_dims, n_params, "p%s_"%str(i_process))
         
-        Prior(cube, n_dims, n_params)
-        lnlike = LnLike(cube, n_dims, n_params)
+            if lnlike > af.log_zero:
+                i_accept += 1
+                saveCube(cube, data_file, file_path, str(i_process)+str(i_accept), True)
         
-        if lnlike > af.log_zero:
-            Naccept += 1
-            saveCube(cube, data_file, file_path, str(Naccept), True)
-        
-        if (Nrun+1)%n_print == 0: 
-            printPoint(Nrun+1, cube, n_dims, inpar, fixedpar, outpar, lnlike, Naccept-1)
+            if (Nrun+1)%n_print == 0: 
+                printPoint(Nrun+1, cube, n_dims, inpar, fixedpar, outpar, lnlike, i_accept, i_process)
+    
+    # Create subprocesses
+    processes = []
+    for i in range(num_processes):
+        i_accept = int(Naccept/num_processes) + 1 if i < Naccept%num_processes else int(Naccept/num_processes)
+        i_tot = int(n_live_points/num_processes) + 1 if i < n_live_points%num_processes else int(n_live_points/num_processes)
+        p = multiprocessing.Process(target = per_run, args=(i,i_accept,i_tot))
+        processes.append(p)
+    
+    # Start all subprocesses
+    for p in processes:
+        p.start()
+    
+    # Wait for all subprocesses to finish
+    for p in processes:
+        p.join()
+    
+    af.Info('All processes finished')
 
 def mcmcrun(LnLike, Prior, n_params, n_live_points, inpar, fixedpar, outpar, StepSize, AccepRate, FlagTuneR, InitVal, n_print, outputfolder):
     data_file = open(os.path.join(outputfolder, af.ResultFile),'a')

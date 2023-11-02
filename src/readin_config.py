@@ -44,6 +44,7 @@ def ReadIn(Configfile, ES, Programs, Constraint, Ploter):
     except configparser.NoOptionError:
         af.ErrorStop(notFind('Result folder name')) 
 
+
     # Read the plot information
     # This part is put here, because if ScanMethod = PLOT, the rest of sections can be ignore.
     plot_items = []
@@ -108,6 +109,20 @@ def ReadIn(Configfile, ES, Programs, Constraint, Ploter):
             af.Info(notFind('Acceptance rate')+takeDefault('0.25')) 
         else:
             pass
+
+    try:
+        ES.setParallelThreads(cf.get('scan', 'Parallel threads'))
+    except configparser.NoOptionError:
+        af.Info('Parallel mode is off.')
+
+    if ES.getParallelMode():
+        try:
+            ES.setParallelFolder(cf.get('scan', 'Parallel Folder'))
+        except configparser.NoOptionError:
+            af.ErrorStop(notFind('Parallel Folder'))
+        
+    
+    
 
     ## sort programs by ID
     ProgID = [x for x in cf.sections() if x.startswith('program')]
