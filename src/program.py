@@ -65,6 +65,8 @@ class PROGRAM:
         self._Command=af.string2nestlist(command)
         af.Info('Execute command = %s'% self._Command)
     def setComPath(self, cpath):
+        if self._parallel_mode and cpath != self._parallel_folder:
+            af.ErrorStop('In parallel mode "command path" have to be same to "parallel folder" !')
         if cpath.startswith('/home') or cpath.startswith('~'):
             self._ComPath=cpath
         else:
@@ -91,6 +93,9 @@ class PROGRAM:
             else:
                 if not self._parallel_mode:
                     ii[1] = os.path.join(af.CurrentPath, ii[1])
+                else:
+                    if not ii[1].startswith(self._parallel_folder+"/"):
+                        af.ErrorStop('In parallel mode, input file %s be inside the "parallel_folder"! '%self._OutFileID )
             self._InputFile[ii[0]]=ii[1]
             af.Info('  fileID= %s \tFile= %s'%(ii[0],ii[1]))
 
@@ -379,6 +384,9 @@ class PROGRAM:
             else:
                 if not self._parallel_mode:
                     ii[1] = os.path.join(af.CurrentPath, ii[1])
+                else:
+                    if not ii[1].startswith(self._parallel_folder+"/"):
+                        af.ErrorStop('In parallel mode, output file %s be inside the "parallel_folder"! '%self._OutFileID )
             self._OutputFile[ii[0]]=ii[1]
             af.Info('  ID= %s \tFile= %s'%(ii[0],ii[1]))
 
