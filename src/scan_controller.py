@@ -2,7 +2,7 @@
 #    Class CONTROLLER: contral scan                                 #
 ####################################################################
 # External modules
-import os
+import os,shutil
 import random
 import time
 from math import log10
@@ -143,6 +143,9 @@ class CONTROLLER:
         self._parallel_threads = int(parallel_threads)
         if self._parallel_threads <= 0:
             af.ErrorStop('"Parallel threads" must be larger than 0.')
+        if self._parallel_threads == 1:
+            self._parallel_mode = False
+            return
         self._parallel_mode = True
         af.Info('Parallel threads   = %s'%self._parallel_threads)
 
@@ -154,9 +157,8 @@ class CONTROLLER:
         
         for ii in range(self._parallel_threads):
             i_folder = 'p%i_%s'%(ii,parallel_folder)
-            print(parallel_folder, i_folder)
             try:
-                f.Info('  Copying %s'%i_folder)
+                af.Info('  Copying %s'%i_folder)
                 shutil.copytree(parallel_folder, i_folder)
             except FileExistsError:
                 af.Info('  %s already exist.'%i_folder)    
@@ -347,7 +349,11 @@ class CONTROLLER:
     
     def getParallelMode(self):
         return self._parallel_mode
-    
+    def getParallelFolder(self):
+        return self._parallel_folder
+    def getParallelThreads(self):
+        return self._parallel_threads
+
     def getStepSize(self):
         return self.MCMCss
     def getInitialValue(self):

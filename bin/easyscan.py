@@ -43,12 +43,11 @@ def LnLike(cube, ndim, nparams, i_process=''):
     for i,name in enumerate(ES.InPar):
         ES.AllPar[name]=cube[i]
  
-    parallel_folder = "tools"# TODO
     PhysicalPoint = True
     # Run programs
     for ii in ProgID:
         Programs[ii].WriteInputFile(ES.AllPar,i_process)
-        Programs[ii].RunProgram(i_process,parallel_folder) 
+        Programs[ii].RunProgram(i_process)
         PhysicalPoint = Programs[ii].ReadOutputFile(ES.AllPar, ES.getFolderName(),i_process)
         # Apply bound
         if PhysicalPoint: 
@@ -111,7 +110,8 @@ elif ES.getScanMethod() == af._random:
 	      outpar        = ES.OutPar,
         n_live_points = ES.getPointNum(),
         n_print       = ES.getPrintNum(),
-        outputfolder  = ES.getFolderName())
+        outputfolder  = ES.getFolderName(),
+        num_processes = ES.getParallelThreads())
 
 elif ES.getScanMethod() == af._grid:
     scanner.gridrun(

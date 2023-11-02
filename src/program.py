@@ -48,8 +48,15 @@ class PROGRAM:
         self._outputclean = True
         self._timelimit = 60
 
-        self.parallel_mode = True
+        self._parallel_mode = False
+        self._parallel_folder = ""
 
+    def setParallelMode(self, parallel_mode):
+        self._parallel_mode = parallel_mode
+        
+    def setParallelFolder(self, parallel_folder):
+        self._parallel_folder = parallel_folder
+                
     def setProgName(self, name):
         self._ProgName=name
         af.Info('...............................................')
@@ -79,10 +86,10 @@ class PROGRAM:
                 af.ErrorStop('The input file of %s need two items (File ID, File path).'%self._ProgName)
                 
             if ii[1].startswith('/home') or ii[1].startswith('~') :
-                if self.parallel_mode:
+                if self._parallel_mode:
                     af.ErrorStop('In parallel mode, it must be relative path for output file %s'%self._OutFileID )
             else:
-                if not self.parallel_mode:
+                if not self._parallel_mode:
                     ii[1] = os.path.join(af.CurrentPath, ii[1])
             self._InputFile[ii[0]]=ii[1]
             af.Info('  fileID= %s \tFile= %s'%(ii[0],ii[1]))
@@ -367,10 +374,10 @@ class PROGRAM:
         af.Info('Output file     = ')
         for ii in outputfile:
             if ii[1].startswith('/home') or ii[1].startswith('~') :
-                if self.parallel_mode:
+                if self._parallel_mode:
                     af.ErrorStop('In parallel mode, it must be relative path for output file %s'%self._OutFileID )
             else:
-                if not self.parallel_mode:
+                if not self._parallel_mode:
                     ii[1] = os.path.join(af.CurrentPath, ii[1])
             self._OutputFile[ii[0]]=ii[1]
             af.Info('  ID= %s \tFile= %s'%(ii[0],ii[1]))
@@ -617,18 +624,16 @@ class PROGRAM:
                  outlines.append( "".join(newList))
             open(i_InputFile,'w').writelines(outlines)
 
-    def RunProgram(self, i_processing='', parallel_folder = ''):
-        af.Debug('Be about to run Program %s in process %s'%(self._ProgName,i_processing))
+    def RunProgram(self, i_process=''):
+        af.Debug('Be about to run Program %s in process %s'%(self._ProgName,i_process))
         cwd=self._ComPath
         
-        
-        if cwd.endswith(parallel_folder):
-            cwd = cwd[:-len(parallel_folder)] + i_processing + cwd[-len(parallel_folder):]
-        print(cwd)
+        if self._parallel_mode:
+            cwd = cwd[:-len(self._parallel_folder)] + i_process + cwd[-len(self._parallel_folder):]
         
         # remove output file
         if self._outputclean:
-            self.RemoveOutputFile(parallel_folder)
+            self.RemoveOutputFile(i_process)
         for cmd in self._Command:
           af.Debug('Runing Program %s with command'%self._ProgName,cmd)
 
