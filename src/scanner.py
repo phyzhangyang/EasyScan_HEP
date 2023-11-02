@@ -11,7 +11,8 @@ import auxfun as af
 import ploter
 import time
 import multiprocessing
-
+multiprocessing.set_start_method('fork')
+    
 lock = multiprocessing.Lock()
 
 def getFilelength(datafile):
@@ -36,11 +37,12 @@ def saveCube(cube, data_file, file_path, num, save_file):
       data_file.write(','.join(result)+'\n')
       data_file.flush()
 
-def printPoint(Numrun, cube, n_dims, inpar, fixedpar, outpar, lnlike, Naccept, i_process=0):
+def printPoint(Numrun, cube, n_dims, inpar, fixedpar, outpar, lnlike, Naccept, i_process=''):
+  with lock:
     if Numrun == 1:
-        af.Info('------------ Start point in process-%i ------'%i_process)
+        af.Info('------------ Start point -%s-------'%i_process)
     else:
-        af.Info('------------ Num: %i in process-%i ----------'%(Numrun,i_process))
+        af.Info('------------ Num: %i -%s-----------'%(Numrun,i_process))
     for i,name in enumerate(inpar):
         af.Info('Input  - %s = %s '%(name,cube[i]))
     for i,name in enumerate(fixedpar):
@@ -213,7 +215,7 @@ def gridrun(LnLike, Prior, n_params, inpar, fixedpar, outpar, bin_num, n_print, 
 
 
         
-def randomrun(LnLike, Prior, n_params, inpar, fixedpar, outpar, n_live_points, n_print, outputfolder):
+def randomrun(LnLike, Prior, n_params, inpar, fixedpar, outpar, n_live_points, n_print, outputfolder, num_processes=1):
     data_file = open(os.path.join(outputfolder, af.ResultFile),'a')
     file_path = os.path.join(outputfolder,"SavedFile")
    
@@ -233,29 +235,31 @@ def randomrun(LnLike, Prior, n_params, inpar, fixedpar, outpar, n_live_points, n
     
     af.Info('Begin random scan ...')
     
-    num_processes = 5
-
     def per_run(i_process, i_accept, i_tot):
         for Nrun in range(i_accept, i_tot) :
             for j in range(n_dims):
                 cube[j] = random()
             
             Prior(cube, n_dims, n_params)
-            lnlike = LnLike(cube, n_dims, n_params, "p%s_"%str(i_process))
+            lnlike = LnLike(cube, n_dims, n_params, i_process)
         
             if lnlike > af.log_zero:
                 i_accept += 1
-                saveCube(cube, data_file, file_path, str(i_process)+str(i_accept), True)
+                saveCube(cube, data_file, file_path, i_process+str(i_accept), True)
         
             if (Nrun+1)%n_print == 0: 
                 printPoint(Nrun+1, cube, n_dims, inpar, fixedpar, outpar, lnlike, i_accept, i_process)
     
+    if num_processes == 1:
+        per_run("",Naccept,n_live_points)
+        return
+        
     # Create subprocesses
     processes = []
     for i in range(num_processes):
         i_accept = int(Naccept/num_processes) + 1 if i < Naccept%num_processes else int(Naccept/num_processes)
         i_tot = int(n_live_points/num_processes) + 1 if i < n_live_points%num_processes else int(n_live_points/num_processes)
-        p = multiprocessing.Process(target = per_run, args=(i,i_accept,i_tot))
+        p = multiprocessing.Process(target = per_run, args=("p%s_"%str(i),i_accept,i_tot))
         processes.append(p)
     
     # Start all subprocesses

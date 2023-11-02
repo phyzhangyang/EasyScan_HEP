@@ -140,6 +140,8 @@ def ReadIn(Configfile, ES, Programs, Constraint, Ploter):
         items  = cf.options(ii)
         
         Programs[ii] = PROGRAM()
+        Programs[ii].setParallelMode(ES.getParallelMode());
+        Programs[ii].setParallelFolder(ES.getParallelFolder());
         if 'program name' in items:
             Programs[ii].setProgName(cf.get(ii, 'Program name'))
         else:
