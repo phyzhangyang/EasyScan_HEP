@@ -211,21 +211,25 @@ def gridrun(LnLike, Prior, n_params, inpar, fixedpar, outpar, bin_num, n_print, 
           
     # Create subprocesses
     processes = []
-    for i in range(num_processes):
-        i_accept = int(Naccept/num_processes) + 1 if i < Naccept%num_processes else int(Naccept/num_processes)
-        i_tot = int(n_live_points/num_processes) + 1 if i < n_live_points%num_processes else int(n_live_points/num_processes)
-        p = multiprocessing.Process(target = per_run, args=("p%s_"%str(i),i_accept,i_tot))
-        processes.append(p)
-    
-    # Start all subprocesses
-    for p in processes:
-        p.start()
-    
-    # Wait for all subprocesses to finish
-    for p in processes:
-        p.join()
-    
-    af.Info('All processes finished')
+    i_start = 0
+    i_end = 0
+    for ii in range(num_processes):
+        i_start = Naccept[ii] + i_end + 1
+        i_end = i_start + int(n_live_points/num_processes) + 1 if i < n_live_points%num_processes else int(n_live_points/num_processes)
+        
+        print (i_start,i_end)
+#        p = multiprocessing.Process(target = per_run, args=("p%s_"%str(i),i_accept,i_tot))
+#        processes.append(p)
+#    
+#    # Start all subprocesses
+#    for p in processes:
+#        p.start()
+#    
+#    # Wait for all subprocesses to finish
+#    for p in processes:
+#        p.join()
+#    
+#    af.Info('All processes finished')
           
 
 
