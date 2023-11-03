@@ -140,7 +140,8 @@ elif ES.getScanMethod() == af._mcmc:
         FlagTuneR     = ES.getFlagTuneR(),
         InitVal       = ES.getInitialValue(),
         n_print       = ES.getPrintNum(),
-        outputfolder  = ES.getFolderName())
+        outputfolder  = ES.getFolderName(),
+        num_processes = ES.getParallelThreads())
 
 elif ES.getScanMethod() == af._multinest:
     import pymultinest
