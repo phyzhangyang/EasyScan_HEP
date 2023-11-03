@@ -16,6 +16,17 @@ multiprocessing.set_start_method('fork')
     
 lock = multiprocessing.Lock()
 
+def run_processes(processes):
+    # Start all subprocesses
+    for p in processes:
+        p.start()
+    
+    # Wait for all subprocesses to finish
+    for p in processes:
+        p.join()
+    
+    af.Info('All processes finished')
+
 def getFilelength(datafile):
   with open(datafile, 'r') as f:
     num_lines = sum(1 for line in f)
@@ -219,6 +230,10 @@ def gridrun(LnLike, Prior, n_params, inpar, fixedpar, outpar, bin_num, n_print, 
             if (Nrun+1-i_start_)%n_print == 0:
                 printPoint(Nrun+1-i_start_, cube, n_dims, inpar, fixedpar, outpar, lnlike, i_start, i_process)
             
+    if num_processes == 1:
+        per_run("",Naccept[0],ntotal)
+        return
+        
     # Create subprocesses
     processes = []
     i_end = 0
@@ -228,15 +243,7 @@ def gridrun(LnLike, Prior, n_params, inpar, fixedpar, outpar, bin_num, n_print, 
         p = multiprocessing.Process(target = per_run, args=("p%s_"%str(ii),i_start,i_end))
         processes.append(p)
     
-    # Start all subprocesses
-    for p in processes:
-        p.start()
-    
-    # Wait for all subprocesses to finish
-    for p in processes:
-        p.join()
-    
-    af.Info('All processes finished')
+    run_processes(processes)
 
         
 def randomrun(LnLike, Prior, n_params, inpar, fixedpar, outpar, n_live_points, n_print, outputfolder, num_processes=1):
@@ -286,15 +293,7 @@ def randomrun(LnLike, Prior, n_params, inpar, fixedpar, outpar, n_live_points, n
         p = multiprocessing.Process(target = per_run, args=("p%s_"%str(i),i_accept,i_tot))
         processes.append(p)
     
-    # Start all subprocesses
-    for p in processes:
-        p.start()
-    
-    # Wait for all subprocesses to finish
-    for p in processes:
-        p.join()
-    
-    af.Info('All processes finished')
+    run_processes(processes)
 
 def mcmcrun(LnLike, Prior, n_params, n_live_points, inpar, fixedpar, outpar, StepSize, AccepRate, FlagTuneR, InitVal, n_print, outputfolder):
     data_file = open(os.path.join(outputfolder, af.ResultFile),'a')
