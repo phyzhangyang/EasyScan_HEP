@@ -75,6 +75,7 @@ def printPoint(Numrun, cube, n_dims, inpar, fixedpar, outpar, lnlike, Naccept, i
     af.Info('Total    Num    = '+str(Numrun))
 
 def printPoint4MCMC(Chisq,CurChisq,MinChisq,AccRat,FlagTuneR,kcovar):
+  with lock:
     af.Info('........... MCMC info .............')
     af.Info('Test     Chi^2 = '+str(Chisq))
     af.Info('Current  Chi^2 = '+str(CurChisq))
@@ -231,7 +232,7 @@ def gridrun(LnLike, Prior, n_params, inpar, fixedpar, outpar, bin_num, n_print, 
                 printPoint(Nrun+1-i_start_, cube, n_dims, inpar, fixedpar, outpar, lnlike, i_start, i_process)
             
     if num_processes == 1:
-        per_run("",Naccept[0],ntotal)
+        per_run("",int(Naccept[0]),ntotal)
         return
         
     # Create subprocesses
@@ -239,14 +240,14 @@ def gridrun(LnLike, Prior, n_params, inpar, fixedpar, outpar, bin_num, n_print, 
     i_end = 0
     for ii in range(num_processes):
         i_start = int(Naccept[ii] + i_end)
-        i_end += int(ntotal/num_processes) + 1 if ii < ntotal%num_processes else int(ntotal/num_processes)
+        i_end += af.divide_jobs(ntotal, num_processes, i)
         p = multiprocessing.Process(target = per_run, args=("p%s_"%str(ii),i_start,i_end))
         processes.append(p)
     
     run_processes(processes)
 
         
-def randomrun(LnLike, Prior, n_params, inpar, fixedpar, outpar, n_live_points, n_print, outputfolder, num_processes=1):
+def randomrun(LnLike, Prior, n_params, inpar, fixedpar, outpar, n_live_points, n_print, outputfolder, num_processes):
     data_file = open(os.path.join(outputfolder, af.ResultFile),'a')
     file_path = os.path.join(outputfolder,"SavedFile")
    
@@ -288,14 +289,14 @@ def randomrun(LnLike, Prior, n_params, inpar, fixedpar, outpar, n_live_points, n
     # Create subprocesses
     processes = []
     for i in range(num_processes):
-        i_accept = int(Naccept/num_processes) + 1 if i < Naccept%num_processes else int(Naccept/num_processes)
-        i_tot = int(n_live_points/num_processes) + 1 if i < n_live_points%num_processes else int(n_live_points/num_processes)
+        i_accept = af.divide_jobs(Naccept, num_processes, i)
+        i_tot = af.divide_jobs(n_live_points, num_processes, i)
         p = multiprocessing.Process(target = per_run, args=("p%s_"%str(i),i_accept,i_tot))
         processes.append(p)
     
     run_processes(processes)
 
-def mcmcrun(LnLike, Prior, n_params, n_live_points, inpar, fixedpar, outpar, StepSize, AccepRate, FlagTuneR, InitVal, n_print, outputfolder):
+def mcmcrun(LnLike, Prior, n_params, n_live_points, inpar, fixedpar, outpar, StepSize, AccepRate, FlagTuneR, InitVal, n_print, outputfolder, num_processes):
     data_file = open(os.path.join(outputfolder, af.ResultFile),'a')
     all_data_file = open(os.path.join(outputfolder, af.ResultFile_MCMC),'a')
     file_path = os.path.join(outputfolder,"SavedFile")
@@ -335,7 +336,7 @@ def mcmcrun(LnLike, Prior, n_params, n_live_points, inpar, fixedpar, outpar, Ste
     CurChisq = - 2.0 * lnlike
     for i in range(n_params): CurObs.append( cube[i] )
     CurObs.append(0) # dwell
-    printPoint(0, cube, n_dims, inpar, fixedpar, outpar, lnlike, 0)
+    printPoint(0, cube, n_dims, inpar, fixedpar, outpar, lnlike, 0, '')
 
     if af.resume:
       if lnlike < af.log_zero * 10. :
@@ -356,15 +357,16 @@ def mcmcrun(LnLike, Prior, n_params, n_live_points, inpar, fixedpar, outpar, Ste
       Naccept = 1      
       
     
-    # Initialize the MCMC parameters
-    MinChisq = CurChisq
-    Chisq = CurChisq
-    Nout=1
-    dwell = 1
-    kcovar = 0 
-    while Naccept < n_live_points:
+    def per_run(i_process, i_accept, i_run, i_tot, CurChisq):
+    
+      # Initialize the MCMC parameters
+      MinChisq = CurChisq
+      Chisq = CurChisq
+      Nout=1
+      dwell = 1
+      kcovar = 0
+      while i_accept < i_tot:
 
-        #Nrun += 1
         RangeFlag = True
         for j in range(n_dims):
             par[j] = gauss(CurPar[j],exp(kcovar)*covar[j]) # normalized to 1 
@@ -374,16 +376,16 @@ def mcmcrun(LnLike, Prior, n_params, n_live_points, inpar, fixedpar, outpar, Ste
             RangeFlag = False
             Nout = Nout +1
             if Nout%100 == 0: 
-                af.WarningNoWait("Too many points out of range!")
+                af.WarningNoWait("Too many points out of range! Check the range or start point.")
         else:
-            Nrun += 1
+            i_run += 1
             Nout=0
             for i in range(n_dims): cube[i] = par[i]
             Prior(cube, n_dims, n_params)
-            lnlike = LnLike(cube, n_dims, n_params)
+            lnlike = LnLike(cube, n_dims, n_params,i_process)
             AllOutMCMC = cube.copy()
             AllOutMCMC.append(1)
-            saveCube(AllOutMCMC, all_data_file, file_path, '0', False)
+            saveCube(AllOutMCMC, all_data_file, file_path, i_process+'0', False)
             Chisq = - 2.0 * lnlike
 
         Flag_accept = RangeFlag and (Chisq < CurChisq + 20) 
@@ -395,30 +397,48 @@ def mcmcrun(LnLike, Prior, n_params, n_live_points, inpar, fixedpar, outpar, Ste
         if Flag_accept :
             CurObs[-1]=dwell
             #"Naccept+1" due to file of Chisq have covered file of CurChisq
-            saveCube(CurObs, data_file, file_path, str(Naccept+1), True)
+            saveCube(CurObs, data_file, file_path, i_process+str(i_accept+1), True)
             CurChisq = Chisq
             for i in range(n_params): CurObs[i]   = cube[i]
             for i in range(n_dims):   CurPar[i]   = par[i]
             
             if Chisq < MinChisq : MinChisq = Chisq
-            Naccept += 1
+            i_accept += 1
             dwell = 1
         else:
             if RangeFlag:
                 dwell +=1
 
-        AccRat = float(Naccept)/float(Nrun)
+        AccRat = float(i_accept)/float(i_run)
 
-        if FlagTuneR and Nrun < 1000 and Nrun > 10 : 
-            kcovar = kcovar + 1.0/(float(Nrun)**0.7)*(AccRat - AccepRate)
+        if FlagTuneR and i_run < 1000 and i_run > 10 :
+            kcovar = kcovar + 1.0/(float(i_run)**0.7)*(AccRat - AccepRate)
         else: 
             kcovar = 1
 
-        if Nrun%n_print == 0: 
+        if i_run%n_print == 0:
             if RangeFlag:
-                printPoint(Nrun, cube, n_dims, inpar, fixedpar, outpar, lnlike, Naccept-1)
+                printPoint(i_run, cube, n_dims, inpar, fixedpar, outpar, lnlike, i_accept-1, i_process)
                 printPoint4MCMC(Chisq,CurChisq,MinChisq,AccRat,FlagTuneR,kcovar)
 
-    # save the last point
-    CurObs[-1]=dwell
-    saveCube(CurObs, data_file, file_path, str(Naccept), True)
+      # save the last point
+      CurObs[-1]=dwell
+      saveCube(CurObs, data_file, file_path, i_process+str(i_accept), True)
+
+    if num_processes == 1:
+        per_run("", Naccept, Nrun, n_live_points, CurChisq)
+        return
+        
+    # Create subprocesses
+    processes = []
+    for i in range(num_processes):
+        i_tot = af.divide_jobs(n_live_points, num_processes, i)
+        i_accept = max(af.divide_jobs(Naccept, num_processes, i),1)
+        i_run = max(af.divide_jobs(Nrun, num_processes, i),1)
+        p = multiprocessing.Process(target = per_run, args=("p%s_"%str(i), i_accept, i_run, i_tot, CurChisq))
+        processes.append(p)
+
+    run_processes(processes)
+
+
+        

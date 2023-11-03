@@ -160,3 +160,6 @@ def parseMath(par):
 def sortDic(Dic):
     return OrderedDict(sorted(list(Dic.items()), key = lambda t: t[0]))
        
+# Divide samples for multi-processes
+def divide_jobs(num_jobs, num_works, i_work):
+    return int(num_jobs/num_works) + 1 if i_work < num_jobs%num_works else int(num_jobs/num_works)
