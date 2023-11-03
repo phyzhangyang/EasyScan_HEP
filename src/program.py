@@ -696,7 +696,7 @@ class PROGRAM:
                 return False
             else:
                 os.remove(i_OutputFile)
-                af.Debug('Successful remaining output file %s for program %s'%(i_OutputFile, self._ProgName))
+                af.Debug('Removed output file %s for program %s'%(i_OutputFile, self._ProgName))
 
     def ReadOutputFile(self,par,path,i_process):
         for ii in self._OutFileID:
