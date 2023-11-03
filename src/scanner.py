@@ -104,6 +104,15 @@ def postprocessrun(LnLike, n_params, inpar, fixedpar, outpar, n_print,outputfold
     # Initialise cube
     cube = [af.NaN] * n_params
 
+#def read_file(file_path, lock):
+#    with open(file_path, 'r') as file:
+#        while True:
+#            with lock:
+#                line = file.readline().strip()
+#                if not line:  # 如果读取到文件末尾，则退出循环
+#                    break
+#                print(line)
+
     af.Info('Begin read scan ...')
     Naccept = 0
     for Nrun in range(ntotal):
@@ -441,4 +450,26 @@ def mcmcrun(LnLike, Prior, n_params, n_live_points, inpar, fixedpar, outpar, Ste
     run_processes(processes)
 
 
+def multinestrun(LnLike, Prior, n_dims, n_params, seed, outputfiles_basename, n_live_points, verbose, resume, importance_nested_sampling, num_processes):
+    import pymultinest
+    # See https://johannesbuchner.github.io/PyMultiNest/_modules/pymultinest/run.html
+    # for more settings
+    import functools
+    
+    
+    LnLike_1 = functools.partial(LnLike, i_process="")
+
+
+    
+    pymultinest.run(
+        LogLikelihood        = LnLike_1,
+        Prior                = Prior,
+        n_dims               = n_dims,
+        n_params             = n_params,
+        seed                 = seed,
+        outputfiles_basename = outputfiles_basename,
+        n_live_points        = n_live_points,
+        verbose                    = verbose,
+        resume                     = resume,
+        importance_nested_sampling = importance_nested_sampling)
         
