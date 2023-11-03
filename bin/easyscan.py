@@ -123,7 +123,8 @@ elif ES.getScanMethod() == af._grid:
 	      outpar        = ES.OutPar,
         bin_num       = ES.GridBin,
         n_print       = ES.getPrintNum(),
-        outputfolder  = ES.getFolderName())
+        outputfolder  = ES.getFolderName(),
+        num_processes = ES.getParallelThreads())
 
 elif ES.getScanMethod() == af._mcmc:
     scanner.mcmcrun(
