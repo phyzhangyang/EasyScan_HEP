@@ -5,6 +5,7 @@
 ## External modules.
 import os,sys,shutil
 from random import random, gauss
+from numpy import zeros, sum
 from math import exp
 # Internal modules
 import auxfun as af
@@ -162,7 +163,7 @@ def onepointbatchrun(LnLike, n_params, inpar, fixedpar, outpar, scanfile, n_prin
         if (Nrun+1)%n_print == 0:
             printPoint(Nrun+1, cube, n_dims, inpar, fixedpar, outpar, lnlike, Naccept)
         
-def gridrun(LnLike, Prior, n_params, inpar, fixedpar, outpar, bin_num, n_print, outputfolder):
+def gridrun(LnLike, Prior, n_params, inpar, fixedpar, outpar, bin_num, n_print, outputfolder,num_processes):
     data_file = open(os.path.join(outputfolder, af.ResultFile),'a') 
     file_path = os.path.join(outputfolder,"SavedFile")
     
@@ -182,15 +183,52 @@ def gridrun(LnLike, Prior, n_params, inpar, fixedpar, outpar, bin_num, n_print, 
 
     af.Info('Begin grid scan ...')
     
+    Naccept = zeros(num_processes)
     if af.resume:
-      try:
-        Naccept = int(open(os.path.join(outputfolder, "Nrun.txt"),'r').read().strip()) + 1
-      except: 
-        af.ErrorStop('Can not use resume mode because of Nrun.txt.')
-      if Naccept >= ntotal:
-        af.ErrorStop('There are already %s living samples in the data file.'%Naccept)
-    else:
-      Naccept = 0
+        try:
+            for i_process in range(num_processes):
+                Naccept[i_process] = int(open(os.path.join(outputfolder, "Nrun.txt"),'r').read().strip()) + 1
+        except: 
+            af.ErrorStop('Can not use resume mode because of no p[i]_Nrun.txt.')
+
+        if sum(Naccept) >= ntotal:
+            af.ErrorStop('There are already %s living samples in the data file.'%Naccept)
+          
+#    def per_run(i_process, i_accept, i_tot):
+#        for Nrun in range(i_accept, i_tot) :
+#            for j in range(n_dims):
+#                cube[j] = random()
+#            
+#            Prior(cube, n_dims, n_params)
+#            lnlike = LnLike(cube, n_dims, n_params, i_process)
+#        
+#            if lnlike > af.log_zero:
+#                i_accept += 1
+#                saveCube(cube, data_file, file_path, i_process+str(i_accept), True)
+#        
+#            if (Nrun+1)%n_print == 0: 
+#                printPoint(Nrun+1, cube, n_dims, inpar, fixedpar, outpar, lnlike, i_accept, i_process)
+          
+    # Create subprocesses
+    processes = []
+    for i in range(num_processes):
+        i_accept = int(Naccept/num_processes) + 1 if i < Naccept%num_processes else int(Naccept/num_processes)
+        i_tot = int(n_live_points/num_processes) + 1 if i < n_live_points%num_processes else int(n_live_points/num_processes)
+        p = multiprocessing.Process(target = per_run, args=("p%s_"%str(i),i_accept,i_tot))
+        processes.append(p)
+    
+    # Start all subprocesses
+    for p in processes:
+        p.start()
+    
+    # Wait for all subprocesses to finish
+    for p in processes:
+        p.join()
+    
+    af.Info('All processes finished')
+          
+
+
 
     for Nrun in range(Naccept, ntotal):
         iner = 1
