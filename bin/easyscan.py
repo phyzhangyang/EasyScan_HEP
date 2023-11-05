@@ -98,7 +98,8 @@ elif ES.getScanMethod() == af._onepointbatch:
         outpar        = ES.OutPar,
         scanfile      = ES.getScanFile(),
         n_print       = ES.getPrintNum(),
-        outputfolder  = ES.getFolderName())
+        outputfolder  = ES.getFolderName(),
+        num_processes = ES.getParallelThreads())
 
 elif ES.getScanMethod() == af._random:
     scanner.randomrun(
@@ -166,7 +167,8 @@ elif ES.getScanMethod() == af._postprocess:
             fixedpar     = ES.FixedPar,
             outpar       = ES.OutPar,
             n_print      = ES.getPrintNum(),
-            outputfolder = ES.getFolderName())
+            outputfolder = ES.getFolderName(),
+            num_processes= ES.getParallelThreads())
 
 ## recover the modified input file(s) for external programs
 if ES.getScanMethod() != af._plot: 
