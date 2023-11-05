@@ -84,7 +84,7 @@ def printPoint4MCMC(Chisq,CurChisq,MinChisq,AccRat,FlagTuneR,kcovar):
     if FlagTuneR :
         af.Info('StepZize factor= '+str(exp(kcovar)))
 
-def postprocessrun(LnLike, n_params, inpar, fixedpar, outpar, n_print,outputfolder):
+def postprocessrun(LnLike, n_params, inpar, fixedpar, outpar, n_print, outputfolder, num_processes):
     data_file = open(os.path.join(outputfolder, af.ResultFile),'a') 
     file_path = os.path.join(outputfolder,"SavedFile")
     
@@ -104,28 +104,38 @@ def postprocessrun(LnLike, n_params, inpar, fixedpar, outpar, n_print,outputfold
     # Initialise cube
     cube = [af.NaN] * n_params
 
-#def read_file(file_path, lock):
-#    with open(file_path, 'r') as file:
-#        while True:
-#            with lock:
-#                line = file.readline().strip()
-#                if not line:  # 如果读取到文件末尾，则退出循环
-#                    break
-#                print(line)
-
     af.Info('Begin read scan ...')
-    Naccept = 0
-    for Nrun in range(ntotal):
-        for i,name in enumerate(inpar):
-            cube[i] = data[name][Nrun]
+    
+    def per_run(i_process, i_start, i_end):
+        N_Accept = 0
+        for Nrun in range(i_start, i_end) :
+            for i,name in enumerate(inpar):
+                cube[i] = data[name][Nrun]
             
-        lnlike = LnLike(cube, n_dims, n_params)
-        if lnlike > af.log_zero:
-            Naccept += 1
-            saveCube(cube,data_file,file_path,str(Naccept),True)
+            lnlike = LnLike(cube, n_dims, n_params,i_process)
+            if lnlike > af.log_zero:
+                N_Accept += 1
+                saveCube(cube,data_file,file_path,i_process+str(N_Accept),True)
         
-        if (Nrun+1)%n_print == 0:
-            printPoint(Nrun+1, cube, n_dims, inpar, fixedpar, outpar, lnlike, Naccept)
+            if (Nrun+1)%n_print == 0:
+                printPoint(Nrun+1-i_start, cube, n_dims, inpar, fixedpar, outpar, lnlike, N_Accept, i_process)
+
+    if num_processes == 1:
+        per_run("")
+        return
+        
+    # Create subprocesses
+    processes = []
+    i_end = 0
+    for ii in range(num_processes):
+        i_start = i_end
+        i_end += af.divide_jobs(ntotal, num_processes, ii)
+        af.Info('p%i process: %i >>>> %i '%(ii, i_start, i_end))
+        p = multiprocessing.Process(target = per_run, args=("p%s_"%str(ii),i_start,i_end))
+        processes.append(p)
+    
+    run_processes(processes)
+    
 
 def onepointrun(LnLike, Prior, n_params, inpar, fixedpar, outpar, outputfolder):
     data_file = open(os.path.join(outputfolder, af.ResultFile),'a')
@@ -171,18 +181,36 @@ def onepointbatchrun(LnLike, n_params, inpar, fixedpar, outpar, scanfile, n_prin
     cube = [af.NaN] * n_params
 
     af.Info('Begin one point batch scan ...')
-    Naccept = 0
-    for Nrun in range(ntotal):
-        for i,name in enumerate(inpar):
-            cube[i] = data[name][Nrun]
-
-        lnlike = LnLike(cube, n_dims, n_params)
-        if lnlike > af.log_zero:
-            Naccept += 1
-            saveCube(cube,data_file,file_path,str(Naccept),True)
+    
+    def per_run(i_process, i_start, i_end):
+        N_Accept = 0
+        for Nrun in range(i_start, i_end) :
+            for i,name in enumerate(inpar):
+                cube[i] = data[name][Nrun]
+            
+            lnlike = LnLike(cube, n_dims, n_params,i_process)
+            if lnlike > af.log_zero:
+                N_Accept += 1
+                saveCube(cube,data_file,file_path,i_process+str(N_Accept),True)
         
-        if (Nrun+1)%n_print == 0:
-            printPoint(Nrun+1, cube, n_dims, inpar, fixedpar, outpar, lnlike, Naccept)
+            if (Nrun+1)%n_print == 0:
+                printPoint(Nrun+1-i_start, cube, n_dims, inpar, fixedpar, outpar, lnlike, N_Accept, i_process)
+
+    if num_processes == 1:
+        per_run("")
+        return
+        
+    # Create subprocesses
+    processes = []
+    i_end = 0
+    for ii in range(num_processes):
+        i_start = i_end
+        i_end += af.divide_jobs(ntotal, num_processes, ii)
+        af.Info('p%i process: %i >>>> %i '%(ii, i_start, i_end))
+        p = multiprocessing.Process(target = per_run, args=("p%s_"%str(ii),i_start,i_end))
+        processes.append(p)
+    
+    run_processes(processes)
         
 def gridrun(LnLike, Prior, n_params, inpar, fixedpar, outpar, bin_num, n_print, outputfolder,num_processes):
     data_file = open(os.path.join(outputfolder, af.ResultFile),'a') 
