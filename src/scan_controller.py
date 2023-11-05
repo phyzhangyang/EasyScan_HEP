@@ -36,7 +36,7 @@ class CONTROLLER:
         self.MCMCss = {}  # Step size
         self.MCMCiv = {}  # Initial value
 
-        self.MNOutputFile = 'test/MultiNestData/'
+        self.MNOutputFile = 'MultiNestData/'
     
         self._Count   = 0
     
@@ -64,6 +64,9 @@ class CONTROLLER:
         os.system(action+r" %s %s" %(FolderName, BackupPath))
     
     def setFolderName(self, name):
+        if name.__contains__(' '):
+            af.ErrorStop("The name of result folder contains space.")
+    
         # Turn the result folder path into absolute path
         if name.startswith('/home') or name.startswith('~'):
             self._FolderName = name
@@ -73,7 +76,7 @@ class CONTROLLER:
 
         if ( self._ScanMethod in af._post) or af.resume:
             if not os.path.exists(self._FolderName):
-              af.ErrorStop("The result folder %s does not exist."%self._FolderName)
+              af.ErrorStop("The result folder %s does not exist. Can not do post-run or resume."%self._FolderName)
 
             if self._ScanMethod == af._postprocess:
               # Backup previous results

@@ -456,20 +456,58 @@ def multinestrun(LnLike, Prior, n_dims, n_params, seed, outputfiles_basename, n_
     # for more settings
     import functools
     
+    def get_i_folder(i_process):
+        return outputfiles_basename[:-14] + i_process + "MultiNestData/"
     
-    LnLike_1 = functools.partial(LnLike, i_process="")
-
-
-    
-    pymultinest.run(
-        LogLikelihood        = LnLike_1,
-        Prior                = Prior,
-        n_dims               = n_dims,
-        n_params             = n_params,
-        seed                 = seed,
-        outputfiles_basename = outputfiles_basename,
-        n_live_points        = n_live_points,
-        verbose                    = verbose,
-        resume                     = resume,
-        importance_nested_sampling = importance_nested_sampling)
+    # TODO: check whether we can set random seed here
+    def per_run(i_process, i_live_points):
+        i_outputfiles_basename = get_i_folder(i_process)
+        print(i_outputfiles_basename)
+        i_LnLike = functools.partial(LnLike, i_process=i_process)
+        pymultinest.run(
+            LogLikelihood        = i_LnLike,
+            Prior                = Prior,
+            n_dims               = n_dims,
+            n_params             = n_params,
+            seed                 = seed,
+            outputfiles_basename = i_outputfiles_basename,
+            n_live_points        = i_live_points,
+            verbose                    = verbose,
+            resume                     = resume,
+            importance_nested_sampling = importance_nested_sampling)
         
+    if num_processes == 1:
+        per_run("",n_live_points)
+        return
+    
+    if resume:
+        for ii in range(num_processes):
+            if not os.path.exists(get_i_folder("p%s_"%str(ii))):
+                af.ErrorStop('Can not use resume mode because of no '+ "p%s_"%str(ii) + "MultiNestData/")
+    else:
+        for ii in range(num_processes):
+            os.mkdir(get_i_folder("p%s_"%str(ii)))
+    
+    # Create subprocesses
+    processes = []
+
+    for i in range(num_processes):
+        i_live_points = af.divide_jobs(n_live_points, num_processes, i)
+        af.Info('p%i process has %i live points .............'%(i, i_live_points))
+        p = multiprocessing.Process(target = per_run, args=("p%s_"%str(i), i_live_points))
+        processes.append(p)
+
+    run_processes(processes)
+    
+    # Combine results
+    
+    with open(get_i_folder('')+'.txt', 'w') as merged_file:
+        af.Info('Merge result.')
+        for ii in range(num_processes):
+            with open(get_i_folder("p%s_"%str(ii))+'.txt', 'r') as file:
+                filetext = file.read()
+                merged_file.write(filetext)
+                if not filetext.endswith('\n'):
+                    merged_file.write('\n')
+    
+
