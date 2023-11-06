@@ -65,12 +65,16 @@ class PROGRAM:
         self._Command=af.string2nestlist(command)
         af.Info('Execute command = %s'% self._Command)
     def setComPath(self, cpath):
-        if self._parallel_mode and cpath != self._parallel_folder:
-            af.ErrorStop('In parallel mode "command path" have to be same to "parallel folder" !')
-        if cpath.startswith('/home') or cpath.startswith('~'):
+        if self._parallel_mode:
+            print(cpath,self._parallel_folder)
+            if not cpath.startswith(self._parallel_folder):
+                af.ErrorStop('In parallel mode, "command path" has to start with "parallel folder" !')
             self._ComPath=cpath
         else:
-            self._ComPath=os.path.join(af.CurrentPath, cpath)
+            if cpath.startswith('/home') or cpath.startswith('~'):
+                self._ComPath=cpath
+            else:
+                self._ComPath=os.path.join(af.CurrentPath, cpath)
         if not os.path.exists(self._ComPath):
             af.ErrorStop('Command path "%s" do not exist.'%self._ComPath)
         af.Info('Command path    = %s'% self._ComPath)
@@ -639,9 +643,9 @@ class PROGRAM:
     def RunProgram(self, i_process=''):
         af.Debug('Be about to run Program %s in process %s'%(self._ProgName,i_process))
         cwd=self._ComPath
-        
         if self._parallel_mode:
-            cwd = cwd[:-len(self._parallel_folder)] + i_process + cwd[-len(self._parallel_folder):]
+            cwd = i_process+ cwd
+        af.Debug('Command path is %s'%cwd)
         
         # remove output file
         if self._outputclean:
