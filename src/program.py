@@ -357,8 +357,8 @@ class PROGRAM:
             if not self._parallel_mode:
                 self.checkVar_replace(ii, file_flag, "")
             else:
-                for ii in range(ParallelThreads):
-                    self.checkVar_replace(ii, file_flag, "p%s_"%str(ii))
+                for jj in range(ParallelThreads):
+                    self.checkVar_replace(ii, file_flag, "p%s_"%str(jj))
             
             ## For 'Position' method
             ## check the input vars that use 'Position' method
@@ -787,10 +787,10 @@ class PROGRAM:
 
         return True
 
-    def Recover(self):
+    def Recover(self, ParallelAdd):
         for ii in self._InFileID:
-            if (ii!= '') and os.path.isfile(self._InputFile[ii]+".ESbackup"):
-                os.system("mv %s.ESbackup %s" %(self._InputFile[ii],self._InputFile[ii]))
+            if (ii!= '') and os.path.isfile(ParallelAdd+self._InputFile[ii]+".ESbackup"):
+                os.system("mv %s.ESbackup %s" %(ParallelAdd+self._InputFile[ii],ParallelAdd+self._InputFile[ii]))
 
     ## new function to use "math .." in [constrain]
     ## in order to add new variable in self.AllPar
