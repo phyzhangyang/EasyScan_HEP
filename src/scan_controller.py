@@ -48,6 +48,8 @@ class CONTROLLER:
             self._ScanMethod = "ONEPOINTBATCH"
             self._ScanFile = os.path.join(os.path.sep, *method.split('/')[1:])
             if not os.path.exists(self._ScanFile):
+                self._ScanFile = os.path.join(os.path.sep, af.CurrentPath, *method.split('/')[1:])
+            if not os.path.exists(self._ScanFile):
                 af.ErrorStop('%s can not be found'%self._ScanFile)
         if self._ScanMethod not in af._all:
             af.ErrorStop('%s is not a supported scan method'%method)
