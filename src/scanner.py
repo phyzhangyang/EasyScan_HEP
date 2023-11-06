@@ -274,50 +274,14 @@ def gridrun(LnLike, Prior, n_params, inpar, fixedpar, outpar, bin_num, n_print, 
         
     # Create subprocesses
     processes = []
-    i_start = 0
     i_end = 0
     for ii in range(num_processes):
-        i_start = Naccept[ii] + i_end + 1
-        i_end = i_start + int(n_live_points/num_processes) + 1 if i < n_live_points%num_processes else int(n_live_points/num_processes)
-        
-        print (i_start,i_end)
-#        p = multiprocessing.Process(target = per_run, args=("p%s_"%str(i),i_accept,i_tot))
-#        processes.append(p)
-#    
-#    # Start all subprocesses
-#    for p in processes:
-#        p.start()
-#    
-#    # Wait for all subprocesses to finish
-#    for p in processes:
-#        p.join()
-#    
-#    af.Info('All processes finished')
-          
-
-
-
-    for Nrun in range(Naccept, ntotal):
-        iner = 1
-        for i,name in enumerate(inpar):
-            cube[i] = ( int(Nrun/iner) )%bin_num[name] * interval[name]
-            iner   *= bin_num[name]
-
-        for i,name in enumerate(outpar):
-            cube[i+n_dims] = af.NaN
-        
-        Prior(cube, n_dims, n_params)
-        lnlike = LnLike(cube, n_dims, n_params)
-
-        if lnlike > af.log_zero:
-            Naccept += 1
-            saveCube(cube,data_file,file_path,str(Naccept),True)
-        # for resume
-        open(os.path.join(outputfolder, "Nrun.txt"),'w').write(str(Nrun)) 
-        
-        if (Nrun+1)%n_print == 0: 
-          printPoint(Nrun+1, cube, n_dims, inpar, fixedpar, outpar, lnlike, Naccept)
-
+        i_start = int(Naccept[ii] + i_end)
+        i_end += af.divide_jobs(ntotal, num_processes, i)
+        p = multiprocessing.Process(target = per_run, args=("p%s_"%str(ii),i_start,i_end))
+        processes.append(p)
+    
+    run_processes(processes)
 
         
 def randomrun(LnLike, Prior, n_params, inpar, fixedpar, outpar, n_live_points, n_print, outputfolder, num_processes):
