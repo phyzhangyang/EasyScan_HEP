@@ -172,11 +172,12 @@ elif ES.getScanMethod() == af._postprocess:
 
 ## recover the modified input file(s) for external programs
 if ES.getScanMethod() != af._plot:
-    if not ES.getParallelMode():
-        Programs[ii].Recover("")
-    else:
-        for ii in range(ES.getParallelThreads()):
-            Programs[ii].Recover("p%s_"%str(ii))
+    for ii in Programs:
+        if not ES.getParallelMode():
+            Programs[ii].Recover("")
+        else:
+            for jj in range(ES.getParallelThreads()):
+                Programs[ii].Recover("p%s_"%str(jj))
 
 """ Plot """
 Ploter.setPlotPar(ES.getFolderName(), ES._ScanMethod)
