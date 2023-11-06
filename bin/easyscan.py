@@ -176,7 +176,7 @@ if ES.getScanMethod() != af._plot:
         Programs[ii].Recover("")
     else:
         for ii in range(ES.getParallelThreads()):
-            Programs[ii].Recover("p%s_"%str(jj))
+            Programs[ii].Recover("p%s_"%str(ii))
 
 """ Plot """
 Ploter.setPlotPar(ES.getFolderName(), ES._ScanMethod)
