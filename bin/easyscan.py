@@ -81,7 +81,7 @@ def Prior(cube, ndim, nparams):
 # Load corresponding scan method
 if ES.getScanMethod() == af._onepoint:
     scanner.onepointrun(
-        LnLike = LnLike,
+        LnLike        = LnLike,
         Prior         = Prior,
         n_params      = len(ES.AllPar)+len(Constraint.Chi2),
         inpar         = ES.InPar,
@@ -91,18 +91,19 @@ if ES.getScanMethod() == af._onepoint:
 
 elif ES.getScanMethod() == af._onepointbatch:
     scanner.onepointbatchrun(
-        LnLike = LnLike,
+        LnLike        = LnLike,
         n_params      = len(ES.AllPar)+len(Constraint.Chi2),
         inpar         = ES.InPar,
         fixedpar      = ES.FixedPar,
         outpar        = ES.OutPar,
         scanfile      = ES.getScanFile(),
         n_print       = ES.getPrintNum(),
-        outputfolder  = ES.getFolderName())
+        outputfolder  = ES.getFolderName(),
+        num_processes = ES.getParallelThreads())
 
 elif ES.getScanMethod() == af._random:
     scanner.randomrun(
-        LnLike = LnLike,
+        LnLike        = LnLike,
         Prior         = Prior,
         n_params      = len(ES.AllPar)+len(Constraint.Chi2),
         inpar         = ES.InPar,
@@ -115,7 +116,7 @@ elif ES.getScanMethod() == af._random:
 
 elif ES.getScanMethod() == af._grid:
     scanner.gridrun(
-        LnLike = LnLike,
+        LnLike        = LnLike,
         Prior         = Prior,
         n_params      = len(ES.AllPar)+len(Constraint.Chi2),
         inpar         = ES.InPar,
@@ -128,7 +129,7 @@ elif ES.getScanMethod() == af._grid:
 
 elif ES.getScanMethod() == af._mcmc:
     scanner.mcmcrun(
-        LnLike = LnLike,
+        LnLike        = LnLike,
         Prior         = Prior,
         n_params      = len(ES.AllPar)+len(Constraint.Chi2),
         n_live_points = ES.getPointNum(),
@@ -140,33 +141,34 @@ elif ES.getScanMethod() == af._mcmc:
         FlagTuneR     = ES.getFlagTuneR(),
         InitVal       = ES.getInitialValue(),
         n_print       = ES.getPrintNum(),
-        outputfolder  = ES.getFolderName())
+        outputfolder  = ES.getFolderName(),
+        num_processes = ES.getParallelThreads())
 
 elif ES.getScanMethod() == af._multinest:
-    import pymultinest
-    # See https://johannesbuchner.github.io/PyMultiNest/_modules/pymultinest/run.html
-    # for more settings
-    pymultinest.run(
-        LogLikelihood        = LnLike,
+    scanner.multinestrun(
+        LnLike               = LnLike,
         Prior                = Prior,
         n_dims               = len(ES.InPar),
         n_params             = len(ES.AllPar)+len(Constraint.Chi2),
         seed                 = ES.getRandomSeed(),
         outputfiles_basename = ES.MNOutputFile,
         n_live_points        = ES.getPointNum(),
-        verbose                    = True,
-        resume                     = af.resume,
-        importance_nested_sampling = True)
+        verbose              = True,
+        resume               = af.resume,
+        importance_nested_sampling = True,
+        num_processes        = ES.getParallelThreads())
+
 
 elif ES.getScanMethod() == af._postprocess:
     scanner.postprocessrun(
             LnLike       = LnLike,
             n_params     = len(ES.AllPar)+len(Constraint.Chi2),
-            inpar                = ES.InPar,
-            fixedpar      = ES.FixedPar,
-            outpar               = ES.OutPar,
-            n_print              = ES.getPrintNum(),
-            outputfolder = ES.getFolderName())
+            inpar        = ES.InPar,
+            fixedpar     = ES.FixedPar,
+            outpar       = ES.OutPar,
+            n_print      = ES.getPrintNum(),
+            outputfolder = ES.getFolderName(),
+            num_processes= ES.getParallelThreads())
 
 ## recover the modified input file(s) for external programs
 if ES.getScanMethod() != af._plot: 
