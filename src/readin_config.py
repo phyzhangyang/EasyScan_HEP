@@ -158,7 +158,7 @@ def ReadIn(Configfile, ES, Programs, Constraint, Ploter):
         
         if 'input file' in items and 'input variable' in items:
             Programs[ii].setInputFile(cf.get(ii, 'Input file'))
-            Programs[ii].setInputVar(cf.get(ii, 'Input variable'))
+            Programs[ii].setInputVar(cf.get(ii, 'Input variable'), ES.getParallelThreads())
         if 'output file' in items and 'output variable' in items:
             Programs[ii].setOutputFile(cf.get(ii, 'Output file'))
             Programs[ii].setOutputVar(cf.get(ii, 'Output variable'))
