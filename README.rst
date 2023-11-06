@@ -60,8 +60,12 @@ Package content:
 		- TestFunction\_input.dat
 		- OnePointBatch.in
 		- MSSM\_mW
+	- tools
+		- TestFunction.py
+		- TestFunction\_input.dat
 	- templates
 		- example\_random.ini
+		- example\_random\_parallel.ini
 		- example\_grid.ini
 		- example\_mcmc.ini
 		- example\_mcmc\_bound.ini
