@@ -278,6 +278,7 @@ def gridrun(LnLike, Prior, n_params, inpar, fixedpar, outpar, bin_num, n_print, 
     for ii in range(num_processes):
         i_start = int(Naccept[ii] + i_end)
         i_end += af.divide_jobs(ntotal, num_processes, i)
+        af.Info('p%i process: %i >>>> %i '%(ii, i_start, i_end))
         p = multiprocessing.Process(target = per_run, args=("p%s_"%str(ii),i_start,i_end))
         processes.append(p)
     
@@ -328,6 +329,7 @@ def randomrun(LnLike, Prior, n_params, inpar, fixedpar, outpar, n_live_points, n
     for i in range(num_processes):
         i_accept = af.divide_jobs(Naccept, num_processes, i)
         i_tot = af.divide_jobs(n_live_points, num_processes, i)
+        af.Info('p%i process: %i >>>> %i '%(i, i_accept, i_tot))
         p = multiprocessing.Process(target = per_run, args=("p%s_"%str(i),i_accept,i_tot))
         processes.append(p)
     
@@ -472,6 +474,7 @@ def mcmcrun(LnLike, Prior, n_params, n_live_points, inpar, fixedpar, outpar, Ste
         i_tot = af.divide_jobs(n_live_points, num_processes, i)
         i_accept = max(af.divide_jobs(Naccept, num_processes, i),1)
         i_run = max(af.divide_jobs(Nrun, num_processes, i),1)
+        af.Info('p%i process has %i live points .............'%(i, i_tot))
         p = multiprocessing.Process(target = per_run, args=("p%s_"%str(i), i_accept, i_run, i_tot, CurChisq))
         processes.append(p)
 
@@ -490,7 +493,6 @@ def multinestrun(LnLike, Prior, n_dims, n_params, seed, outputfiles_basename, n_
     # TODO: check whether we can set random seed here
     def per_run(i_process, i_live_points):
         i_outputfiles_basename = get_i_folder(i_process)
-        print(i_outputfiles_basename)
         i_LnLike = functools.partial(LnLike, i_process=i_process)
         pymultinest.run(
             LogLikelihood        = i_LnLike,
