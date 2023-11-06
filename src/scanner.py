@@ -121,9 +121,11 @@ def postprocessrun(LnLike, n_params, inpar, fixedpar, outpar, n_print, outputfol
                 printPoint(Nrun+1-i_start, cube, n_dims, inpar, fixedpar, outpar, lnlike, N_Accept, i_process)
 
     if num_processes == 1:
-        per_run("")
+        per_run("", 0, ntotal)
         return
-        
+    
+    num_processes = min(num_processes, ntotal)
+    
     # Create subprocesses
     processes = []
     i_end = 0
@@ -160,7 +162,7 @@ def onepointrun(LnLike, Prior, n_params, inpar, fixedpar, outpar, outputfolder):
     printPoint(1, cube, n_dims, inpar, fixedpar, outpar, lnlike, Naccept)
     saveCube(cube, data_file, file_path, str(Naccept), True)
 
-def onepointbatchrun(LnLike, n_params, inpar, fixedpar, outpar, scanfile, n_print, outputfolder):
+def onepointbatchrun(LnLike, n_params, inpar, fixedpar, outpar, scanfile, n_print, outputfolder, num_processes):
     data_file = open(os.path.join(outputfolder, af.ResultFile),'a') 
     file_path = os.path.join(outputfolder, "SavedFile")
    
@@ -197,8 +199,10 @@ def onepointbatchrun(LnLike, n_params, inpar, fixedpar, outpar, scanfile, n_prin
                 printPoint(Nrun+1-i_start, cube, n_dims, inpar, fixedpar, outpar, lnlike, N_Accept, i_process)
 
     if num_processes == 1:
-        per_run("")
+        per_run("",0,ntotal)
         return
+    
+    num_processes = min(num_processes, ntotal)
         
     # Create subprocesses
     processes = []
@@ -271,7 +275,9 @@ def gridrun(LnLike, Prior, n_params, inpar, fixedpar, outpar, bin_num, n_print, 
     if num_processes == 1:
         per_run("",int(Naccept[0]),ntotal)
         return
-        
+    
+    num_processes = min(num_processes, ntotal)
+    
     # Create subprocesses
     processes = []
     i_end = 0
@@ -323,7 +329,9 @@ def randomrun(LnLike, Prior, n_params, inpar, fixedpar, outpar, n_live_points, n
     if num_processes == 1:
         per_run("",Naccept,n_live_points)
         return
-        
+    
+    num_processes = min(num_processes, n_live_points)
+    
     # Create subprocesses
     processes = []
     for i in range(num_processes):
@@ -467,7 +475,9 @@ def mcmcrun(LnLike, Prior, n_params, n_live_points, inpar, fixedpar, outpar, Ste
     if num_processes == 1:
         per_run("", Naccept, Nrun, n_live_points, CurChisq)
         return
-        
+    
+    num_processes = min(num_processes, Naccept)
+    
     # Create subprocesses
     processes = []
     for i in range(num_processes):
@@ -509,6 +519,8 @@ def multinestrun(LnLike, Prior, n_dims, n_params, seed, outputfiles_basename, n_
     if num_processes == 1:
         per_run("",n_live_points)
         return
+    
+    num_processes = min(num_processes, n_live_points)
     
     if resume:
         for ii in range(num_processes):

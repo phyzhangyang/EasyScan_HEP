@@ -164,9 +164,9 @@ class CONTROLLER:
                 af.Info('  Copying %s'%i_folder)
                 shutil.copytree(parallel_folder, i_folder)
             except FileExistsError:
-                af.Info('  %s already exist.'%i_folder)    
+                af.WarningNoWait('  %s already exist.'%i_folder)
             except Exception as e:
-                af.ErrorStop('  Error in copying %s: %s'%(i_folder, str(e)))
+                af.WarningWait('  Error in copying %s: %s'%(i_folder, str(e)))
 
     def setPrintNum(self, nprint):
         self._PrintNum = int(nprint)
