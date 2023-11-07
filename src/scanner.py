@@ -364,7 +364,7 @@ def mcmcrun(LnLike, Prior, n_params, n_live_points, inpar, fixedpar, outpar, Ste
     n_init = 0
     while True:
         Prior(cube, n_dims, n_params) # normalized to cube to real value
-        lnlike = LnLike(cube, n_dims, n_params, i_process)
+        lnlike = LnLike(cube, n_dims, n_params, "")
         AllOutMCMC = cube.copy()
         AllOutMCMC.append(1)
         #"True" for saving files of initial physical point
