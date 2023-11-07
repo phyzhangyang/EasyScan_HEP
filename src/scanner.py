@@ -303,7 +303,7 @@ def randomrun(LnLike, Prior, n_params, inpar, fixedpar, outpar, n_live_points, n
     # For resume 
     # If it is a new scan, Naccept == 1, otherwise Naccept >= 2
     Naccept = getFilelength(os.path.join(outputfolder, af.ResultFile))
-    if Naccept >= n_live_points:
+    if Naccept > n_live_points:
       af.ErrorStop('There are already %s living samples in the data file.'%Naccept)
     elif Naccept == 0 :
       af.ErrorStop('The data file is empty. Please start a new scan instead of using the resume mode.')
