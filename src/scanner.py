@@ -120,11 +120,11 @@ def postprocessrun(LnLike, n_params, inpar, fixedpar, outpar, n_print, outputfol
             if (Nrun+1)%n_print == 0:
                 printPoint(Nrun+1-i_start, cube, n_dims, inpar, fixedpar, outpar, lnlike, N_Accept, i_process)
 
+    num_processes = min(num_processes, ntotal)
+    
     if num_processes == 1:
         per_run("", 0, ntotal)
         return
-    
-    num_processes = min(num_processes, ntotal)
     
     # Create subprocesses
     processes = []
@@ -152,7 +152,7 @@ def onepointrun(LnLike, Prior, n_params, inpar, fixedpar, outpar, outputfolder):
     Naccept = 0  
 
     Prior(cube, n_dims, n_params) # normalized to cube to real value
-    lnlike = LnLike(cube, n_dims, n_params)
+    lnlike = LnLike(cube, n_dims, n_params, "")
 
     if lnlike > af.log_zero:   
         Naccept = Naccept +1
@@ -197,12 +197,12 @@ def onepointbatchrun(LnLike, n_params, inpar, fixedpar, outpar, scanfile, n_prin
         
             if (Nrun+1)%n_print == 0:
                 printPoint(Nrun+1-i_start, cube, n_dims, inpar, fixedpar, outpar, lnlike, N_Accept, i_process)
-
+    
+    num_processes = min(num_processes, ntotal)
+    
     if num_processes == 1:
         per_run("",0,ntotal)
         return
-    
-    num_processes = min(num_processes, ntotal)
         
     # Create subprocesses
     processes = []
@@ -271,13 +271,13 @@ def gridrun(LnLike, Prior, n_params, inpar, fixedpar, outpar, bin_num, n_print, 
         
             if (Nrun+1-i_start_)%n_print == 0:
                 printPoint(Nrun+1-i_start_, cube, n_dims, inpar, fixedpar, outpar, lnlike, i_start, i_process)
-            
+    
+    num_processes = min(num_processes, ntotal)
+                
     if num_processes == 1:
         per_run("",int(Naccept[0]),ntotal)
         return
-    
-    num_processes = min(num_processes, ntotal)
-    
+
     # Create subprocesses
     processes = []
     i_end = 0
@@ -326,11 +326,11 @@ def randomrun(LnLike, Prior, n_params, inpar, fixedpar, outpar, n_live_points, n
             if (Nrun+1)%n_print == 0: 
                 printPoint(Nrun+1, cube, n_dims, inpar, fixedpar, outpar, lnlike, i_accept, i_process)
     
+    num_processes = min(num_processes, n_live_points)
+    
     if num_processes == 1:
         per_run("",Naccept,n_live_points)
         return
-    
-    num_processes = min(num_processes, n_live_points)
     
     # Create subprocesses
     processes = []
@@ -364,7 +364,7 @@ def mcmcrun(LnLike, Prior, n_params, n_live_points, inpar, fixedpar, outpar, Ste
     n_init = 0
     while True:
         Prior(cube, n_dims, n_params) # normalized to cube to real value
-        lnlike = LnLike(cube, n_dims, n_params)
+        lnlike = LnLike(cube, n_dims, n_params, i_process)
         AllOutMCMC = cube.copy()
         AllOutMCMC.append(1)
         #"True" for saving files of initial physical point
@@ -472,11 +472,13 @@ def mcmcrun(LnLike, Prior, n_params, n_live_points, inpar, fixedpar, outpar, Ste
       CurObs[-1]=dwell
       saveCube(CurObs, data_file, file_path, i_process+str(i_accept), True)
 
+    num_processes = min(num_processes, n_live_points)
+
     if num_processes == 1:
         per_run("", Naccept, Nrun, n_live_points, CurChisq)
         return
     
-    num_processes = min(num_processes, n_live_points)
+    
     
     # Create subprocesses
     processes = []
@@ -516,11 +518,12 @@ def multinestrun(LnLike, Prior, n_dims, n_params, seed, outputfiles_basename, n_
             resume                     = resume,
             importance_nested_sampling = importance_nested_sampling)
         
+    
+    num_processes = min(num_processes, n_live_points)
+        
     if num_processes == 1:
         per_run("",n_live_points)
         return
-    
-    num_processes = min(num_processes, n_live_points)
     
     if resume:
         for ii in range(num_processes):

@@ -38,7 +38,7 @@ ProgID     = ReadIn(sys.argv[1], ES, Programs, Constraint, Ploter)
 af.WriteResultInf(ES.InPar, ES.FixedPar, ES.OutPar, Constraint.Chi2, ES.getFolderName(), ES.getScanMethod())
 
 # Natural logarithm of likelihood function
-def LnLike(cube, ndim, nparams, i_process=''):
+def LnLike(cube, ndim, nparams, i_process):
     # Pass input value from cube to AllPar
     for i,name in enumerate(ES.InPar):
         ES.AllPar[name]=cube[i]
