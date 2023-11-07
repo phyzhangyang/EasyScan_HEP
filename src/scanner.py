@@ -476,7 +476,7 @@ def mcmcrun(LnLike, Prior, n_params, n_live_points, inpar, fixedpar, outpar, Ste
         per_run("", Naccept, Nrun, n_live_points, CurChisq)
         return
     
-    num_processes = min(num_processes, Naccept)
+    num_processes = min(num_processes, n_live_points)
     
     # Create subprocesses
     processes = []
