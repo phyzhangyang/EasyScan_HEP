@@ -12,3 +12,4 @@ utils/MSSM_mW/higgsbounds.log
 utils/MSSM_mW/susyhit/
 src/*.pyc
 Backup/*
+.*
