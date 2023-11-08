@@ -240,13 +240,10 @@ def gridrun(LnLike, Prior, n_params, inpar, fixedpar, outpar, bin_num, n_print, 
     if af.resume:
         try:
             for i_process in range(num_processes):
-                Naccept[i_process] = int(open(os.path.join(outputfolder, "Nrun.txt"),'r').read().strip()) + 1
+                Naccept[i_process] = int(open(os.path.join(outputfolder, "p%s_"%str(i_process)+"Nrun.txt"),'r').read().strip()) + 1
         except: 
             af.ErrorStop('Can not use resume mode because of no p[i]_Nrun.txt.')
-
-        if sum(Naccept) >= ntotal:
-            af.ErrorStop('There are already %s living samples in the data file.'%Naccept)
-          
+         
     def per_run(i_process, i_start, i_end):
         i_start_ = i_start
         for Nrun in range(i_start, i_end) :
