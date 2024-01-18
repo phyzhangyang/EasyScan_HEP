@@ -779,7 +779,6 @@ class PROGRAM:
                                 par[jj[0]]=af.forcetype(ouvar[kki][2])
                                 ks_flag  = True
                             break
-                af.Debug('Output - %s='%jj[0],par[jj[0]])
                 if not ks_flag:
                     if jj[3].upper() == 'DECAY':
                         af.Debug('Can not read the output var',jj)
@@ -788,6 +787,8 @@ class PROGRAM:
                     else:
                         af.Debug('Can not read the output var',jj)
                         return False
+
+                af.Debug('Output - %s ='%jj[0], par[jj[0]])
 
         return True
 
