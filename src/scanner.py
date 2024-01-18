@@ -255,7 +255,6 @@ def gridrun(LnLike, Prior, n_params, inpar, fixedpar, outpar, bin_num, n_print, 
             for i,name in enumerate(outpar):
                 cube[i+n_dims] = af.NaN
             
-            
             Prior(cube, n_dims, n_params)
             lnlike = LnLike(cube, n_dims, n_params, i_process)
 
@@ -310,9 +309,12 @@ def randomrun(LnLike, Prior, n_params, inpar, fixedpar, outpar, n_live_points, n
     
     def per_run(i_process, i_accept, i_tot):
         for Nrun in range(i_accept, i_tot) :
-            for j in range(n_dims):
-                cube[j] = random()
+            for i in range(n_dims):
+                cube[i] = random()
             
+            for i,name in enumerate(outpar):
+                cube[i+n_dims] = af.NaN
+
             Prior(cube, n_dims, n_params)
             lnlike = LnLike(cube, n_dims, n_params, i_process)
         
