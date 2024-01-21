@@ -277,11 +277,11 @@ def gridrun(LnLike, Prior, n_params, inpar, fixedpar, outpar, bin_num, n_print, 
     # Create subprocesses
     processes = []
     i_end = 0
-    for ii in range(num_processes):
-        i_start = int(Naccept[ii] + i_end)
+    for i in range(num_processes):
+        i_start = int(Naccept[i] + i_end)
         i_end += af.divide_jobs(ntotal, num_processes, i)
-        af.Info('p%i process: %i >>>> %i '%(ii, i_start, i_end))
-        p = multiprocessing.Process(target = per_run, args=("p%s_"%str(ii),i_start,i_end))
+        af.Info('p%i process: %i >>>> %i '%(i, i_start, i_end))
+        p = multiprocessing.Process(target = per_run, args=("p%s_"%str(i), i_start, i_end))
         processes.append(p)
     
     run_processes(processes)
