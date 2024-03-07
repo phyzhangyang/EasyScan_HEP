@@ -2,13 +2,13 @@
 #    Class CONTROLLER: contral scan                                 #
 ####################################################################
 # External modules
-import os,shutil
-import random
+import os
 import time
-from math import log10
 import math
-# Internal modules
+import random
 import auxfun as af
+from math import log10
+# Internal modules
 
 class CONTROLLER:
     def __init__(self):
@@ -161,14 +161,15 @@ class CONTROLLER:
         af.Info('Parallel folder   = %s'%parallel_folder)
         
         for ii in range(self._parallel_threads):
-            i_folder = 'p%i_%s'%(ii,parallel_folder)
-            try:
-                af.Info('  Copying %s'%i_folder)
-                shutil.copytree(parallel_folder, i_folder)
-            except FileExistsError:
-                af.WarningNoWait('  %s already exist.'%i_folder)
-            except Exception as e:
-                af.WarningWait('  Error in copying %s: %s'%(i_folder, str(e)))
+            i_folder = 'p%i_%s'%(ii, parallel_folder)
+            source_dir = parallel_folder 
+            destination_dir = i_folder 
+            af.Info('  Copying %s'%destination_dir)
+            if os.path.exists(destination_dir):
+                af.WarningWait(f"{destination_dir} already exists, skip copy.")
+                continue
+            command = f"cp -r {source_dir}/ {destination_dir}/"
+            os.system(command)
 
     def setPrintNum(self, nprint):
         self._PrintNum = int(nprint)
