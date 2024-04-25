@@ -152,6 +152,9 @@ def parseMath(par):
                     else:
                         expr=expr.replace(keyAlt, str(valueAlt))
             cal = eval(expr, safe_dict)
+        except TypeError as e:
+            WarningNoWait(f"An error occurred in parseMath() in auxfun.py: {e}")
+            ErrorStop("There are maybe some spelling mistakes in input variable")
 
         #print key, expr, cal; raw_input("math") 
         par[key] = cal
