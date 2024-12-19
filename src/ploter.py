@@ -132,6 +132,7 @@ class PLOTER():
             os.mkdir(self._path)
 
         af.Info("Read data for ONEPOINTBATCH or PLOT successfully in the file %s"%datafile)
+        af.Info(f"Row number is {self._data.shape[0]}, Column number is {self._data.shape[1]}.")
 
     def checkPar(self, par, num, section_name='plot', severe=False):                  
       for jj in range(num):
