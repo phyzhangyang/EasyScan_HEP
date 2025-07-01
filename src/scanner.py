@@ -79,7 +79,7 @@ def printPoint4MCMC(Chisq,CurChisq,MinChisq,AccRat,FlagTuneR,kcovar):
     af.Info('........... MCMC info .............')
     af.Info('Test     Chi^2 = '+str(Chisq))
     af.Info('Current  Chi^2 = '+str(CurChisq))
-    af.Info('Mimimum  Chi^2 = '+str(MinChisq))
+    af.Info('Minimum  Chi^2 = '+str(MinChisq))
     af.Info('Accepted Ratio = '+str(AccRat))
     if FlagTuneR :
         af.Info('StepZize factor= '+str(exp(kcovar)))
@@ -240,9 +240,12 @@ def gridrun(LnLike, Prior, n_params, inpar, fixedpar, outpar, bin_num, n_print, 
     if af.resume:
         try:
             for i_process in range(num_processes):
-                Naccept[i_process] = int(open(os.path.join(outputfolder, "p%s_"%str(i_process)+"Nrun.txt"),'r').read().strip()) + 1
+                if num_processes == 1:
+                    Naccept[i_process] = int(open(os.path.join(outputfolder, "Nrun.txt"),'r').read().strip()) + 1
+                else:
+                    Naccept[i_process] = int(open(os.path.join(outputfolder, "p%s_"%str(i_process)+"Nrun.txt"),'r').read().strip()) + 1
         except: 
-            af.ErrorStop('Can not use resume mode because of no p[i]_Nrun.txt.')
+            af.ErrorStop('Can not use resume mode because of no Nrun.txt or p[i]_Nrun.txt.')
          
     def per_run(i_process, i_start, i_end):
         i_start_ = i_start
@@ -266,7 +269,8 @@ def gridrun(LnLike, Prior, n_params, inpar, fixedpar, outpar, bin_num, n_print, 
             open(os.path.join(outputfolder, i_process+"Nrun.txt"),'w').write(str(Nrun))
         
             if (Nrun+1-i_start_)%n_print == 0:
-                printPoint(Nrun+1-i_start_, cube, n_dims, inpar, fixedpar, outpar, lnlike, i_start, i_process)
+                #printPoint(Nrun+1-i_start_, cube, n_dims, inpar, fixedpar, outpar, lnlike, i_start, i_process)
+                printPoint(Nrun+1, cube, n_dims, inpar, fixedpar, outpar, lnlike, i_start, i_process)
     
     num_processes = min(num_processes, ntotal)
                 
