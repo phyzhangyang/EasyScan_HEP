@@ -42,8 +42,8 @@ def GotoWeb():
     print(ColorText(1,'# Goto ') + ColorText(1,'https://github.com/phyzhangyang/EasyScan_HEP',4) + ColorText(1,' for detail.'))
 def WarningWait(warinfo):
     logger.warning(ColorText(1,warinfo))
-    print(ColorText(1,'# Waiting 3 seconds for WARNING.'))
-    time.sleep(3)
+    print(ColorText(1,'# Waiting 2 seconds for WARNING.'))
+    time.sleep(2)
 def WarningNoWait(warinfo):
     logger.warning(ColorText(1,warinfo))
 def ErrorStop(errinfo):
