@@ -468,7 +468,8 @@ def mcmcrun(LnLike, Prior, n_params, n_live_points, inpar, fixedpar, outpar, Ste
 
         if i_run%n_print == 0:
             if RangeFlag:
-                printPoint(i_run, cube, n_dims, inpar, fixedpar, outpar, lnlike, i_accept-1, i_process)
+                #printPoint(i_run, cube, n_dims, inpar, fixedpar, outpar, lnlike, i_accept-1, i_process)
+                printPoint(i_run, cube, n_dims, inpar, fixedpar, outpar, lnlike, i_accept, i_process)
                 printPoint4MCMC(Chisq,CurChisq,MinChisq,AccRat,FlagTuneR,kcovar)
 
       # save the last point
