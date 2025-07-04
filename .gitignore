@@ -3,7 +3,7 @@ EASYSCAN.LOG
 src/__pycache__
 src/easyscan_logging.conf
 example*/*
-MSSM_MW/
+# MSSM_MW/
 utils/TestFunction_output.dat
 utils/MSSM_mW/FeynHiggs/
 utils/MSSM_mW/GM2Calc/
