@@ -1,0 +1,69 @@
+cmake_minimum_required(VERSION 3.5...4.0)
+project(
+  HiggsBounds
+  VERSION 5.10.2
+  LANGUAGES Fortran C)
+
+# -------------------------------- setup cmake --------------------------------
+if(POLICY CMP0074)
+  cmake_policy(SET CMP0074 NEW) # use <packagename>_ROOT as search path
+endif(POLICY CMP0074)
+
+list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/cmake")
+include(DefaultBuildType)
+
+# ------------------------ create install_data module -----------------------
+set(HB_DATA_DIR
+    "${CMAKE_CURRENT_SOURCE_DIR}/data"
+    CACHE PATH "HiggsBounds data directory")
+string(LENGTH ${HB_DATA_DIR} path_length)
+configure_file(src/install_data.f90.in src/install_data.f90 @ONLY)
+set(HIGGSBOUNDS_INCLUDE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/include)
+
+# --------------------------- optional dependencies ---------------------------
+option(LEP_CHISQ "enable the optional LEP chisq extension" OFF)
+if(LEP_CHISQ)
+  include(GetLepChisq)
+endif(LEP_CHISQ)
+
+if(PROJECT_SOURCE_DIR STREQUAL CMAKE_SOURCE_DIR)
+  find_package(FeynHiggs)
+endif()
+# ----------------------------------- doc -------------------------------------
+if(PROJECT_SOURCE_DIR STREQUAL CMAKE_SOURCE_DIR)
+  include(MakeDoxygen)
+endif()
+
+# ------------------------------ subdirectories -------------------------------
+add_subdirectory(src)
+add_subdirectory(bin)
+if(PROJECT_SOURCE_DIR STREQUAL CMAKE_SOURCE_DIR)
+  add_subdirectory(example_programs)
+endif()
+
+# ----------------------- alias for use as subdirectory -----------------------
+add_library(HiggsBounds::HB ALIAS HB)
+
+# -------------------------- export as cmake package --------------------------
+include(CMakePackageConfigHelpers)
+write_basic_package_version_file(
+  HiggsBoundsConfigVersion.cmake
+  VERSION ${PACKAGE_VERSION}
+  COMPATIBILITY SameMajorVersion)
+
+export(
+  TARGETS HB
+  NAMESPACE HiggsBounds::
+  FILE HiggsBoundsConfig.cmake)
+if(PROJECT_SOURCE_DIR STREQUAL CMAKE_SOURCE_DIR)
+  export(PACKAGE HiggsBounds)
+endif()
+
+# ----------------------------------- ctest -----------------------------------
+if(PROJECT_SOURCE_DIR STREQUAL CMAKE_SOURCE_DIR)
+  find_package(Python3 COMPONENTS Interpreter REQUIRED)
+  if(${PythonInterp_FOUND})
+    enable_testing()
+    add_subdirectory("tests")
+  endif()
+endif()
