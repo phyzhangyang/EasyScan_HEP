@@ -147,7 +147,7 @@ def parseMath(par):
                 if type(valueAlt) == str:
                     expr=expr.replace(keyAlt, valueAlt)
                 else:
-                    if isnan(valueAlt): 
+                    if math.isnan(valueAlt): 
                         expr=expr.replace(keyAlt, "float('NaN')")
                     else:
                         expr=expr.replace(keyAlt, str(valueAlt))
