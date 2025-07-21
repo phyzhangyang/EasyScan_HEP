@@ -405,7 +405,7 @@ class PROGRAM:
         outputvar=af.string2nestlist(outputvar)
         for ii in outputvar:
             if ii[1] not in self._OutFileID:
-                af.ErrorStop( 'ID of output variable "%s" in program "%s" is wrong.'%(ii[0],self._ProgName, ii[1]))
+                af.ErrorStop('ID=%s of output variable=%s in program=%s is wrong.'%(ii[1], ii[0], self._ProgName))
             if ii[2].upper() not in ['FILE', 'POSITION', 'LABEL', 'SLHA']:
                 af.ErrorStop( 'Method "%s" of output variable "%s" in program "%s" is not supported'%(ii[2],ii[0],self._ProgName))
             
