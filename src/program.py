@@ -66,7 +66,7 @@ class PROGRAM:
         af.Info('Execute command = %s'% self._Command)
     def setComPath(self, cpath):
         if self._parallel_mode:
-            print(cpath,self._parallel_folder)
+            af.Info("command path is '%s', parallel folder path is '%s'"%(cpath,     self._parallel_folder))
             if not cpath.startswith(self._parallel_folder):
                 af.ErrorStop('In parallel mode, "command path" has to start with "parallel folder" !')
             self._ComPath=cpath
