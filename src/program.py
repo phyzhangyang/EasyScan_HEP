@@ -837,18 +837,21 @@ class PROGRAM:
                     return
                 af.ErrorStop( 'The "Bound" in program "%s" must have at least 3 items.'%self._ProgName )
             elif len(ii) == 3:
-                if type(af.autotype(ii[2])) not in [type(1),type(1.0)]:  
-                    af.ErrorStop('For "Bound" in program "%s", "%s" should be int or float when there are 3 items.'%(self._ProgName, ii[2])) 
-                try: 
-                    float(ii[1]) 
-                except: 
-                    if ii[1] not in ["<=", ">=", ">", "<", "==", "!="]: 
-                        af.ErrorStop( 'The second item "%s" in "Bound" in program "%s" must be int, float, "<=", ">=", ">", "<", "==", or "!=" at 3 items.'%(ii[1], self._ProgName) ) 
-
+                af.Debug('evaluation of (%s,%s,%s) in "Bound" for program=%s'%(str(ii[0]), str(ii[1]), str(ii[2]), self._ProgName))
                 if ii[1] in ["<=", ">=", ">", "<", "==", "!="]:
-                    af.Info('    varID= %s \tLimit: %s \tValue: %s'%(ii[0],ii[1],ii[2]))
+                    try:
+                        float(ii[2])
+                    except:
+                        self.boundvar[ii[2]] = af.NaN
                 else:
-                    af.Info('    varID= %s \tMin= %s \tMax= %s'%(ii[0],ii[1],ii[2]))
+                    try: 
+                        float(ii[1])
+                    except:
+                        self.boundvar[ii[1]] = af.NaN
+                    try: 
+                        float(ii[2])
+                    except:
+                        self.boundvar[ii[2]] = af.NaN
                 self.boundvar[ii[0]] = af.NaN 
             else: 
                 if ii[2].lower() not in ["max", "min"]: 
@@ -888,16 +891,25 @@ class PROGRAM:
         for ii in self._BoundVar:
             physub = True
             if len(ii)== 3:
-                af.Debug('"%s=%.3E" compare to the limit "%s" in "Bound" for program %s'%(ii[0], par[ii[0]], ii[1:], self._ProgName))
-                try:
-                    float(ii[1])
-                    physub = eval("%e >= %e and %e <= %e"%(par[ii[0]], ii[1], par[ii[0]], ii[2]))
-                except:
-                    physub = eval("%e%s%e"%(par[ii[0]], ii[1], ii[2])) 
-                if physub:
-                    af.Debug('"%s=%.3E" satisfy "%s" in "Bound" for program %s'%(ii[0], par[ii[0]], ii[1:], self._ProgName))
+                if ii[1] in ["<=", ">=", ">", "<", "==", "!="]:
+                    try:
+                        float(ii[2])
+                        physub = eval("%e%s%e"%(par[ii[0]], ii[1], ii[2])) 
+                    except:
+                        physub = eval("%e%s%e"%(par[ii[0]], ii[1], par[ii[2]])) 
                 else:
-                    af.Debug('"%s=%.3E" unsatisfy "%s" in "Bound" for program %s'%(ii[0], par[ii[0]], ii[1:], self._ProgName))
+                    if type(af.autotype(ii[1])) not in [type(1),type(1.0)] and type(af.autotype(ii[2])) not in [type(1),type(1.0)]:  
+                        physub = eval("%e >= %e and %e <= %e"%(par[ii[0]], par[ii[1]], par[ii[0]], par[ii[2]]))
+                    elif type(af.autotype(ii[1])) in [type(1),type(1.0)] and type(af.autotype(ii[2])) not in [type(1),type(1.0)]:  
+                        physub = eval("%e >= %e and %e <= %e"%(par[ii[0]], ii[1], par[ii[0]], par[ii[2]]))
+                    elif type(af.autotype(ii[1])) not in [type(1),type(1.0)] and type(af.autotype(ii[2])) in [type(1),type(1.0)]:  
+                        physub = eval("%e >= %e and %e <= %e"%(par[ii[0]], par[ii[1]], par[ii[0]], ii[2]))
+                    else:
+                        physub = eval("%e >= %e and %e <= %e"%(par[ii[0]], ii[1], par[ii[0]], ii[2]))
+                if physub:
+                    af.Debug('(%s,%s,%s) satisfy in "Bound" for program=%s'%(ii[0], ii[1], ii[2], self._ProgName))
+                else:
+                    af.Debug('(%s,%s,%s) unsatisfy in "Bound" for program=%s'%(ii[0], ii[1], ii[2], self._ProgName))
                 phy = phy and physub 
             else: 
                 if not (ii[3].startswith('/home') or ii[3].startswith('~')):
