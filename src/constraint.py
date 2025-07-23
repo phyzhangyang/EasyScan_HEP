@@ -85,21 +85,30 @@ class CONSTRAINT:
             if not af.is_number(par[ii[0]]):
               return af.log_zero
               
+            try:
+                ii1 = eval(ii[1])
+            except:
+                ii1 = ii[1]
+            try:
+                ii2 = eval(ii[2])
+            except:
+                ii2 = ii[2]
             if ii[3].lower() == 'symm':
-                ichisq =     (ii[1] - par[ii[0]])**2/ii[2]**2
+                ichisq = (ii1 - par[ii[0]])**2/ii2**2
             elif ii[3].lower() == 'upper':
-                if par[ii[0]] <= ii[1] :
+                if par[ii[0]] <= ii1 :
                     ichisq = 0
                 else:
-                    ichisq = (ii[1] - par[ii[0]])**2/ii[2]**2
+                    ichisq = (ii1 - par[ii[0]])**2/ii2**2
             elif ii[3].lower() == 'lower':
-                if par[ii[0]] >= ii[1]:
+                if par[ii[0]] >= ii1:
                     ichisq = 0
                 else:
-                    ichisq = (ii[1] - par[ii[0]])**2/ii[2]**2
+                    ichisq = (ii1 - par[ii[0]])**2/ii2**2
 
             ## new 20180428 liang
             self.Chi2[ii[4]]=ichisq
+            af.Debug("Chi2: %s = %f"%(ii[4], ichisq))
 
             chisq += ichisq
 
@@ -110,6 +119,7 @@ class CONSTRAINT:
             ichisq = par[ii[0]]
 
             self.Chi2[ii[1]]=ichisq
+            af.Debug("Chi2: %s = %f"%(ii[1], ichisq))
 
             chisq += ichisq
 
