@@ -136,12 +136,18 @@ safe_dict = {'abs':abs, 'float':float, 'int':int,
              '__builtins__': None}
 # names that can not be used for variable
 forbidden_names = [*safe_dict] + _all + ['dwell', 'probability', '-2lnlike'] 
-def parseMath(par):
+def parseMath(par, keys_to_compute = None):
     safe_dict.update(par)
-    for key,value in par.items():
+    if keys_to_compute is None:
+        keys_to_compute = list(par)
+    for key in keys_to_compute:
+        value = par[key]
         expr = ','.join(key.split(';'))
         try:
             cal = eval(expr, safe_dict)
+        except ValueError:
+            Info(f'There is a domain error in {expr}.')
+            return False
         except SyntaxError:
             for keyAlt,valueAlt in par.items():
                 if type(valueAlt) == str:
@@ -159,6 +165,7 @@ def parseMath(par):
         #print key, expr, cal; raw_input("math") 
         par[key] = cal
 
+    return True
 # Sort parameters so that we can output them in right order
 def sortDic(Dic):
     return OrderedDict(sorted(list(Dic.items()), key = lambda t: t[0]))

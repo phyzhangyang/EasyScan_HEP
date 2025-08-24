@@ -499,9 +499,10 @@ class PROGRAM:
 
     def WriteInputFile(self,par,i_process):
         if self._InFileID ==['']:
-            return
-            
-        af.parseMath(par)
+            return True
+        
+        keys_to_compute = list(self.invar)
+        phys = af.parseMath(par, keys_to_compute)
 
         ## self._InFileID is list of file ID in Input file in [programX]
         for ii in self._InFileID:
@@ -639,6 +640,8 @@ class PROGRAM:
                  #outlines.append( "  ".join(invar[xxi])+"\n" )
                  outlines.append( "".join(newList))
             open(i_InputFile,'w').writelines(outlines)
+            
+        return phys
 
     def RunProgram(self, i_process=''):
         af.Debug('Be about to run Program %s in process %s'%(self._ProgName,i_process))
@@ -726,7 +729,7 @@ class PROGRAM:
                     par[jj[0]] = af.forcetype(ouvar[jj[3]-1][jj[4]-1])
                     af.Debug('Output - %s='%jj[0],par[jj[0]])
                 except:
-                    af.Info('Can not read the output var %s'%jj)
+                    af.WarningNoWait(f'Can not read the output var {jj}')
                     return False
 
             ## For 'Label' method
@@ -746,7 +749,7 @@ class PROGRAM:
                     par[jj[0]] = af.forcetype(re.split(r'[ \t]+',labeline[0].strip())[int(jj[4]-1)])
                     af.Debug('Output - %s='%jj[0],par[jj[0]])
                 except:
-                    af.Debug('Can not read the output var',jj[0])
+                    af.WarningNoWait(f'Can not read the output var {jj}')
                     return False
                         
             ## For 'SLHA' method
@@ -773,7 +776,7 @@ class PROGRAM:
                         blk_flag = True
                         if jj[3].upper() == 'DECAY' and jj[5] == 0:
                             if len(kk) < 3 :
-                                af.Debug('Can not read the output var',jj)
+                                af.WarningNoWait(f'Can not read the output var {jj}')
                                 return False
                             else:
                                 par[jj[0]]=af.forcetype(ouvar[kki][2])
@@ -785,7 +788,7 @@ class PROGRAM:
                         af.Debug('In DECAY mode, set it as zero!')
                         par[jj[0]]=0
                     else:
-                        af.Debug('Can not read the output var',jj)
+                        af.WarningNoWait(f'Can not read the output var {jj}')
                         return False
 
                 af.Debug('Output - %s ='%jj[0], par[jj[0]])
@@ -884,10 +887,14 @@ class PROGRAM:
             return True
 
         ## add for "math ..." in "Bound" in [programX]
-        af.parseMath(par)
+        keys_to_compute = list(self.boundvar)
+        phys = af.parseMath(par, keys_to_compute)
+        
+        if not phys:
+            af.Debug(f'Scanned parameters are outside domains in "Bound" for some math functions.')
+            return False
 
         ## new 20180429 liang
-        phy=True
         for ii in self._BoundVar:
             physub = True
             if len(ii)== 3:
@@ -909,8 +916,8 @@ class PROGRAM:
                 if physub:
                     af.Debug('(%s,%s,%s) satisfy in "Bound" for program=%s'%(ii[0], ii[1], ii[2], self._ProgName))
                 else:
-                    af.Debug('(%s,%s,%s) unsatisfy in "Bound" for program=%s'%(ii[0], ii[1], ii[2], self._ProgName))
-                phy = phy and physub 
+                    af.Info('(%s,%s,%s) unsatisfy in "Bound" for program=%s'%(ii[0], ii[1], ii[2], self._ProgName))
+                phys = phys and physub
             else: 
                 if not (ii[3].startswith('/home') or ii[3].startswith('~')):
                     ii[3]=os.path.join(af.CurrentPath, ii[3])
@@ -937,13 +944,8 @@ class PROGRAM:
                 if physub:
                     af.Debug('"%s=%.3E" satisfy "%s" in "Bound" for program %s'%(ii[0], par[ii[0]], ii[1:], self._ProgName))
                 else:
-                    af.Debug('"%s=%.3E" unsatisfy "%s" in "Bound" for program %s'%(ii[0], par[ii[0]], ii[1:], self._ProgName))
-                phy = phy and physub 
+                    af.Info('"%s=%.3E" unsatisfy "%s" in "Bound" for program %s'%(ii[0], par[ii[0]], ii, self._ProgName))
+                phys = phys and physub
 
-        if phy:
-            af.Debug('This point is allowed in "Bound" for program %s'%(self._ProgName))
-        else:
-            af.Debug('This point is excluded in "Bound" for program %s'%(self._ProgName))
-
-        return phy 
+        return phys
 
