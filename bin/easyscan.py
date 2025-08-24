@@ -64,7 +64,10 @@ def LnLike(cube, ndim, nparams, i_process):
             break
         # command running
         af.Info(f'Running {ii}')
-        Programs[ii].RunProgram(i_process)
+        PhysicalPoint = Programs[ii].RunProgram(i_process)
+        if not PhysicalPoint:
+            break
+        # read output file
         PhysicalPoint = Programs[ii].ReadOutputFile(ES.AllPar, ES.getFolderName(),i_process)
         if not PhysicalPoint:
             af.Info(f'Missing output files or output variables could not be get from output files in {ii}. Go to next scan.')

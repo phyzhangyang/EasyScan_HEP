@@ -7,6 +7,7 @@ import re,shutil
 import subprocess
 import numpy
 import time
+import select
 # Internal modules
 import auxfun as af
 
@@ -455,14 +456,14 @@ class PROGRAM:
     def setExecutor(self, executor):
         if executor.lower() == 'os.system':
             self._executor = True
-            af.Info('Use "%s" execute commands.'%executor)
+            af.Info(f'Use {executor} execute commands in {self._ProgName} if there is no "Time limit in minute" setting.')
         elif executor.lower() == 'subprocess.popen':
             self._executor = False
-            af.Info('Use "%s" execute commands.'%executor)
+            af.Info(f'Use {executor} execute commands in {self._ProgName}.')
         else:
             af.Info('The command executor for program "%s" should be either "os.system" or "subprocess.popen", not "%s".'%(self._ProgName,executor))
             self._executor = True
-            af.WarningNoWait('Use "os.system" execute commands.')
+            af.WarningNoWait(f'Use "os.system" execute commands in {self._ProgName} if there is no "Time limit in minute" setting.')
 
     def setOutputClean(self, outputclean):
         if outputclean.lower()  in ['yes','y','t','true']:
@@ -479,7 +480,7 @@ class PROGRAM:
     def setTimeLimit(self, timelimit):
         self._executor = False
         self._timelimit = timelimit
-        af.Info('Time limit = %i minutes.'%self._timelimit)
+        af.Info(f'Time limit = {self._timelimit} minutes.')
 
 
     def getProgName(self):
@@ -666,17 +667,22 @@ class PROGRAM:
                 t_begining = time.time()
                 process=subprocess.Popen(cmd, stdout=subprocess.PIPE,
                         stderr=subprocess.STDOUT, cwd=cwd, preexec_fn=os.setpgrp,
-                        shell=True)
-                while process.poll() == None:
-                    process.stdout.flush()  
-                    output = process.stdout.readline()
-                    if output:
-                        print(output.strip())
+                        shell=True, text=True)
+                while process.poll() is None:
+                    ready, _, _ = select.select([process.stdout], [], [], 1.0)
+                    if ready:
+                        output = process.stdout.readline()
+                        if output:
+                            af.Info(f'Output message from Program {self._ProgName}:\n{output.strip()}')
                     seconds_passed = time.time() - t_begining
                     if seconds_passed > self._timelimit*60: 
-                        os.killpg(os.getpgid(process.pid), signal.SIGTERM) 
-                        af.WarningWait("Program %s has been running more than %f minutes, It will be killed."%(self._ProgName, self._timelimit))
-                        return
+                        #try:
+                        if process.poll() is None:
+                            os.killpg(os.getpgid(process.pid), signal.SIGTERM) 
+                        #except OSError:
+                        #    pass
+                        af.WarningNoWait(f"Program {self._ProgName} has been running more than {self._timelimit} minutes, it has been killed.")
+                        return False
             except OSError as error:
                 if cwd and not os.path.exists(cwd):
                     raise Exception('Directory %s doesn\'t exist. Impossible to run' % cwd)
@@ -685,7 +691,8 @@ class PROGRAM:
                     error_text += '    in the directory \'%s\'\n' % cwd
                     error_text += 'Trying to recover from:\n'
                     error_text += '    %s\n' % str(error)
-                    raise Exception(err)
+                    raise Exception(error_text)
+        return True
 #        print p.returncode
 #
 #        if p.returncode:
@@ -736,7 +743,7 @@ class PROGRAM:
             for jj in self._OutLabelVar[ii]:
                 labeline = [xx for xx in oulines if re.search(str(jj[3]),xx)]
                 if len(labeline)>1:
-                    af.ErrorStop( 'For output variable "%s" in program "%s" with "Label" method, there is %d "%s" in output file "%s". Please choose other method.'%(jj[0],self._ProgName,len(labelinum),jj[3],i_OutputFile) )
+                    af.ErrorStop( 'For output variable "%s" in program "%s" with "Label" method, there is %d "%s" in output file "%s". Please choose other method.'%(jj[0],self._ProgName,len(labeline),jj[3],i_OutputFile) )
 
                 try:
                     ## new 20180425 liang
@@ -833,14 +840,14 @@ class PROGRAM:
         ## boundvar is a string of all content in "Bound" in [programX] of configure file
         self._BoundVar=af.string2nestlist(boundvar)
 
-        af.Info('Bound condition in program %s:'%self._ProgName)
+        af.Info('Bound condition in Program %s:'%self._ProgName)
         for ii in self._BoundVar:
             if len(ii) <3:
                 if ii[0] == '': ## Program can have zero input parameters
                     return
                 af.ErrorStop( 'The "Bound" in program "%s" must have at least 3 items.'%self._ProgName )
             elif len(ii) == 3:
-                af.Debug('evaluation of (%s,%s,%s) in "Bound" for program=%s'%(str(ii[0]), str(ii[1]), str(ii[2]), self._ProgName))
+                af.Info(f'{ii} in "Bound" for Program {self._ProgName}')
                 if ii[1] in ["<=", ">=", ">", "<", "==", "!="]:
                     try:
                         float(ii[2])
@@ -871,7 +878,7 @@ class PROGRAM:
                     af.ErrorStop('Find string or irregular column and row in the bould file "%s" in "Bound" in program "%s".'%(ii[3],self._ProgName)) 
                 if len(numpy.shape(boundata)) < 2: 
                     af.ErrorStop('There should be more than one row and more than one column in the bound file "%s" in "Bound" in program "%s".'%(ii[3], self._ProgName)) 
-                af.Info('    varID1= %s (for comparison) when varID2= %s given that "%s" in the bound File "%s"'%(ii[0],ii[1],ii[2],ii[3]))
+                af.Info(f'{ii} in "Bound" for Program {self._ProgName}')
                 self.boundvar[ii[0]] = af.NaN 
                 self.boundvar[ii[1]] = af.NaN 
 

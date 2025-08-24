@@ -172,7 +172,12 @@ def ReadIn(Configfile, ES, Programs, Constraint, Ploter):
         try:
             Programs[ii].setExecutor(cf.get(ii, 'Command executor'))
         except:
-            af.Info('Use "os.system" execute commands.')
+            af.Info(f'No "Command executor" setting, use "os.system" to execute commands if there is no "Time limit in minute" setting in {ii}.')
+        try:
+            Programs[ii].setTimeLimit(cf.getfloat(ii, 'Time limit in minute'))
+            af.Info(f'There is "Time limit in minute" setting, subprocess.popen is used in {ii}.')
+        except:
+            af.Info(f'No "Time limit in minute" setting in {ii}.')
         try:
             Programs[ii].setOutputClean(cf.get(ii, 'Clean output file'))
         except:
@@ -183,18 +188,6 @@ def ReadIn(Configfile, ES, Programs, Constraint, Ploter):
             sys.exit(1)  
         except:
             af.Info('No Bound.')
-        
-        if Programs[ii]._executor: # 'os.system'
-          try:
-            Programs[ii].setTimeLimit(cf.getfloat(ii, 'Time limit in minute'))
-            af.WarningNoWait('Time limit of %s is not used.'%ii)
-          except:
-            pass
-        else: # 'subprocess.popen'
-          try:
-            Programs[ii].setTimeLimit(cf.getfloat(ii, 'Time limit in minute'))
-          except: 
-            af.Info('No time limit setting. Using defaut value 60 min.')
         
     ## Read the constraints
     constraint_items = []
