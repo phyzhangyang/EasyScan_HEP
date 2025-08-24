@@ -386,7 +386,7 @@ def mcmcrun(LnLike, Prior, n_params, n_live_points, inpar, fixedpar, outpar, Ste
     CurChisq = - 2.0 * lnlike
     for i in range(n_params): CurObs.append( cube[i] )
     CurObs.append(0) # dwell
-    printPoint(0, cube, n_dims, inpar, fixedpar, outpar, lnlike, 0, '')
+    printPoint(1, cube, n_dims, inpar, fixedpar, outpar, lnlike, 1, '')
 
     if af.resume:
       if lnlike < af.log_zero * 10. :
@@ -408,7 +408,6 @@ def mcmcrun(LnLike, Prior, n_params, n_live_points, inpar, fixedpar, outpar, Ste
       
     
     def per_run(i_process, i_accept, i_run, i_tot, CurChisq):
-    
       # Initialize the MCMC parameters
       MinChisq = CurChisq
       Chisq = CurChisq
