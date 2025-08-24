@@ -102,7 +102,7 @@ class PLOTER():
             # read data from file
             if ScanMethod == af._multinest:
                 column_names = pandas.read_csv(os.path.join(path, af.ResultFile), header=0, index_col=False).columns.values.tolist()
-                self._data = pandas.read_csv(datafile, header=None, names=column_names, delim_whitespace=True, index_col=False)
+                self._data = pandas.read_csv(datafile, header=None, names=column_names, sep='\s+', index_col=False)
             else:
                 self._data = pandas.read_csv(datafile, header=0, index_col=False, sep="[,\s\t]+", engine='python')
             # read specific data for mcmc
@@ -113,7 +113,7 @@ class PLOTER():
             if os.path.exists(os.path.join(path, af.ResultFile_MultiNest)):
                 column_names = pandas.read_csv(os.path.join(path, ResultFile_name), header=0, index_col=False).columns.values.tolist()
                 datafile = os.path.join(path, af.ResultFile_MultiNest)
-                self._data = pandas.read_csv(datafile, header=None, names=column_names, delim_whitespace=True, index_col=False)
+                self._data = pandas.read_csv(datafile, header=None, names=column_names, sep='\s+', index_col=False)
             else:
                 datafile = os.path.join(path, ResultFile_name)
                 self._data = pandas.read_csv(datafile, header=0, index_col=False)

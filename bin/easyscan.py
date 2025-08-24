@@ -39,22 +39,42 @@ af.WriteResultInf(ES.InPar, ES.FixedPar, ES.OutPar, Constraint.Chi2, ES.getFolde
 
 # Natural logarithm of likelihood function
 def LnLike(cube, ndim, nparams, i_process):
+    PhysicalPoint = True
+    
+    for ii in ProgID:
+        for name in list(Programs[ii].invar):
+            ES.AllPar[name] = af.NaN
+        for name in list(Programs[ii].outvar):
+            ES.AllPar[name] = af.NaN
+        for name in list(Programs[ii].boundvar):
+            ES.AllPar[name] = af.NaN
+    
+    af.Info(f'->\n       Calculating in a new scan\n       <-')
     # Pass input value from cube to AllPar
     for i,name in enumerate(ES.InPar):
         ES.AllPar[name]=cube[i]
- 
-    PhysicalPoint = True
+        af.Info(f'Scanned parameter: {name} = {cube[i]}')
+    
     # Run programs
     for ii in ProgID:
-        Programs[ii].WriteInputFile(ES.AllPar,i_process)
+        # wirte input file
+        PhysicalPoint = Programs[ii].WriteInputFile(ES.AllPar,i_process)
+        if not PhysicalPoint:
+            af.Info(f'Scanned parameters are outside domains for some math functions in input variables of {ii}. Go to next scan.')
+            break
+        # command running
+        af.Info(f'Running {ii}')
         Programs[ii].RunProgram(i_process)
         PhysicalPoint = Programs[ii].ReadOutputFile(ES.AllPar, ES.getFolderName(),i_process)
+        if not PhysicalPoint:
+            af.Info(f'Missing output files or output variables could not be get from output files in {ii}. Go to next scan.')
+            break
         # Apply bound
-        if PhysicalPoint: 
-          PhysicalPoint = Programs[ii].ReadBound(ES.AllPar)
+        PhysicalPoint = Programs[ii].ReadBound(ES.AllPar)
         # If the point is unphysical, return log(0)
-        if not PhysicalPoint : 
-          break
+        if not PhysicalPoint:
+            af.Info(f'Scanned parameters are outside domains for some math functions or excluded in "Bound" of {ii}. Go to next scan.')
+            break
     
     # Pass fixed variables to cube
     for i,name in enumerate(ES.FixedPar):
