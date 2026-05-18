@@ -1,0 +1,189 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>EasyScan_HEP Local UI</title>
+    <link rel="stylesheet" href="/static/styles.css?v={{ static_version }}">
+  </head>
+  <body>
+    <header class="app-header">
+      <div>
+        <h1>EasyScan_HEP Local UI</h1>
+        <p>Build configurations, choose local paths, run scans, and inspect results.</p>
+      </div>
+      <div class="header-actions">
+        <button id="previewBtn" class="secondary">Preview Config</button>
+        <button id="runBtn" class="primary">Generate and Run</button>
+      </div>
+    </header>
+
+    <main class="layout">
+      <section class="panel">
+        <div class="panel-title">
+          <h2>Scan Settings</h2>
+        </div>
+        <div class="grid">
+          <label>Result folder
+            <div class="path-row">
+              <input data-bind="result_folder" type="text">
+              <button class="icon-button browse" data-target="result_folder" data-select="dir" title="Choose folder">...</button>
+            </div>
+          </label>
+          <label>Scan method
+            <select data-bind="scan_method">
+              <option>RANDOM</option>
+              <option>GRID</option>
+              <option>MCMC</option>
+              <option>ONEPOINT</option>
+              <option>ONEPOINTBATCH</option>
+            </select>
+          </label>
+          <label>OnePointBatch file
+            <div class="path-row">
+              <input data-bind="batch_file" type="text">
+              <button class="icon-button browse" data-target="batch_file" data-select="file" title="Choose file">...</button>
+            </div>
+          </label>
+          <label>Number of points
+            <input data-bind="number_of_points" type="number" min="1">
+          </label>
+          <label>Random seed
+            <input data-bind="random_seed" type="text" placeholder="Optional">
+          </label>
+          <label>Print interval
+            <input data-bind="print_interval" type="number" min="1">
+          </label>
+          <label>Parallel threads
+            <input data-bind="parallel_threads" type="number" min="1">
+          </label>
+          <label>Parallel folder
+            <div class="path-row">
+              <input data-bind="parallel_folder" type="text">
+              <button class="icon-button browse" data-target="parallel_folder" data-select="dir" title="Choose folder">...</button>
+            </div>
+          </label>
+        </div>
+      </section>
+
+      <section class="panel">
+        <div class="panel-title">
+          <h2>Input Parameters</h2>
+          <button id="addInputParam" class="secondary small">Add Parameter</button>
+        </div>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Name</th>
+                <th>Prior</th>
+                <th>Value</th>
+                <th>Min</th>
+                <th>Max</th>
+                <th>Bins</th>
+                <th>Interval</th>
+                <th>Initial</th>
+                <th></th>
+              </tr>
+            </thead>
+            <tbody id="inputParamsBody"></tbody>
+          </table>
+        </div>
+      </section>
+
+      <section class="panel">
+        <div class="panel-title">
+          <h2>Programs</h2>
+          <button id="addProgram" class="secondary small">Add Program</button>
+        </div>
+        <div id="programs"></div>
+      </section>
+
+      <section class="panel two-column">
+        <div>
+          <div class="panel-title">
+            <h2>Gaussian Constraints</h2>
+            <button id="addGaussian" class="secondary small">Add Gaussian</button>
+          </div>
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>Variable</th>
+                  <th>Mean</th>
+                  <th>Deviation</th>
+                  <th>Type</th>
+                  <th>Name</th>
+                  <th></th>
+                </tr>
+              </thead>
+              <tbody id="gaussianBody"></tbody>
+            </table>
+          </div>
+        </div>
+        <div>
+          <div class="panel-title">
+            <h2>Plots</h2>
+            <button id="addPlot" class="secondary small">Add Plot</button>
+          </div>
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>Type</th>
+                  <th>X</th>
+                  <th>Y</th>
+                  <th>Value</th>
+                  <th>Figure</th>
+                  <th></th>
+                </tr>
+              </thead>
+              <tbody id="plotsBody"></tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <section class="panel">
+        <div class="panel-title">
+          <h2>Generated Config</h2>
+          <button id="copyConfig" class="secondary small">Copy</button>
+        </div>
+        <pre id="configPreview" class="code-box"></pre>
+      </section>
+
+      <section class="panel">
+        <div class="panel-title">
+          <h2>Run</h2>
+          <div class="run-actions">
+            <span id="runStatus" class="status">Idle</span>
+            <button id="stopBtn" class="danger small" disabled>Stop</button>
+          </div>
+        </div>
+        <pre id="logBox" class="log-box"></pre>
+        <div id="results" class="results"></div>
+      </section>
+    </main>
+
+    <div id="browserModal" class="modal hidden" role="dialog" aria-modal="true">
+      <div class="modal-card">
+        <div class="modal-header">
+          <h2>Choose Path</h2>
+          <button id="closeBrowser" class="icon-button" title="Close">x</button>
+        </div>
+        <div class="browser-toolbar">
+          <select id="rootSelect"></select>
+          <button id="upBtn" class="secondary small">Up</button>
+          <button id="selectCurrentBtn" class="secondary small">Select Current Folder</button>
+        </div>
+        <div id="currentPath" class="current-path"></div>
+        <div id="browserEntries" class="browser-entries"></div>
+      </div>
+    </div>
+
+    <script>
+      window.DEFAULT_CONFIG = {{ default_config | safe }};
+    </script>
+    <script src="/static/app.js?v={{ static_version }}"></script>
+  </body>
+</html>

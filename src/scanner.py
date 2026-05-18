@@ -5,7 +5,7 @@
 ## External modules.
 import os,sys,shutil
 from random import random, gauss
-from numpy import zeros, sum
+from numpy import zeros
 from math import exp
 # Internal modules
 import auxfun as af
@@ -558,4 +558,3 @@ def multinestrun(LnLike, Prior, n_dims, n_params, seed, outputfiles_basename, n_
                 if not filetext.endswith('\n'):
                     merged_file.write('\n')
     
-

@@ -1,10 +1,10 @@
-=======
+============
 EasyScan_HEP
-=======
+============
 
 :EasyScan_HEP: A tool for connecting programs to scan the parameter space of physics models
-:Author: Yang Zhang， Liangliang Shang
-:Version: 1.0
+:Author: Yang Zhang, Liangliang Shang, Yang Xiao
+:Version: 2.0
 :GitHub: https://github.com/phyzhangyang/EasyScan_HEP
 :Website: https://easyscanhep.hepforge.org
 :Documentation: https://arxiv.org/pdf/2304.03636.pdf
@@ -13,18 +13,37 @@ EasyScan_HEP
 Installation instructions
 -------------------------
 
-EasyScan_HEP is a Python3 code with dependencies on *numpy*, *scipy* and *ConfigParser* libraries. The optional plot functions and MultiNest sampler further require *matplotlib*, *pandas* and *pymultinest* libraries. The dependencies can be installed via pip:
-:: 
-    sudo apt install python3-pip python3-tk 
-    
-    pip3 install numpy scipy matplotlib ConfigParser pandas pymultinest
+EasyScan_HEP is a Python3 code. The core scan workflow depends on
+*numpy*, *scipy* and *ConfigParser*. The plot and result inspection
+functions further require *matplotlib* and *pandas*. The MultiNest sampler
+requires the optional *pymultinest* library.
+
+On Ubuntu or Debian systems, install the basic system packages first::
+
+    sudo apt install python3-pip python3-venv python3-tk
+
+The recommended installation method is to use a local virtual environment::
+
+    python3 -m venv .venv
+    pip install numpy scipy matplotlib ConfigParser pandas
+
+Install *pymultinest* only if the MultiNest sampler is needed::
+
+    pip install pymultinest
+
+The local Web UI has additional dependencies: *fastapi*, *uvicorn*,
+*jinja2* and *python-multipart*. They can be installed with::
+
+    pip install fastapi uvicorn jinja2 python-multipart
 
 The "easyscan.py" in folder "bin" is the main program, which is executed with configuration file through the command line,
 ::
+
     ./bin/easyscan.py templates/example_random.ini
 
 Here *example_random.ini* is an example configuration file provided in EasyScan_HEP. It performs a scan on a simplified model,
-:：
+::
+
     f(x,y) = sin^2 x + cos^2 y,
     
 using random sampler, where *x* and *y* are input parameters in range *[0,\pi]* and *[-\pi,\pi]*, respectively, and *f* is output parameter. 
@@ -33,12 +52,31 @@ Three other example configuration files in *templates* folder (*example_grid.ini
 
 Configuration file *templates/scan_MSSM_for_mW.ini* is an simply physical examples. Relevant programs need to be installed beforehand, using
 ::
+
     cd utils/MSSM_mW
     make
     
 and then it can be executed with 
 ::
+
     ./bin/easyscan.py templates/scan_MSSM_for_mW.ini
+
+Local Web UI
+------------
+
+EasyScan_HEP also provides a local single-user Web UI. Start it with the
+same main entrypoint::
+
+    ./bin/easyscan.py -ui
+
+The UI runs at ``http://127.0.0.1:8000/`` and opens the browser
+automatically when possible. Keep the terminal open while using the UI.
+Press ``Control-C`` in that terminal to stop the server.
+
+The Web UI can build ``.ini`` configuration files visually, choose local
+paths from the browser UI, run EasyScan in the background, show live logs,
+stop running jobs, and inspect result files and generated plots. Generated
+UI run artifacts are stored under ``ui_runs/``.
 
 Package content:
 
@@ -75,6 +113,10 @@ Package content:
 		- example\_plot.ini
 		- scan\_MSSM\_for\_mW.ini
 		- bound.txt
+	- ui
+		- app.py
+		- templates
+		- static
 	- README.rst 
 	- LICENSE 
 	
