@@ -13,8 +13,64 @@ r"""
 ##########################################################################
 
 # External modules.
-import os,sys,time
-sys.path.append(os.path.join(os.path.split(os.path.split(os.path.realpath(__file__))[0])[0], "src"))
+import os,sys,time,threading,urllib.request,webbrowser
+
+EASYSCAN_ROOT = os.path.split(os.path.split(os.path.realpath(__file__))[0])[0]
+sys.path.append(os.path.join(EASYSCAN_ROOT, "src"))
+
+
+def ui_is_running(url):
+    try:
+        urllib.request.urlopen(url, timeout=1).close()
+        return True
+    except Exception:
+        return False
+
+
+def open_ui_when_ready(url):
+    for _ in range(30):
+        if ui_is_running(url):
+            webbrowser.open(url)
+            return
+        time.sleep(1)
+    print("Open this URL in your browser: %s" % url)
+
+
+def run_ui():
+    url = "http://127.0.0.1:8000/"
+    os.chdir(EASYSCAN_ROOT)
+    if EASYSCAN_ROOT not in sys.path:
+        sys.path.insert(0, EASYSCAN_ROOT)
+
+    if ui_is_running(url):
+        webbrowser.open(url)
+        print("EasyScan_HEP Local UI is already running.")
+        print("Opened %s" % url)
+        return
+
+    try:
+        import uvicorn
+    except ImportError:
+        venv_python = os.path.join(EASYSCAN_ROOT, ".venv", "bin", "python")
+        if os.path.exists(venv_python) and os.path.abspath(sys.executable) != os.path.abspath(venv_python):
+            os.execv(venv_python, [venv_python, os.path.realpath(__file__), "-ui"])
+        print("FastAPI UI dependencies are not installed.")
+        print("Install them with:")
+        print("  pip install fastapi uvicorn jinja2 python-multipart")
+        sys.exit(1)
+
+    threading.Thread(target=open_ui_when_ready, args=(url,), daemon=True).start()
+    print("Starting EasyScan_HEP Local UI at %s" % url)
+    print("Keep this terminal open while using the UI.")
+    print("Press Control-C here to stop the server.")
+    print("")
+    uvicorn.run("ui.app:app", host="127.0.0.1", port=8000)
+
+
+if len(sys.argv) > 1 and sys.argv[1] in ["-ui", "--ui"]:
+    run_ui()
+    sys.exit(0)
+
 # Internal modules.
 import initialize
 import auxfun as af
