@@ -6,10 +6,11 @@ import re
 import shutil
 import signal
 import subprocess
+import sys
 import threading
 import time
 from pathlib import Path
-from typing import Any
+from typing import Any, Optional
 
 from fastapi import FastAPI, HTTPException, Query, Request
 from fastapi.responses import FileResponse, HTMLResponse
@@ -21,7 +22,7 @@ from pydantic import BaseModel, Field
 REPO_ROOT = Path(__file__).resolve().parents[1]
 UI_ROOT = REPO_ROOT / "ui"
 RUNS_ROOT = REPO_ROOT / "ui_runs"
-PYTHON_EXE = REPO_ROOT / ".venv" / "bin" / "python"
+PYTHON_EXE = Path(sys.executable)
 ANSI_ESCAPE_RE = re.compile(r"\x1b\[[0-9;]*m")
 
 app = FastAPI(title="EasyScan_HEP Local UI")
@@ -125,11 +126,11 @@ class RunRecord:
         self.config_path = config_path
         self.log_path = run_dir / "run.log"
         self.status = "queued"
-        self.return_code: int | None = None
-        self.process: subprocess.Popen[str] | None = None
+        self.return_code: Optional[int] = None
+        self.process: Optional[subprocess.Popen[str]] = None
         self.logs: list[str] = []
         self.started_at = time.time()
-        self.ended_at: float | None = None
+        self.ended_at: Optional[float] = None
         self.lock = threading.Lock()
 
     def append_log(self, line: str) -> None:
@@ -578,7 +579,7 @@ def stop_run(run_id: str) -> dict[str, str]:
 
 @app.get("/api/browse")
 def browse(
-    path: str | None = Query(default=None),
+    path: Optional[str] = Query(default=None),
     select: str = Query(default="file"),
 ) -> dict[str, Any]:
     roots = allowed_roots()

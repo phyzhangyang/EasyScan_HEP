@@ -51,12 +51,9 @@ def run_ui():
     try:
         import uvicorn
     except ImportError:
-        venv_python = os.path.join(EASYSCAN_ROOT, ".venv", "bin", "python")
-        if os.path.exists(venv_python) and os.path.abspath(sys.executable) != os.path.abspath(venv_python):
-            os.execv(venv_python, [venv_python, os.path.realpath(__file__), "-ui"])
         print("FastAPI UI dependencies are not installed.")
         print("Install them with:")
-        print("  pip install fastapi uvicorn jinja2 python-multipart")
+        print("  %s -m pip install fastapi uvicorn jinja2 python-multipart" % sys.executable)
         sys.exit(1)
 
     threading.Thread(target=open_ui_when_ready, args=(url,), daemon=True).start()

@@ -22,10 +22,16 @@ On Ubuntu or Debian systems, install the basic system packages first::
 
     sudo apt install python3-pip python3-venv python3-tk
 
-The recommended installation method is to use a local virtual environment::
+Install the Python dependencies into the Python environment you will use
+to run EasyScan_HEP::
+
+    python3 -m pip install numpy scipy matplotlib ConfigParser pandas
+
+If you prefer an isolated environment, you can create a local virtual
+environment first and then install the same dependencies there::
 
     python3 -m venv .venv
-    pip install numpy scipy matplotlib ConfigParser pandas
+    .venv/bin/python -m pip install numpy scipy matplotlib ConfigParser pandas
 
 Install *pymultinest* only if the MultiNest sampler is needed::
 
@@ -34,7 +40,7 @@ Install *pymultinest* only if the MultiNest sampler is needed::
 The local Web UI has additional dependencies: *fastapi*, *uvicorn*,
 *jinja2* and *python-multipart*. They can be installed with::
 
-    pip install fastapi uvicorn jinja2 python-multipart
+    python3 -m pip install fastapi uvicorn jinja2 python-multipart
 
 The "easyscan.py" in folder "bin" is the main program, which is executed with configuration file through the command line,
 ::
