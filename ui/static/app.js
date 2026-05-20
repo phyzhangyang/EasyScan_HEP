@@ -36,6 +36,10 @@ const NUMBER_OF_POINTS_LABELS = {
     label: "Number of points (total surviving number)",
     help: "Target total number of surviving accepted points in the MCMC scan.",
   },
+  EMCEE: {
+    label: "Number of points (total samples)",
+    help: "Target total saved samples for emcee ensemble MCMC.",
+  },
   DYNESTY: {
     label: "Number of points (live points)",
     help: "Number of live points used by dynesty nested sampling.",
@@ -200,7 +204,7 @@ function scanMethod() {
 function updateTopLevelControls() {
   const method = scanMethod();
   const isOnePointBatch = method === "ONEPOINTBATCH";
-  const supportsRandomSeed = ["RANDOM", "MCMC"].includes(method);
+  const supportsRandomSeed = ["RANDOM", "MCMC", "EMCEE"].includes(method);
   const supportsParallel = ["RANDOM", "GRID", "MCMC", "ONEPOINTBATCH"].includes(method);
   const parallelThreads = Number(state.parallel_threads || 1);
   const usesParallelFolder = supportsParallel && parallelThreads > 1;
@@ -217,7 +221,7 @@ function updateTopLevelControls() {
   const parallelFolderInput = $('[data-bind="parallel_folder"]');
   const parallelFolderButton = $('[data-target="parallel_folder"]');
   const pointsText = NUMBER_OF_POINTS_LABELS[method] || NUMBER_OF_POINTS_LABELS.RANDOM;
-  const usesNumberOfPoints = ["RANDOM", "MCMC", "DYNESTY"].includes(method);
+  const usesNumberOfPoints = ["RANDOM", "MCMC", "EMCEE", "DYNESTY"].includes(method);
 
   setElementDisabled(batchInput, !isOnePointBatch, true);
   setElementDisabled(batchButton, !isOnePointBatch);
@@ -249,11 +253,11 @@ function updateInputParameterHeaders() {
     name: true,
     prior: !["ONEPOINT", "ONEPOINTBATCH"].includes(method),
     value: true,
-    minimum: ["RANDOM", "GRID", "MCMC", "DYNESTY"].includes(method),
-    maximum: ["RANDOM", "GRID", "MCMC", "DYNESTY"].includes(method),
+    minimum: ["RANDOM", "GRID", "MCMC", "EMCEE", "DYNESTY"].includes(method),
+    maximum: ["RANDOM", "GRID", "MCMC", "EMCEE", "DYNESTY"].includes(method),
     bins: method === "GRID",
-    interval: method === "MCMC",
-    initial: method === "MCMC",
+    interval: ["MCMC", "EMCEE"].includes(method),
+    initial: ["MCMC", "EMCEE"].includes(method),
   };
   const labels = {
     name: "Name",
@@ -297,11 +301,11 @@ function updateInputParameterRows() {
       name: true,
       prior: !onePointMode,
       value: onePointMode || fixedPrior,
-      minimum: !fixedPrior && ["RANDOM", "GRID", "MCMC", "DYNESTY"].includes(method),
-      maximum: !fixedPrior && ["RANDOM", "GRID", "MCMC", "DYNESTY"].includes(method),
+      minimum: !fixedPrior && ["RANDOM", "GRID", "MCMC", "EMCEE", "DYNESTY"].includes(method),
+      maximum: !fixedPrior && ["RANDOM", "GRID", "MCMC", "EMCEE", "DYNESTY"].includes(method),
       bins: !fixedPrior && method === "GRID",
-      interval: !fixedPrior && method === "MCMC",
-      initial: !fixedPrior && method === "MCMC",
+      interval: !fixedPrior && ["MCMC", "EMCEE"].includes(method),
+      initial: !fixedPrior && ["MCMC", "EMCEE"].includes(method),
     };
     setFieldDisabled(`input_parameters.${index}.name`, !enabled.name);
     setFieldDisabled(`input_parameters.${index}.prior`, !enabled.prior);

@@ -218,7 +218,7 @@ def input_parameter_line(item: InputParameter, scan_method: str) -> str:
         return f"{item.name},     Fixed,  {value}"
     if method == "GRID":
         return f"{item.name},     {item.prior},   {item.minimum},       {item.maximum},  {item.bins or '10'}"
-    if method == "MCMC":
+    if method in {"MCMC", "EMCEE"}:
         return (
             f"{item.name},     {item.prior},   {item.minimum},       {item.maximum},  "
             f"{item.interval or '10'},       {item.initial or item.minimum}"

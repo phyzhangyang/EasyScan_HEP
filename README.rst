@@ -41,6 +41,10 @@ Install *dynesty* only if the Dynesty nested sampler is needed::
 
     pip install dynesty
 
+Install *emcee* only if the EMCEE ensemble MCMC sampler is needed::
+
+    pip install emcee
+
 The local Web UI has additional dependencies: *fastapi*, *uvicorn*,
 *jinja2* and *python-multipart*. They can be installed with::
 
@@ -62,7 +66,7 @@ Here *example_random.ini* is an example configuration file provided in EasyScan_
     
 using random sampler, where *x* and *y* are input parameters in range *[0,\pi]* and *[-\pi,\pi]*, respectively, and *f* is output parameter. 
 
-Other example configuration files in *templates* folder, including *example_grid.ini*, *example_mcmc.ini*, *example_multinest.ini* and *example_dynesty.ini*, exhibit briefly usages of other samplers in EasyScan_HEP.
+Other example configuration files in *templates* folder, including *example_grid.ini*, *example_mcmc.ini*, *example_emcee.ini*, *example_multinest.ini* and *example_dynesty.ini*, exhibit briefly usages of other samplers in EasyScan_HEP.
 
 Configuration file *templates/scan_MSSM_for_mW.ini* is an simply physical examples. Relevant programs need to be installed beforehand, using
 ::
@@ -122,6 +126,7 @@ Package content:
 		- example\_grid.ini
 		- example\_mcmc.ini
 		- example\_mcmc\_bound.ini
+		- example\_emcee.ini
 		- example\_multinest.ini
 		- example\_dynesty.ini
 		- example\_onepoint.ini
