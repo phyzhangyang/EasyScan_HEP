@@ -7,7 +7,7 @@ import shutil
 from pathlib import Path
 
 
-SCAN_METHODS = {"ONEPOINT", "ONEPOINTBATCH", "RANDOM", "GRID", "MCMC", "EMCEE", "MULTINEST", "DYNESTY", "POSTPROCESS", "PLOT", "READ"}
+SCAN_METHODS = {"ONEPOINT", "ONEPOINTBATCH", "RANDOM", "GRID", "BESTFIT", "MCMC", "EMCEE", "MULTINEST", "DYNESTY", "POSTPROCESS", "PLOT", "READ"}
 NO_NUMBER_OF_POINTS = {"ONEPOINT", "ONEPOINTBATCH", "GRID", "POSTPROCESS", "PLOT", "READ"}
 NO_LIKE = {"ONEPOINT", "ONEPOINTBATCH", "RANDOM", "GRID", "POSTPROCESS", "PLOT", "READ"}
 PARALLEL_METHODS = {"RANDOM", "GRID", "MCMC", "ONEPOINTBATCH", "MULTINEST", "POSTPROCESS"}
@@ -46,6 +46,7 @@ FORBIDDEN_NAMES = {
     "ONEPOINTBATCH",
     "RANDOM",
     "GRID",
+    "BESTFIT",
     "MCMC",
     "EMCEE",
     "MULTINEST",
@@ -241,7 +242,7 @@ def check_config_text(text, base_dir=None):
                     warnings.append(f'Input parameter "{name}" has no {method} initial value; EasyScan will use midpoint.')
                 else:
                     check_float(parts[5], f'Input parameter "{name}" initial value', errors)
-            elif method in {"RANDOM", "MULTINEST", "DYNESTY"} and len(parts) > 4:
+            elif method in {"RANDOM", "BESTFIT", "MULTINEST", "DYNESTY"} and len(parts) > 4:
                 warnings.append(f'Input parameter "{name}" has extra fields ignored by {method}.')
     add_duplicate_errors("Input parameter", input_names, errors)
 

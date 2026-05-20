@@ -216,6 +216,18 @@ elif ES.getScanMethod() == af._grid:
         outputfolder  = ES.getFolderName(),
         num_processes = ES.getParallelThreads())
 
+elif ES.getScanMethod() == af._bestfit:
+    scanner.bestfitrun(
+        LnLike       = LnLike,
+        Prior        = Prior,
+        n_params     = len(ES.AllPar)+len(Constraint.Chi2),
+        inpar        = ES.InPar,
+        fixedpar     = ES.FixedPar,
+        outpar       = ES.OutPar,
+        maxiter      = ES.getPointNum(),
+        n_print      = ES.getPrintNum(),
+        outputfolder = ES.getFolderName())
+
 elif ES.getScanMethod() == af._mcmc:
     scanner.mcmcrun(
         LnLike        = LnLike,

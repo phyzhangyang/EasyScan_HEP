@@ -346,6 +346,58 @@ def randomrun(LnLike, Prior, n_params, inpar, fixedpar, outpar, n_live_points, n
     
     run_processes(processes)
 
+
+def bestfitrun(LnLike, Prior, n_params, inpar, fixedpar, outpar, maxiter, n_print, outputfolder):
+    try:
+        from scipy.optimize import differential_evolution
+    except ImportError:
+        af.ErrorStop('No scipy module. BESTFIT needs scipy.optimize.differential_evolution.')
+
+    data_file = open(os.path.join(outputfolder, af.ResultFile), 'a')
+    file_path = os.path.join(outputfolder, "SavedFile")
+    n_dims = len(inpar)
+    cube = [af.NaN] * n_params
+    best_chisq = float("inf")
+    best_cube = None
+    n_call = 0
+
+    af.Info('Begin BESTFIT differential evolution ...')
+
+    def objective(unit_cube):
+        nonlocal best_chisq, best_cube, n_call
+        n_call += 1
+        if max(unit_cube) > 1 or min(unit_cube) < 0:
+            return float("inf")
+        for i in range(n_dims):
+            cube[i] = unit_cube[i]
+        Prior(cube, n_dims, n_params)
+        for i, name in enumerate(outpar):
+            cube[i + n_dims] = af.NaN
+        lnlike = LnLike(cube, n_dims, n_params, "")
+        chisq = -2.0 * lnlike if lnlike > af.log_zero else float("inf")
+        if chisq < best_chisq:
+            best_chisq = chisq
+            best_cube = cube.copy()
+            saveCube(best_cube, data_file, file_path, "best", True)
+            af.Info('New best chi2 = %s'%best_chisq)
+        if n_print and n_call % n_print == 0:
+            printPoint(n_call, cube, n_dims, inpar, fixedpar, outpar, lnlike, 1 if best_cube else 0)
+        return chisq
+
+    result = differential_evolution(
+        objective,
+        bounds=[(0.0, 1.0)] * n_dims,
+        maxiter=maxiter,
+        polish=True,
+        updating="immediate",
+        workers=1,
+    )
+    if best_cube is None:
+        af.ErrorStop('BESTFIT did not find a physical point.')
+    af.Info('BESTFIT finished. Best chi2 = %s'%result.fun)
+    data_file.close()
+
+
 def mcmcrun(LnLike, Prior, n_params, n_live_points, inpar, fixedpar, outpar, StepSize, AccepRate, FlagTuneR, InitVal, n_print, outputfolder, num_processes):
     data_file = open(os.path.join(outputfolder, af.ResultFile),'a')
     all_data_file = open(os.path.join(outputfolder, af.ResultFile_MCMC),'a')

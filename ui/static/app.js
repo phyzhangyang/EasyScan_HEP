@@ -36,6 +36,10 @@ const NUMBER_OF_POINTS_LABELS = {
     label: "Number of points (total surviving number)",
     help: "Target total number of surviving accepted points in the MCMC scan.",
   },
+  BESTFIT: {
+    label: "Number of points (max iterations)",
+    help: "Maximum differential evolution iterations for the BESTFIT optimizer.",
+  },
   EMCEE: {
     label: "Number of points (total samples)",
     help: "Target total saved samples for emcee ensemble MCMC.",
@@ -221,7 +225,7 @@ function updateTopLevelControls() {
   const parallelFolderInput = $('[data-bind="parallel_folder"]');
   const parallelFolderButton = $('[data-target="parallel_folder"]');
   const pointsText = NUMBER_OF_POINTS_LABELS[method] || NUMBER_OF_POINTS_LABELS.RANDOM;
-  const usesNumberOfPoints = ["RANDOM", "MCMC", "EMCEE", "DYNESTY"].includes(method);
+  const usesNumberOfPoints = ["RANDOM", "BESTFIT", "MCMC", "EMCEE", "DYNESTY"].includes(method);
 
   setElementDisabled(batchInput, !isOnePointBatch, true);
   setElementDisabled(batchButton, !isOnePointBatch);
@@ -253,8 +257,8 @@ function updateInputParameterHeaders() {
     name: true,
     prior: !["ONEPOINT", "ONEPOINTBATCH"].includes(method),
     value: true,
-    minimum: ["RANDOM", "GRID", "MCMC", "EMCEE", "DYNESTY"].includes(method),
-    maximum: ["RANDOM", "GRID", "MCMC", "EMCEE", "DYNESTY"].includes(method),
+    minimum: ["RANDOM", "GRID", "BESTFIT", "MCMC", "EMCEE", "DYNESTY"].includes(method),
+    maximum: ["RANDOM", "GRID", "BESTFIT", "MCMC", "EMCEE", "DYNESTY"].includes(method),
     bins: method === "GRID",
     interval: ["MCMC", "EMCEE"].includes(method),
     initial: ["MCMC", "EMCEE"].includes(method),
@@ -301,8 +305,8 @@ function updateInputParameterRows() {
       name: true,
       prior: !onePointMode,
       value: onePointMode || fixedPrior,
-      minimum: !fixedPrior && ["RANDOM", "GRID", "MCMC", "EMCEE", "DYNESTY"].includes(method),
-      maximum: !fixedPrior && ["RANDOM", "GRID", "MCMC", "EMCEE", "DYNESTY"].includes(method),
+      minimum: !fixedPrior && ["RANDOM", "GRID", "BESTFIT", "MCMC", "EMCEE", "DYNESTY"].includes(method),
+      maximum: !fixedPrior && ["RANDOM", "GRID", "BESTFIT", "MCMC", "EMCEE", "DYNESTY"].includes(method),
       bins: !fixedPrior && method === "GRID",
       interval: !fixedPrior && ["MCMC", "EMCEE"].includes(method),
       initial: !fixedPrior && ["MCMC", "EMCEE"].includes(method),
