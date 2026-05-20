@@ -36,6 +36,10 @@ const NUMBER_OF_POINTS_LABELS = {
     label: "Number of points (total surviving number)",
     help: "Target total number of surviving accepted points in the MCMC scan.",
   },
+  DYNESTY: {
+    label: "Number of points (live points)",
+    help: "Number of live points used by dynesty nested sampling.",
+  },
   GRID: {
     label: "Number of points (not used)",
     help: "Not used by GRID; use Bins in Input Parameters to set grid density.",
@@ -213,7 +217,7 @@ function updateTopLevelControls() {
   const parallelFolderInput = $('[data-bind="parallel_folder"]');
   const parallelFolderButton = $('[data-target="parallel_folder"]');
   const pointsText = NUMBER_OF_POINTS_LABELS[method] || NUMBER_OF_POINTS_LABELS.RANDOM;
-  const usesNumberOfPoints = ["RANDOM", "MCMC"].includes(method);
+  const usesNumberOfPoints = ["RANDOM", "MCMC", "DYNESTY"].includes(method);
 
   setElementDisabled(batchInput, !isOnePointBatch, true);
   setElementDisabled(batchButton, !isOnePointBatch);
@@ -245,8 +249,8 @@ function updateInputParameterHeaders() {
     name: true,
     prior: !["ONEPOINT", "ONEPOINTBATCH"].includes(method),
     value: true,
-    minimum: ["RANDOM", "GRID", "MCMC"].includes(method),
-    maximum: ["RANDOM", "GRID", "MCMC"].includes(method),
+    minimum: ["RANDOM", "GRID", "MCMC", "DYNESTY"].includes(method),
+    maximum: ["RANDOM", "GRID", "MCMC", "DYNESTY"].includes(method),
     bins: method === "GRID",
     interval: method === "MCMC",
     initial: method === "MCMC",
@@ -293,8 +297,8 @@ function updateInputParameterRows() {
       name: true,
       prior: !onePointMode,
       value: onePointMode || fixedPrior,
-      minimum: !fixedPrior && ["RANDOM", "GRID", "MCMC"].includes(method),
-      maximum: !fixedPrior && ["RANDOM", "GRID", "MCMC"].includes(method),
+      minimum: !fixedPrior && ["RANDOM", "GRID", "MCMC", "DYNESTY"].includes(method),
+      maximum: !fixedPrior && ["RANDOM", "GRID", "MCMC", "DYNESTY"].includes(method),
       bins: !fixedPrior && method === "GRID",
       interval: !fixedPrior && method === "MCMC",
       initial: !fixedPrior && method === "MCMC",

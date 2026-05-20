@@ -20,11 +20,12 @@ _random = "RANDOM"
 _grid = "GRID"
 _mcmc = "MCMC"
 _multinest = "MULTINEST"
+_dynesty = "DYNESTY"
 _plot = "PLOT"
 _postprocess = "POSTPROCESS"
 _read = "READ"
 
-_all = [_onepoint, _onepointbatch, _random, _grid, _mcmc, _multinest, _postprocess, _plot, _read]
+_all = [_onepoint, _onepointbatch, _random, _grid, _mcmc, _multinest, _dynesty, _postprocess, _plot, _read]
 _no_random = [_onepoint, _onepointbatch, _grid, _postprocess, _plot, _read]
 _no_like   = [_onepoint, _onepointbatch, _random, _grid, _postprocess, _plot, _read]
 _post = [_postprocess, _plot]

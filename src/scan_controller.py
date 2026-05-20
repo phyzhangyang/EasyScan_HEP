@@ -240,7 +240,7 @@ class CONTROLLER:
             if lenii < 4 :
               af.ErrorStop(self.InputParInfo(ii[0], 4, "Minimum, Maximum"))
 
-            if self._ScanMethod in [af._random, af._multinest]:
+            if self._ScanMethod in [af._random, af._multinest, af._dynesty]:
               if lenii > 4 :
                 af.WarningNoWait(self.InputParInfo(ii[0], 4, "Minimum, Maximum"))
                 af.WarningWait("The rest %i values will be ignore."%(lenii-4) )
