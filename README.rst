@@ -14,18 +14,14 @@ Installation instructions
 -------------------------
 
 EasyScan_HEP is a Python3 code. The core scan workflow depends on
-*numpy*, *scipy* and *ConfigParser*. The plot and result inspection
-functions further require *matplotlib* and *pandas*. The MultiNest sampler
-requires the optional *pymultinest* library.
+*numpy*, *scipy*, *matplotlib* and *pandas*. These core Python
+dependencies are installed automatically when EasyScan_HEP is installed
+with pip. The MultiNest sampler additionally requires the optional
+*pymultinest* Python package and a working MultiNest library.
 
 On Ubuntu or Debian systems, install the basic system packages first::
 
     sudo apt install python3-pip python3-venv python3-tk
-
-Install the Python dependencies into the Python environment you will use
-to run EasyScan_HEP::
-
-    python3 -m pip install numpy scipy matplotlib ConfigParser pandas
 
 Install EasyScan_HEP itself from the source directory with::
 
@@ -39,27 +35,34 @@ from the directory where ``easyscan`` is launched, so run it from your
 project directory or use absolute paths in the configuration file.
 
 If you prefer an isolated environment, you can create a local virtual
-environment first and then install the same dependencies there::
+environment first and then install EasyScan_HEP there::
 
     python3 -m venv .venv
-    .venv/bin/python -m pip install numpy scipy matplotlib ConfigParser pandas
+    .venv/bin/python -m pip install .
 
-Install *pymultinest* only if the MultiNest sampler is needed::
+Install the local Web UI dependencies with::
 
-    pip install pymultinest
+    python3 -m pip install ".[ui]"
 
 Install *dynesty* only if the Dynesty nested sampler is needed::
 
-    pip install dynesty
+    python3 -m pip install ".[dynesty]"
 
 Install *emcee* only if the EMCEE ensemble MCMC sampler is needed::
 
-    pip install emcee
+    python3 -m pip install ".[emcee]"
 
-The local Web UI has additional dependencies: *fastapi*, *uvicorn*,
-*jinja2* and *python-multipart*. They can be installed with::
+Install *pymultinest* only if the MultiNest sampler is needed::
 
-    python3 -m pip install fastapi uvicorn jinja2 python-multipart
+    python3 -m pip install ".[multinest]"
+
+The Python-only optional features can be installed together with::
+
+    python3 -m pip install ".[all]"
+
+The ``all`` extra includes the Web UI, Dynesty and EMCEE dependencies.
+MultiNest is kept separate because it may require additional native
+library setup outside pip.
 
 The installed ``easyscan`` command is executed with a configuration file through the command line,
 ::
@@ -113,3 +116,19 @@ configuration consistency before a run. Generated UI ``.ini`` and ``.log``
 artifacts are stored in the directory where the UI was opened. The
 Configuration File panel can also call an OpenAI-compatible large language
 model API to turn a natural-language request into a checked ``.ini`` setup.
+
+Package release check
+---------------------
+
+Before publishing a release package, install the packaging tools once::
+
+    python3 -m pip install build twine
+
+Then build and smoke-test the source distribution and wheel with::
+
+    python3 scripts/check_package.py
+
+The check builds EasyScan_HEP in a temporary directory, verifies the
+distribution metadata with ``twine check``, installs the wheel into an
+isolated target directory, and runs ``easyscan --check`` on the built-in
+test configuration.

@@ -1,5 +1,11 @@
 *~
 EASYSCAN.LOG
+*.log
+*.py[cod]
+__pycache__/
+build/
+dist/
+*.egg-info/
 src/__pycache__
 src/easyscan_logging.conf
 example*/*
@@ -10,7 +16,6 @@ utils/MSSM_mW/GM2Calc/
 utils/MSSM_mW/HiggsBounds/
 utils/MSSM_mW/higgsbounds.log
 utils/MSSM_mW/susyhit/
-src/*.pyc
 Backup/*
 ui_runs/
 .*

@@ -1,0 +1,7 @@
+include LICENSE
+include README.rst
+include bin/easyscan.py
+recursive-include scripts *.py
+recursive-include ui/templates *.html
+recursive-include ui/static *.css *.js
+recursive-include templates *.ini *.txt
