@@ -21,8 +21,14 @@ from pydantic import BaseModel, Field
 REPO_ROOT = Path(__file__).resolve().parents[1]
 RUN_CWD = Path(os.environ.get("EASYSCAN_UI_CWD", Path.cwd())).expanduser().resolve()
 UI_ROOT = REPO_ROOT / "ui"
+SRC_ROOT = REPO_ROOT / "src"
 PYTHON_EXE = Path(sys.executable)
 ANSI_ESCAPE_RE = re.compile(r"\x1b\[[0-9;]*m")
+
+if str(SRC_ROOT) not in sys.path:
+    sys.path.insert(0, str(SRC_ROOT))
+
+from config_checker import check_config_text, format_check_report
 
 app = FastAPI(title="EasyScan_HEP Local UI")
 app.mount("/static", StaticFiles(directory=UI_ROOT / "static"), name="static")
@@ -677,6 +683,13 @@ def export_config_to_file(config: EasyScanConfig) -> dict[str, str]:
     path.parent.mkdir(parents=True, exist_ok=True)
     path.write_text(serialize_config(config), encoding="utf-8")
     return {"path": str(path)}
+
+
+@app.post("/api/config/check")
+def check_config(config: EasyScanConfig) -> dict[str, Any]:
+    report = check_config_text(serialize_config(config), base_dir=REPO_ROOT)
+    report["text"] = format_check_report(report)
+    return report
 
 
 @app.post("/api/runs")

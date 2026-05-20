@@ -69,6 +69,17 @@ if len(sys.argv) > 1 and sys.argv[1] in ["-ui", "--ui"]:
     run_ui()
     sys.exit(0)
 
+if "--check" in sys.argv:
+    from config_checker import check_config_file, format_check_report
+
+    config_args = [arg for arg in sys.argv[1:] if arg != "--check"]
+    if len(config_args) != 1:
+        print("Usage: ./bin/easyscan.py --check CONFIG.ini")
+        sys.exit(1)
+    report = check_config_file(config_args[0])
+    print(format_check_report(report))
+    sys.exit(0 if report["ok"] else 1)
+
 # Internal modules.
 import initialize
 import auxfun as af

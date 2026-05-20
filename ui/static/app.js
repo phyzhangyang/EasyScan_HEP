@@ -618,6 +618,28 @@ async function exportConfig() {
   setConfigFileStatus(`Saved ${payload.path || "INI file"}.`, "completed");
 }
 
+async function checkConfig() {
+  setConfigFileStatus("Checking...");
+  const response = await fetch("/api/config/check", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(state),
+  });
+  const payload = await response.json().catch(() => ({}));
+  const box = $("#checkBox");
+  if (box) {
+    box.classList.remove("hidden");
+    box.textContent = payload.text || payload.detail || "Check failed.";
+    box.classList.toggle("failed", !payload.ok);
+    box.classList.toggle("completed", Boolean(payload.ok));
+  }
+  if (!response.ok) {
+    setConfigFileStatus(payload.detail || "Check failed.", "failed");
+    return;
+  }
+  setConfigFileStatus(payload.ok ? "Config check passed." : "Config check found issues.", payload.ok ? "completed" : "failed");
+}
+
 async function startRun() {
   $("#runBtn").disabled = true;
   $("#stopBtn").disabled = false;
@@ -765,6 +787,7 @@ $("#addGaussian").addEventListener("click", () => addRow("gaussian_constraints")
 $("#addPlot").addEventListener("click", () => addRow("plots"));
 $("#importConfigBtn").addEventListener("click", importConfig);
 $("#exportConfigBtn").addEventListener("click", exportConfig);
+$("#checkConfigBtn").addEventListener("click", checkConfig);
 $("#runBtn").addEventListener("click", startRun);
 $("#stopBtn").addEventListener("click", stopRun);
 $("#closeBrowser").addEventListener("click", () => $("#browserModal").classList.add("hidden"));

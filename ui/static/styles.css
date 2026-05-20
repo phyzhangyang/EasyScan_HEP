@@ -338,7 +338,8 @@ th .help-tip::before {
 }
 
 .code-box,
-.log-box {
+.log-box,
+.check-box {
   width: 100%;
   min-height: 180px;
   max-height: 420px;
@@ -354,6 +355,19 @@ th .help-tip::before {
 
 .log-box {
   min-height: 260px;
+}
+
+.check-box {
+  min-height: 90px;
+  margin-top: 12px;
+}
+
+.check-box.completed {
+  border-color: #abefc6;
+}
+
+.check-box.failed {
+  border-color: #fecdca;
 }
 
 .status {
