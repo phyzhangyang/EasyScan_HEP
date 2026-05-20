@@ -27,6 +27,17 @@ to run EasyScan_HEP::
 
     python3 -m pip install numpy scipy matplotlib ConfigParser pandas
 
+Install EasyScan_HEP itself from the source directory with::
+
+    python3 -m pip install .
+
+After installation, the command ``easyscan`` is available from any
+directory. Use ``easyscan`` rather than ``./easyscan``; the ``./`` prefix
+means "run a file in the current directory" and is only appropriate for
+local scripts. Relative paths inside a configuration file are resolved
+from the directory where ``easyscan`` is launched, so run it from your
+project directory or use absolute paths in the configuration file.
+
 If you prefer an isolated environment, you can create a local virtual
 environment first and then install the same dependencies there::
 
@@ -50,14 +61,18 @@ The local Web UI has additional dependencies: *fastapi*, *uvicorn*,
 
     python3 -m pip install fastapi uvicorn jinja2 python-multipart
 
-The "easyscan.py" in folder "bin" is the main program, which is executed with configuration file through the command line,
+The installed ``easyscan`` command is executed with a configuration file through the command line,
 ::
+
+    easyscan templates/example_random.ini
+
+The source-tree entry point remains available for development use::
 
     ./bin/easyscan.py templates/example_random.ini
 
 Check a configuration file without running a scan with::
 
-    ./bin/easyscan.py --check templates/example_random.ini
+    easyscan --check templates/example_random.ini
 
 Here *example_random.ini* is an example configuration file provided in EasyScan_HEP. It performs a scan on a simplified model,
 ::
@@ -77,7 +92,7 @@ Configuration file *templates/scan_MSSM_for_mW.ini* is an simply physical exampl
 and then it can be executed with 
 ::
 
-    ./bin/easyscan.py templates/scan_MSSM_for_mW.ini
+    easyscan templates/scan_MSSM_for_mW.ini
 
 Local Web UI
 ------------
@@ -85,7 +100,7 @@ Local Web UI
 EasyScan_HEP also provides a local single-user Web UI. Start it with the
 same main entrypoint::
 
-    ./bin/easyscan.py -ui
+    easyscan -ui
 
 The UI runs at ``http://127.0.0.1:8000/`` and opens the browser
 automatically when possible. Keep the terminal open while using the UI.
