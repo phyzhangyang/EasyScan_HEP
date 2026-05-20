@@ -47,6 +47,10 @@ The "easyscan.py" in folder "bin" is the main program, which is executed with co
 
     ./bin/easyscan.py templates/example_random.ini
 
+Check a configuration file without running a scan with::
+
+    ./bin/easyscan.py --check templates/example_random.ini
+
 Here *example_random.ini* is an example configuration file provided in EasyScan_HEP. It performs a scan on a simplified model,
 ::
 
@@ -81,8 +85,9 @@ Press ``Control-C`` in that terminal to stop the server.
 
 The Web UI can build ``.ini`` configuration files visually, choose local
 paths from the browser UI, run EasyScan in the background, show live logs,
-stop running jobs, and inspect result files and generated plots. Generated
-UI run artifacts are stored under ``ui_runs/``.
+stop running jobs, inspect result files and generated plots, and check
+configuration consistency before a run. Generated UI ``.ini`` and ``.log``
+artifacts are stored in the directory where the UI was opened.
 
 Package content:
 
