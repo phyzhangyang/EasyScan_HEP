@@ -10,6 +10,7 @@ import optparse
 import logging
 logging.getLogger("matplotlib").setLevel(logging.WARNING)
 import logging.config
+from pathlib import Path
     
 print('\033[1;36;2m')
 print('''
@@ -36,11 +37,27 @@ parser.add_option("-r","--resume", action="store_true", default=False,
 if len(args) == 0:
     args = ''
 
+def logging_config_path():
+    candidates = []
+    env_root = os.environ.get("EASYSCAN_ROOT", "")
+    if env_root:
+        candidates.append(Path(env_root) / "src" / "easyscan_logging.conf")
+    candidates.append(Path(__file__).resolve().with_name("easyscan_logging.conf"))
+    candidates.append(Path(__file__).resolve().parents[1] / "src" / "easyscan_logging.conf")
+    for candidate in candidates:
+        if candidate.is_file():
+            return candidate
+    return None
+
+
 ## Configure logging info
 if options.debug and options.logging == 'INFO':
     options.logging = 'DEBUG'
-logging.config.fileConfig(os.path.join(os.path.split(os.path.split(os.path.realpath(__file__))[0])[0], "src/easyscan_logging.conf"),
-        defaults={'logfilename': 'EASYSCAN.LOG'})
+log_config = logging_config_path()
+if log_config:
+    logging.config.fileConfig(str(log_config), defaults={'logfilename': 'EASYSCAN.LOG'})
+else:
+    logging.basicConfig(filename='EASYSCAN.LOG', level=getattr(logging, options.logging), format='%(levelname)s:  %(message)s')
 logging.root.setLevel(vars(logging)[options.logging])
 logging.getLogger('easyscan').setLevel(vars(logging)[options.logging])
                               
@@ -53,7 +70,7 @@ try:
     open(sys.argv[1],'r')
 except IndexError:
     logger.error('No configfile for the script easyscan')
-    print('Usage: ./easyscan configfile')
+    print('Usage: easyscan configfile')
     sys.exit(1)
 except IOError:
     logger.error('Configfile not exist')

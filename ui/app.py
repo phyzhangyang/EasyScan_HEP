@@ -21,9 +21,9 @@ from fastapi.templating import Jinja2Templates
 from pydantic import BaseModel, Field
 
 
-REPO_ROOT = Path(__file__).resolve().parents[1]
+REPO_ROOT = Path(os.environ.get("EASYSCAN_ROOT", Path(__file__).resolve().parents[1])).expanduser().resolve()
 RUN_CWD = Path(os.environ.get("EASYSCAN_UI_CWD", Path.cwd())).expanduser().resolve()
-UI_ROOT = REPO_ROOT / "ui"
+UI_ROOT = Path(__file__).resolve().parent
 SRC_ROOT = REPO_ROOT / "src"
 PYTHON_EXE = Path(sys.executable)
 ANSI_ESCAPE_RE = re.compile(r"\x1b\[[0-9;]*m")
@@ -178,6 +178,10 @@ def path_for_config(path_value: str) -> str:
     path = Path(path_value).expanduser()
     if path.is_absolute():
         try:
+            return path.resolve().relative_to(RUN_CWD).as_posix()
+        except ValueError:
+            pass
+        try:
             return path.resolve().relative_to(REPO_ROOT).as_posix()
         except ValueError:
             return str(path)
@@ -188,7 +192,16 @@ def resolve_config_path(path_value: str) -> Path:
     path = Path(path_value).expanduser()
     if path.is_absolute():
         return path.resolve()
-    return (REPO_ROOT / path).resolve()
+    return (RUN_CWD / path).resolve()
+
+
+def config_base_dir(config: EasyScanConfig) -> Path:
+    if config.config_file_path.strip():
+        path = Path(config.config_file_path).expanduser()
+        if not path.is_absolute():
+            path = RUN_CWD / path
+        return path.resolve().parent
+    return RUN_CWD
 
 
 def run_artifact_paths(run_id: str) -> tuple[Path, Path]:
@@ -782,12 +795,12 @@ def choose_save_path(default_name: str = "easyscan_config.ini") -> Path:
 
 
 def default_config() -> EasyScanConfig:
-    template_path = REPO_ROOT / "templates" / "example_random.ini"
-    if template_path.exists():
-        try:
-            return parse_easy_scan_template(template_path)
-        except Exception:
-            return EasyScanConfig()
+    for template_path in (RUN_CWD / "templates" / "example_random.ini", REPO_ROOT / "templates" / "example_random.ini"):
+        if template_path.exists():
+            try:
+                return parse_easy_scan_template(template_path)
+            except Exception:
+                return EasyScanConfig()
     return EasyScanConfig()
 
 
@@ -828,14 +841,20 @@ def result_files(record: RunRecord) -> dict[str, Any]:
 
 def run_worker(record: RunRecord) -> None:
     record.status = "running"
-    command = [str(PYTHON_EXE), "bin/easyscan.py", str(record.config_path)]
+    command = [str(PYTHON_EXE), "-m", "easyscan_hep.cli", str(record.config_path)]
+    env = os.environ.copy()
+    pythonpath = [str(REPO_ROOT), str(SRC_ROOT)]
+    if env.get("PYTHONPATH"):
+        pythonpath.append(env["PYTHONPATH"])
+    env["PYTHONPATH"] = os.pathsep.join(pythonpath)
     with record.log_path.open("w", encoding="utf-8") as log_file:
         log_file.write("$ " + " ".join(command) + "\n")
         log_file.flush()
         try:
             record.process = subprocess.Popen(
                 command,
-                cwd=REPO_ROOT,
+                cwd=RUN_CWD,
+                env=env,
                 stdin=subprocess.PIPE,
                 stdout=subprocess.PIPE,
                 stderr=subprocess.STDOUT,
@@ -924,7 +943,7 @@ def export_config_to_file(config: EasyScanConfig) -> dict[str, str]:
 
 @app.post("/api/config/check")
 def check_config(config: EasyScanConfig) -> dict[str, Any]:
-    report = check_config_text(serialize_config(config), base_dir=REPO_ROOT)
+    report = check_config_text(serialize_config(config), base_dir=config_base_dir(config))
     report["text"] = format_check_report(report)
     return report
 
@@ -948,7 +967,7 @@ def generate_config_with_ai(request: LLMConfigRequest) -> dict[str, Any]:
         ) from exc
 
     generated_config.config_file_path = request.current_config.config_file_path
-    report = check_config_text(ini_text, base_dir=REPO_ROOT)
+    report = check_config_text(ini_text, base_dir=config_base_dir(request.current_config))
     check_text = format_check_report(report)
     if not report.get("ok"):
         raise HTTPException(
