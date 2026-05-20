@@ -8,6 +8,47 @@ let browserInsert = "";
 
 const $ = (selector, root = document) => root.querySelector(selector);
 const $$ = (selector, root = document) => Array.from(root.querySelectorAll(selector));
+const NOT_USED_TEXT = "not used";
+const NOT_USED_VALUE = "__not_used__";
+
+const HELP_TEXT = {
+  programName: "User-facing name for this external program block. It is used in logs to identify the program.",
+  executeCommand: "Shell command run inside Command path for each scan point, for example ./TestFunction.py.",
+  commandPath: "Working directory where Execute command is run. Relative paths are resolved from the EasyScan root.",
+  commandExecutor: "Execution backend. os.system is the default; subprocess.popen is used when a time limit is set and can capture program output.",
+  timeLimit: "Maximum runtime in minutes for this program. When set, EasyScan kills the program if it exceeds the limit.",
+  cleanOutput: "Whether to delete output files before each program execution.",
+  bound: "Additional physical or tabulated bounds. Forms include direct conditions such as x, 0.5, 2.5 or table bounds such as y, x, MAX, bound.txt.",
+  fileId: "Numeric ID used to connect variable definitions to an input or output file.",
+  filePath: "Path to an input or output file. Relative paths are resolved from the EasyScan root.",
+  variableName: "Variable ID used by EasyScan for scanned values, program inputs/outputs, constraints, and plots.",
+  variableFileId: "File ID where this variable is read from or written to.",
+  variableMethod: "How EasyScan reads or writes the variable: Position, Label, SLHA, Replace, or File.",
+  variableArguments: "Method-specific arguments. For Position, use line number and column number, such as 1, 2.",
+};
+
+const NUMBER_OF_POINTS_LABELS = {
+  RANDOM: {
+    label: "Number of points (total number)",
+    help: "Total number of random scan points.",
+  },
+  MCMC: {
+    label: "Number of points (total surviving number)",
+    help: "Target total number of surviving accepted points in the MCMC scan.",
+  },
+  GRID: {
+    label: "Number of points (not used)",
+    help: "Not used by GRID; use Bins in Input Parameters to set grid density.",
+  },
+  ONEPOINT: {
+    label: "Number of points (not used)",
+    help: "Not used by ONEPOINT.",
+  },
+  ONEPOINTBATCH: {
+    label: "Number of points (not used)",
+    help: "Not used by ONEPOINTBATCH; points are read from the batch file.",
+  },
+};
 
 function getPath(path) {
   return path.split(".").reduce((obj, part) => obj?.[part], state);
@@ -28,11 +69,27 @@ function bindRootFields() {
     el.value = getPath(path) ?? "";
     el.addEventListener("input", () => {
       setPath(path, el.value);
+      updateConditionalControls();
     });
     el.addEventListener("change", () => {
       setPath(path, el.value);
+      updateConditionalControls();
     });
   });
+}
+
+function syncRootFields() {
+  $$("[data-bind]").forEach((el) => {
+    el.value = getPath(el.dataset.bind) ?? "";
+  });
+}
+
+function replaceState(nextState) {
+  Object.keys(state).forEach((key) => delete state[key]);
+  Object.assign(state, structuredClone(nextState));
+  syncRootFields();
+  rerender();
+  updateConditionalControls();
 }
 
 function input(name, path, type = "text", placeholder = "") {
@@ -54,6 +111,239 @@ function escapeHtml(value) {
     .replaceAll("<", "&lt;")
     .replaceAll(">", "&gt;")
     .replaceAll('"', "&quot;");
+}
+
+function helpTip(key) {
+  const text = HELP_TEXT[key] || "";
+  if (!text) return "";
+  return `<span class="help-tip" data-tooltip="${escapeHtml(text)}" tabindex="0" aria-label="Help: ${escapeHtml(key)}">?</span>`;
+}
+
+function labelText(text, key) {
+  return `<span class="field-label">${escapeHtml(text)} ${helpTip(key)}</span>`;
+}
+
+function thText(text, key) {
+  return `${escapeHtml(text)} ${helpTip(key)}`;
+}
+
+function pathForElement(el) {
+  return el?.dataset.field || el?.dataset.bind || "";
+}
+
+function restoreControlValue(el) {
+  if (!el) return;
+  if (el.dataset.originalType) {
+    el.type = el.dataset.originalType;
+    delete el.dataset.originalType;
+  }
+  if (el.tagName === "SELECT") {
+    $$('option[data-not-used-option="true"]', el).forEach((option) => option.remove());
+  }
+  const path = pathForElement(el);
+  if (path) el.value = getPath(path) ?? "";
+}
+
+function showNotUsedValue(el) {
+  if (!el) return;
+  if (el.tagName === "SELECT") {
+    let option = $('option[data-not-used-option="true"]', el);
+    if (!option) {
+      option = document.createElement("option");
+      option.dataset.notUsedOption = "true";
+      option.value = NOT_USED_VALUE;
+      option.textContent = NOT_USED_TEXT;
+      el.prepend(option);
+    }
+    el.value = NOT_USED_VALUE;
+    return;
+  }
+  if (el.tagName === "INPUT") {
+    if (el.type !== "text") {
+      el.dataset.originalType ||= el.type;
+      el.type = "text";
+    }
+    el.value = NOT_USED_TEXT;
+  } else if (el.tagName === "TEXTAREA") {
+    el.value = NOT_USED_TEXT;
+  }
+}
+
+function setElementDisabled(el, disabled, showNotUsed = false) {
+  if (!el) return;
+  if (disabled && showNotUsed) {
+    showNotUsedValue(el);
+  } else {
+    restoreControlValue(el);
+  }
+  el.disabled = disabled;
+  el.classList.toggle("not-used-control", disabled && showNotUsed);
+}
+
+function setLabelDisabled(label, disabled) {
+  if (label) label.classList.toggle("disabled-field", disabled);
+}
+
+function setText(selector, text) {
+  const el = $(selector);
+  if (el) el.textContent = text;
+}
+
+function scanMethod() {
+  return String(state.scan_method || "").toUpperCase();
+}
+
+function updateTopLevelControls() {
+  const method = scanMethod();
+  const isOnePointBatch = method === "ONEPOINTBATCH";
+  const supportsRandomSeed = ["RANDOM", "MCMC"].includes(method);
+  const supportsParallel = ["RANDOM", "GRID", "MCMC", "ONEPOINTBATCH"].includes(method);
+  const parallelThreads = Number(state.parallel_threads || 1);
+  const usesParallelFolder = supportsParallel && parallelThreads > 1;
+  const batchInput = $('[data-bind="batch_file"]');
+  const batchButton = $('[data-target="batch_file"]');
+  const batchLabel = $("#batchFileLabel");
+  const batchLabelText = $("#batchFileLabelText");
+  const pointsLabelContainer = $("#numberOfPointsLabel");
+  const pointsLabel = $("#numberOfPointsLabelText");
+  const pointsHelp = $("#numberOfPointsHelp");
+  const pointsInput = $('[data-bind="number_of_points"]');
+  const randomSeedInput = $('[data-bind="random_seed"]');
+  const parallelThreadsInput = $('[data-bind="parallel_threads"]');
+  const parallelFolderInput = $('[data-bind="parallel_folder"]');
+  const parallelFolderButton = $('[data-target="parallel_folder"]');
+  const pointsText = NUMBER_OF_POINTS_LABELS[method] || NUMBER_OF_POINTS_LABELS.RANDOM;
+  const usesNumberOfPoints = ["RANDOM", "MCMC"].includes(method);
+
+  setElementDisabled(batchInput, !isOnePointBatch, true);
+  setElementDisabled(batchButton, !isOnePointBatch);
+  setLabelDisabled(batchLabel, !isOnePointBatch);
+  if (batchLabelText) batchLabelText.textContent = isOnePointBatch ? "OnePointBatch file" : "OnePointBatch file (not used)";
+
+  setElementDisabled(pointsInput, !usesNumberOfPoints, true);
+  setLabelDisabled(pointsLabelContainer, !usesNumberOfPoints);
+  if (pointsLabel) pointsLabel.textContent = pointsText.label;
+  if (pointsHelp) pointsHelp.dataset.tooltip = pointsText.help;
+
+  setElementDisabled(randomSeedInput, !supportsRandomSeed, true);
+  setLabelDisabled($("#randomSeedLabel"), !supportsRandomSeed);
+  setText("#randomSeedLabelText", supportsRandomSeed ? "Random seed" : "Random seed (not used)");
+
+  setElementDisabled(parallelThreadsInput, !supportsParallel, true);
+  setLabelDisabled($("#parallelThreadsLabel"), !supportsParallel);
+  setText("#parallelThreadsLabelText", supportsParallel ? "Parallel threads" : "Parallel threads (not used)");
+
+  setElementDisabled(parallelFolderInput, !usesParallelFolder, true);
+  setElementDisabled(parallelFolderButton, !usesParallelFolder);
+  setLabelDisabled($("#parallelFolderLabel"), !usesParallelFolder);
+  setText("#parallelFolderLabelText", usesParallelFolder ? "Parallel folder" : "Parallel folder (not used)");
+}
+
+function updateInputParameterHeaders() {
+  const method = scanMethod();
+  const usedByMethod = {
+    name: true,
+    prior: !["ONEPOINT", "ONEPOINTBATCH"].includes(method),
+    value: true,
+    minimum: ["RANDOM", "GRID", "MCMC"].includes(method),
+    maximum: ["RANDOM", "GRID", "MCMC"].includes(method),
+    bins: method === "GRID",
+    interval: method === "MCMC",
+    initial: method === "MCMC",
+  };
+  const labels = {
+    name: "Name",
+    prior: "Prior",
+    value: "Value",
+    minimum: "Min",
+    maximum: "Max",
+    bins: "Bins",
+    interval: "Interval",
+    initial: "Initial",
+  };
+  const targets = {
+    name: "#inputHeaderName",
+    prior: "#inputHeaderPrior",
+    value: "#inputHeaderValue",
+    minimum: "#inputHeaderMin",
+    maximum: "#inputHeaderMax",
+    bins: "#inputHeaderBins",
+    interval: "#inputHeaderInterval",
+    initial: "#inputHeaderInitial",
+  };
+  Object.entries(targets).forEach(([key, selector]) => {
+    setText(selector, `${labels[key]}${usedByMethod[key] ? "" : " (not used)"}`);
+    const th = $(selector)?.closest("th");
+    setLabelDisabled(th, !usedByMethod[key]);
+  });
+}
+
+function setFieldDisabled(path, disabled) {
+  const el = $(`[data-field="${path}"]`);
+  setElementDisabled(el, disabled, true);
+  setLabelDisabled(el?.closest("td"), disabled);
+}
+
+function updateInputParameterRows() {
+  const method = scanMethod();
+  state.input_parameters.forEach((parameter, index) => {
+    const fixedPrior = String(parameter.prior || "").toUpperCase() === "FIXED";
+    const onePointMode = ["ONEPOINT", "ONEPOINTBATCH"].includes(method);
+    const enabled = {
+      name: true,
+      prior: !onePointMode,
+      value: onePointMode || fixedPrior,
+      minimum: !fixedPrior && ["RANDOM", "GRID", "MCMC"].includes(method),
+      maximum: !fixedPrior && ["RANDOM", "GRID", "MCMC"].includes(method),
+      bins: !fixedPrior && method === "GRID",
+      interval: !fixedPrior && method === "MCMC",
+      initial: !fixedPrior && method === "MCMC",
+    };
+    setFieldDisabled(`input_parameters.${index}.name`, !enabled.name);
+    setFieldDisabled(`input_parameters.${index}.prior`, !enabled.prior);
+    setFieldDisabled(`input_parameters.${index}.value`, !enabled.value);
+    setFieldDisabled(`input_parameters.${index}.minimum`, !enabled.minimum);
+    setFieldDisabled(`input_parameters.${index}.maximum`, !enabled.maximum);
+    setFieldDisabled(`input_parameters.${index}.bins`, !enabled.bins);
+    setFieldDisabled(`input_parameters.${index}.interval`, !enabled.interval);
+    setFieldDisabled(`input_parameters.${index}.initial`, !enabled.initial);
+  });
+}
+
+function updatePlotRows() {
+  state.plots.forEach((plot, index) => {
+    const kind = String(plot.kind || "").toUpperCase();
+    const enabled = {
+      kind: true,
+      x: true,
+      y: ["SCATTER", "COLOR", "CONTOUR"].includes(kind),
+      value: ["COLOR", "CONTOUR"].includes(kind),
+      figure_name: true,
+    };
+    setFieldDisabled(`plots.${index}.kind`, !enabled.kind);
+    setFieldDisabled(`plots.${index}.x`, !enabled.x);
+    setFieldDisabled(`plots.${index}.y`, !enabled.y);
+    setFieldDisabled(`plots.${index}.value`, !enabled.value);
+    setFieldDisabled(`plots.${index}.figure_name`, !enabled.figure_name);
+  });
+}
+
+function updateProgramControls() {
+  state.programs.forEach((program, index) => {
+    const timeLimitSet = String(program.time_limit || "").trim() !== "";
+    const executor = $(`[data-field="programs.${index}.command_executor"]`);
+    setElementDisabled(executor, timeLimitSet, true);
+    setLabelDisabled(executor?.closest("label"), timeLimitSet);
+    setText(`#program${index}ExecutorLabelText`, timeLimitSet ? "Command executor (set by time limit)" : "Command executor");
+  });
+}
+
+function updateConditionalControls() {
+  updateTopLevelControls();
+  updateInputParameterHeaders();
+  updateInputParameterRows();
+  updatePlotRows();
+  updateProgramControls();
 }
 
 function renderInputParameters() {
@@ -87,7 +377,7 @@ function renderFileRows(programIndex, fieldName, label, selectKind) {
       <div class="table-wrap">
         <table>
           <thead>
-            <tr><th>ID</th><th>Path</th><th></th></tr>
+            <tr><th>${thText("ID", "fileId")}</th><th>${thText("Path", "filePath")}</th><th></th></tr>
           </thead>
           <tbody>
             ${rows
@@ -124,7 +414,13 @@ function renderVariableRows(programIndex, fieldName, label) {
       <div class="table-wrap">
         <table>
           <thead>
-            <tr><th>Name</th><th>File ID</th><th>Method</th><th>Arguments</th><th></th></tr>
+            <tr>
+              <th>${thText("Name", "variableName")}</th>
+              <th>${thText("File ID", "variableFileId")}</th>
+              <th>${thText("Method", "variableMethod")}</th>
+              <th>${thText("Arguments", "variableArguments")}</th>
+              <th></th>
+            </tr>
           </thead>
           <tbody>
             ${rows
@@ -157,25 +453,25 @@ function renderPrograms() {
             <button class="danger small" data-remove="programs.${i}">Remove Program</button>
           </div>
           <div class="grid">
-            <label>Program name
+            <label>${labelText("Program name", "programName")}
               ${input("Program name", `programs.${i}.program_name`)}
             </label>
-            <label>Execute command
+            <label>${labelText("Execute command", "executeCommand")}
               ${input("Execute command", `programs.${i}.execute_command`)}
             </label>
-            <label>Command path
+            <label>${labelText("Command path", "commandPath")}
               <div class="path-row">
                 ${input("Command path", `programs.${i}.command_path`)}
                 <button class="icon-button browse" data-target="programs.${i}.command_path" data-select="dir" title="Choose folder">...</button>
               </div>
             </label>
-            <label>Command executor
+            <label><span class="field-label"><span id="program${i}ExecutorLabelText">Command executor</span> ${helpTip("commandExecutor")}</span>
               ${select(`programs.${i}.command_executor`, ["", "os.system", "subprocess.popen"])}
             </label>
-            <label>Time limit in minutes
+            <label>${labelText("Time limit in minutes", "timeLimit")}
               ${input("Time limit", `programs.${i}.time_limit`)}
             </label>
-            <label>Clean output file
+            <label>${labelText("Clean output file", "cleanOutput")}
               ${select(`programs.${i}.clean_output`, ["", "Yes", "No"])}
             </label>
           </div>
@@ -184,7 +480,7 @@ function renderPrograms() {
           ${renderFileRows(i, "output_files", "Output Files", "file")}
           ${renderVariableRows(i, "output_variables", "Output Variables")}
           <div class="subsection">
-            <label>Bound
+            <label>${labelText("Bound", "bound")}
               <div class="path-row">
                 <textarea data-field="programs.${i}.bounds" placeholder="Example: x, y, MAX, bounds.dat">${escapeHtml(state.programs[i].bounds)}</textarea>
                 <button class="icon-button browse" data-target="programs.${i}.bounds" data-select="file" data-insert="bound-file" title="Choose bound file">...</button>
@@ -240,14 +536,21 @@ function renderAll() {
 
 function refreshBindings() {
   $$("[data-field]").forEach((el) => {
-    el.addEventListener("input", () => setPath(el.dataset.field, el.value));
-    el.addEventListener("change", () => setPath(el.dataset.field, el.value));
+    el.addEventListener("input", () => {
+      setPath(el.dataset.field, el.value);
+      updateConditionalControls();
+    });
+    el.addEventListener("change", () => {
+      setPath(el.dataset.field, el.value);
+      updateConditionalControls();
+    });
   });
 }
 
 function rerender() {
   renderAll();
   refreshBindings();
+  updateConditionalControls();
 }
 
 function removePath(path) {
@@ -280,14 +583,39 @@ function addRow(kind, programIndex = null) {
   rerender();
 }
 
-async function previewConfig() {
-  const response = await fetch("/api/config", {
+function setConfigFileStatus(message, kind = "") {
+  const el = $("#configFileStatus");
+  if (!el) return;
+  el.textContent = message;
+  el.className = `config-status ${kind}`.trim();
+}
+
+async function importConfig() {
+  setConfigFileStatus("Loading...");
+  const response = await fetch("/api/config/import/open", { method: "POST" });
+  const payload = await response.json();
+  if (!response.ok) {
+    setConfigFileStatus(payload.detail || "Failed to load INI.", response.status === 400 ? "" : "failed");
+    return;
+  }
+  replaceState(payload);
+  setConfigFileStatus(`Loaded ${payload.config_file_path || "INI file"}.`, "completed");
+}
+
+async function exportConfig() {
+  setConfigFileStatus("Exporting...");
+  const response = await fetch("/api/config/export/save", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(state),
   });
-  const payload = await response.json();
-  $("#configPreview").textContent = payload.ini || JSON.stringify(payload, null, 2);
+  const payload = await response.json().catch(() => ({}));
+  if (!response.ok) {
+    setConfigFileStatus(payload.detail || "Failed to export INI.", response.status === 400 ? "" : "failed");
+    return;
+  }
+  if (payload.path) state.config_file_path = payload.path;
+  setConfigFileStatus(`Saved ${payload.path || "INI file"}.`, "completed");
 }
 
 async function startRun() {
@@ -366,11 +694,11 @@ function renderResults(results) {
   `;
 }
 
-async function openBrowser(target, selectKind, insertMode = "") {
+async function openBrowser(target, selectKind, insertMode = "", startPath = null) {
   browserTarget = target;
   browserSelect = selectKind;
   browserInsert = insertMode;
-  browserPath = getPath(target) || null;
+  browserPath = startPath || getPath(target) || null;
   $("#browserModal").classList.remove("hidden");
   await loadBrowser(browserPath);
 }
@@ -399,7 +727,7 @@ async function loadBrowser(path = null) {
     .join("");
 }
 
-function choosePath(path) {
+async function choosePath(path) {
   if (!browserTarget) return;
   if (browserInsert === "bound-file") {
     const current = String(getPath(browserTarget) || "").trimEnd();
@@ -427,7 +755,7 @@ document.addEventListener("click", async (event) => {
   } else if (button.dataset.openPath) {
     await loadBrowser(button.dataset.openPath);
   } else if (button.dataset.pickPath) {
-    choosePath(button.dataset.pickPath);
+    await choosePath(button.dataset.pickPath);
   }
 });
 
@@ -435,10 +763,10 @@ $("#addInputParam").addEventListener("click", () => addRow("input_parameters"));
 $("#addProgram").addEventListener("click", () => addRow("programs"));
 $("#addGaussian").addEventListener("click", () => addRow("gaussian_constraints"));
 $("#addPlot").addEventListener("click", () => addRow("plots"));
-$("#previewBtn").addEventListener("click", previewConfig);
+$("#importConfigBtn").addEventListener("click", importConfig);
+$("#exportConfigBtn").addEventListener("click", exportConfig);
 $("#runBtn").addEventListener("click", startRun);
 $("#stopBtn").addEventListener("click", stopRun);
-$("#copyConfig").addEventListener("click", () => navigator.clipboard.writeText($("#configPreview").textContent));
 $("#closeBrowser").addEventListener("click", () => $("#browserModal").classList.add("hidden"));
 $("#upBtn").addEventListener("click", () => loadBrowser($("#upBtn").dataset.path));
 $("#rootSelect").addEventListener("change", (event) => loadBrowser(event.target.value));
@@ -446,4 +774,4 @@ $("#selectCurrentBtn").addEventListener("click", () => choosePath(browserPath));
 
 bindRootFields();
 rerender();
-previewConfig();
+updateConditionalControls();

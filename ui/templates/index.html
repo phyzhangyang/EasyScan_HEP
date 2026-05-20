@@ -3,17 +3,16 @@
   <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>EasyScan_HEP Local UI</title>
+    <title>EasyScan_HEP</title>
     <link rel="stylesheet" href="/static/styles.css?v={{ static_version }}">
   </head>
   <body>
     <header class="app-header">
       <div>
-        <h1>EasyScan_HEP Local UI</h1>
-        <p>Build configurations, choose local paths, run scans, and inspect results.</p>
+        <h1>EasyScan_HEP</h1>
+        <p>A tool for connecting programs to scan the parameter space of physics models.</p>
       </div>
       <div class="header-actions">
-        <button id="previewBtn" class="secondary">Preview Config</button>
         <button id="runBtn" class="primary">Generate and Run</button>
       </div>
     </header>
@@ -21,16 +20,27 @@
     <main class="layout">
       <section class="panel">
         <div class="panel-title">
+          <h2>Configuration File</h2>
+        </div>
+        <div class="config-actions">
+          <button id="importConfigBtn" class="secondary">Load from INI</button>
+          <button id="exportConfigBtn" class="secondary">Export to INI</button>
+          <span id="configFileStatus" class="config-status"></span>
+        </div>
+      </section>
+
+      <section class="panel">
+        <div class="panel-title">
           <h2>Scan Settings</h2>
         </div>
         <div class="grid">
-          <label>Result folder
+          <label><span class="field-label">Result folder <span class="help-tip" data-tooltip="Name of the output folder for scan results." tabindex="0" aria-label="Help: Result folder">?</span></span>
             <div class="path-row">
               <input data-bind="result_folder" type="text">
               <button class="icon-button browse" data-target="result_folder" data-select="dir" title="Choose folder">...</button>
             </div>
           </label>
-          <label>Scan method
+          <label><span class="field-label">Scan method <span class="help-tip" data-tooltip="Sampling mode." tabindex="0" aria-label="Help: Scan method">?</span></span>
             <select data-bind="scan_method">
               <option>RANDOM</option>
               <option>GRID</option>
@@ -39,25 +49,25 @@
               <option>ONEPOINTBATCH</option>
             </select>
           </label>
-          <label>OnePointBatch file
+          <label id="batchFileLabel"><span class="field-label"><span id="batchFileLabelText">OnePointBatch file</span> <span class="help-tip" data-tooltip="Input file used only by ONEPOINTBATCH. Each row supplies a point to evaluate." tabindex="0" aria-label="Help: OnePointBatch file">?</span></span>
             <div class="path-row">
               <input data-bind="batch_file" type="text">
               <button class="icon-button browse" data-target="batch_file" data-select="file" title="Choose file">...</button>
             </div>
           </label>
-          <label>Number of points
+          <label id="numberOfPointsLabel"><span class="field-label"><span id="numberOfPointsLabelText">Number of points</span> <span id="numberOfPointsHelp" class="help-tip" data-tooltip="Number of scan points." tabindex="0" aria-label="Help: Number of points">?</span></span>
             <input data-bind="number_of_points" type="number" min="1">
           </label>
-          <label>Random seed
+          <label id="randomSeedLabel"><span class="field-label"><span id="randomSeedLabelText">Random seed</span> <span class="help-tip" data-tooltip="Optional seed for reproducible random sampling." tabindex="0" aria-label="Help: Random seed">?</span></span>
             <input data-bind="random_seed" type="text" placeholder="Optional">
           </label>
-          <label>Print interval
+          <label><span class="field-label">Print interval <span class="help-tip" data-tooltip="How often EasyScan prints progress information during a scan." tabindex="0" aria-label="Help: Print interval">?</span></span>
             <input data-bind="print_interval" type="number" min="1">
           </label>
-          <label>Parallel threads
+          <label id="parallelThreadsLabel"><span class="field-label"><span id="parallelThreadsLabelText">Parallel threads</span> <span class="help-tip" data-tooltip="Number of worker processes used for parallel scanning. Use 1 for serial execution." tabindex="0" aria-label="Help: Parallel threads">?</span></span>
             <input data-bind="parallel_threads" type="number" min="1">
           </label>
-          <label>Parallel folder
+          <label id="parallelFolderLabel"><span class="field-label"><span id="parallelFolderLabelText">Parallel folder</span> <span class="help-tip" data-tooltip="Folder copied or used for parallel execution. In parallel mode, command and input paths should live under this folder." tabindex="0" aria-label="Help: Parallel folder">?</span></span>
             <div class="path-row">
               <input data-bind="parallel_folder" type="text">
               <button class="icon-button browse" data-target="parallel_folder" data-select="dir" title="Choose folder">...</button>
@@ -75,14 +85,14 @@
           <table>
             <thead>
               <tr>
-                <th>Name</th>
-                <th>Prior</th>
-                <th>Value</th>
-                <th>Min</th>
-                <th>Max</th>
-                <th>Bins</th>
-                <th>Interval</th>
-                <th>Initial</th>
+                <th><span id="inputHeaderName">Name</span> <span class="help-tip" data-tooltip="Parameter ID used in expressions, input variables, constraints, and plots." tabindex="0" aria-label="Help: Input parameter name">?</span></th>
+                <th><span id="inputHeaderPrior">Prior</span> <span class="help-tip" data-tooltip="Prior type for sampled parameters. Use flat or log for scans, Fixed for constants or one-point modes." tabindex="0" aria-label="Help: Prior">?</span></th>
+                <th><span id="inputHeaderValue">Value</span> <span class="help-tip" data-tooltip="Fixed value used when Prior is Fixed, ONEPOINT, or ONEPOINTBATCH." tabindex="0" aria-label="Help: Value">?</span></th>
+                <th><span id="inputHeaderMin">Min</span> <span class="help-tip" data-tooltip="Lower bound of the scanned parameter range." tabindex="0" aria-label="Help: Minimum">?</span></th>
+                <th><span id="inputHeaderMax">Max</span> <span class="help-tip" data-tooltip="Upper bound of the scanned parameter range." tabindex="0" aria-label="Help: Maximum">?</span></th>
+                <th><span id="inputHeaderBins">Bins</span> <span class="help-tip" data-tooltip="Number of bins used by GRID scans." tabindex="0" aria-label="Help: Bins">?</span></th>
+                <th><span id="inputHeaderInterval">Interval</span> <span class="help-tip" data-tooltip="MCMC proposal step or interval setting for this parameter." tabindex="0" aria-label="Help: Interval">?</span></th>
+                <th><span id="inputHeaderInitial">Initial</span> <span class="help-tip" data-tooltip="Initial parameter value used by MCMC; also used as a fallback fixed value." tabindex="0" aria-label="Help: Initial">?</span></th>
                 <th></th>
               </tr>
             </thead>
@@ -109,11 +119,11 @@
             <table>
               <thead>
                 <tr>
-                  <th>Variable</th>
-                  <th>Mean</th>
-                  <th>Deviation</th>
-                  <th>Type</th>
-                  <th>Name</th>
+                  <th>Variable <span class="help-tip" data-tooltip="Variable ID constrained by the Gaussian likelihood term." tabindex="0" aria-label="Help: Gaussian variable">?</span></th>
+                  <th>Mean <span class="help-tip" data-tooltip="Central experimental or target value of the Gaussian constraint." tabindex="0" aria-label="Help: Gaussian mean">?</span></th>
+                  <th>Deviation <span class="help-tip" data-tooltip="Gaussian uncertainty used to compute the chi-square contribution." tabindex="0" aria-label="Help: Gaussian deviation">?</span></th>
+                  <th>Type <span class="help-tip" data-tooltip="Constraint type: symm for two-sided Gaussian, upper for upper limit, lower for lower limit." tabindex="0" aria-label="Help: Gaussian type">?</span></th>
+                  <th>Name <span class="help-tip" data-tooltip="Optional label for this chi-square contribution. If empty, EasyScan creates a Gaussian_variable name." tabindex="0" aria-label="Help: Gaussian name">?</span></th>
                   <th></th>
                 </tr>
               </thead>
@@ -130,11 +140,11 @@
             <table>
               <thead>
                 <tr>
-                  <th>Type</th>
-                  <th>X</th>
-                  <th>Y</th>
-                  <th>Value</th>
-                  <th>Figure</th>
+                  <th>Type <span class="help-tip" data-tooltip="Plot type: Histogram uses X, Scatter uses X and Y, Color/Contour use X, Y, and Value." tabindex="0" aria-label="Help: Plot type">?</span></th>
+                  <th>X <span class="help-tip" data-tooltip="Variable shown on the x-axis, or the histogram variable." tabindex="0" aria-label="Help: Plot X">?</span></th>
+                  <th>Y <span class="help-tip" data-tooltip="Variable shown on the y-axis for Scatter, Color, and Contour plots." tabindex="0" aria-label="Help: Plot Y">?</span></th>
+                  <th>Value <span class="help-tip" data-tooltip="Variable used as the color or contour value. Not used by Histogram or Scatter." tabindex="0" aria-label="Help: Plot value">?</span></th>
+                  <th>Figure <span class="help-tip" data-tooltip="Output figure name. EasyScan appends .png when needed." tabindex="0" aria-label="Help: Figure">?</span></th>
                   <th></th>
                 </tr>
               </thead>
@@ -142,14 +152,6 @@
             </table>
           </div>
         </div>
-      </section>
-
-      <section class="panel">
-        <div class="panel-title">
-          <h2>Generated Config</h2>
-          <button id="copyConfig" class="secondary small">Copy</button>
-        </div>
-        <pre id="configPreview" class="code-box"></pre>
       </section>
 
       <section class="panel">

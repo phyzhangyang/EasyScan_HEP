@@ -3,7 +3,6 @@ from __future__ import annotations
 import json
 import os
 import re
-import shutil
 import signal
 import subprocess
 import sys
@@ -13,15 +12,15 @@ from pathlib import Path
 from typing import Any, Optional
 
 from fastapi import FastAPI, HTTPException, Query, Request
-from fastapi.responses import FileResponse, HTMLResponse
+from fastapi.responses import FileResponse, HTMLResponse, Response
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 from pydantic import BaseModel, Field
 
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
+RUN_CWD = Path(os.environ.get("EASYSCAN_UI_CWD", Path.cwd())).expanduser().resolve()
 UI_ROOT = REPO_ROOT / "ui"
-RUNS_ROOT = REPO_ROOT / "ui_runs"
 PYTHON_EXE = Path(sys.executable)
 ANSI_ESCAPE_RE = re.compile(r"\x1b\[[0-9;]*m")
 
@@ -94,7 +93,8 @@ class PlotEntry(BaseModel):
 
 
 class EasyScanConfig(BaseModel):
-    result_folder: str = "ui_runs/example/result"
+    config_file_path: str = ""
+    result_folder: str = "result"
     scan_method: str = "RANDOM"
     batch_file: str = "utils/OnePointBatch.in"
     number_of_points: str = "100"
@@ -119,12 +119,17 @@ class EasyScanConfig(BaseModel):
     )
 
 
+class ImportConfigRequest(BaseModel):
+    content: str
+
+
 class RunRecord:
-    def __init__(self, run_id: str, run_dir: Path, config_path: Path):
+    def __init__(self, run_id: str, run_dir: Path, config_path: Path, log_path: Path, result_dir: Path):
         self.run_id = run_id
         self.run_dir = run_dir
         self.config_path = config_path
-        self.log_path = run_dir / "run.log"
+        self.log_path = log_path
+        self.result_dir = result_dir
         self.status = "queued"
         self.return_code: Optional[int] = None
         self.process: Optional[subprocess.Popen[str]] = None
@@ -159,6 +164,27 @@ def path_for_config(path_value: str) -> str:
         except ValueError:
             return str(path)
     return path_value
+
+
+def resolve_config_path(path_value: str) -> Path:
+    path = Path(path_value).expanduser()
+    if path.is_absolute():
+        return path.resolve()
+    return (REPO_ROOT / path).resolve()
+
+
+def run_artifact_paths(run_id: str) -> tuple[Path, Path]:
+    return RUN_CWD / f"easyscan_{run_id}.ini", RUN_CWD / f"easyscan_{run_id}.log"
+
+
+def config_target_paths(config: EasyScanConfig, run_id: str) -> tuple[Path, Path]:
+    if config.config_file_path.strip():
+        config_path = Path(config.config_file_path).expanduser()
+        if not config_path.is_absolute():
+            config_path = RUN_CWD / config_path
+        config_path = config_path.resolve()
+        return config_path, config_path.with_suffix(".log")
+    return run_artifact_paths(run_id)
 
 
 def clean_items(items: list[str]) -> list[str]:
@@ -297,11 +323,11 @@ def serialize_config(config: EasyScanConfig) -> str:
     return "\n".join(line for line in lines if line != "") + "\n"
 
 
-def parse_easy_scan_template(path: Path) -> EasyScanConfig:
+def parse_easy_scan_text(text: str) -> EasyScanConfig:
     sections: dict[str, dict[str, list[str]]] = {}
     current_section = ""
     current_key = ""
-    for raw_line in path.read_text(encoding="utf-8").splitlines():
+    for raw_line in text.splitlines():
         if not raw_line.strip() or raw_line.lstrip().startswith("#"):
             continue
         stripped = raw_line.strip()
@@ -416,6 +442,102 @@ def parse_easy_scan_template(path: Path) -> EasyScanConfig:
     return config
 
 
+def parse_easy_scan_template(path: Path) -> EasyScanConfig:
+    return parse_easy_scan_text(path.read_text(encoding="utf-8"))
+
+
+def applescript_string(value: str) -> str:
+    return value.replace("\\", "\\\\").replace('"', '\\"')
+
+
+def choose_open_path() -> Path:
+    if sys.platform == "darwin":
+        default_location = applescript_string(str(RUN_CWD))
+        script = [
+            f'set defaultFolder to POSIX file "{default_location}"',
+            'set chosenFile to choose file with prompt "Load EasyScan INI:" default location defaultFolder',
+            "POSIX path of chosenFile",
+        ]
+        command = ["osascript"]
+        for line in script:
+            command.extend(["-e", line])
+        completed = subprocess.run(command, capture_output=True, text=True)
+        if completed.returncode != 0:
+            message = (completed.stderr or completed.stdout or "").strip()
+            if "User canceled" in message or completed.returncode == 1:
+                raise HTTPException(status_code=400, detail="Load canceled.")
+            raise HTTPException(status_code=500, detail=message or "Failed to open file dialog.")
+        selected = completed.stdout.strip()
+        if not selected:
+            raise HTTPException(status_code=400, detail="Load canceled.")
+        return Path(selected).expanduser()
+
+    try:
+        import tkinter as tk
+        from tkinter import filedialog
+    except Exception as exc:
+        raise HTTPException(status_code=500, detail="Native open dialog is not available.") from exc
+
+    root = tk.Tk()
+    root.withdraw()
+    try:
+        selected = filedialog.askopenfilename(
+            title="Load EasyScan INI",
+            initialdir=str(RUN_CWD),
+            filetypes=[("INI files", "*.ini"), ("All files", "*.*")],
+        )
+    finally:
+        root.destroy()
+    if not selected:
+        raise HTTPException(status_code=400, detail="Load canceled.")
+    return Path(selected).expanduser()
+
+
+def choose_save_path(default_name: str = "easyscan_config.ini") -> Path:
+    if sys.platform == "darwin":
+        default_location = applescript_string(str(RUN_CWD))
+        default_file = applescript_string(default_name)
+        script = [
+            f'set defaultFolder to POSIX file "{default_location}"',
+            f'set chosenFile to choose file name with prompt "Save EasyScan INI as:" default name "{default_file}" default location defaultFolder',
+            "POSIX path of chosenFile",
+        ]
+        command = ["osascript"]
+        for line in script:
+            command.extend(["-e", line])
+        completed = subprocess.run(command, capture_output=True, text=True)
+        if completed.returncode != 0:
+            message = (completed.stderr or completed.stdout or "").strip()
+            if "User canceled" in message or completed.returncode == 1:
+                raise HTTPException(status_code=400, detail="Save canceled.")
+            raise HTTPException(status_code=500, detail=message or "Failed to open save dialog.")
+        selected = completed.stdout.strip()
+        if not selected:
+            raise HTTPException(status_code=400, detail="Save canceled.")
+        return Path(selected).expanduser()
+
+    try:
+        import tkinter as tk
+        from tkinter import filedialog
+    except Exception as exc:
+        raise HTTPException(status_code=500, detail="Native save dialog is not available.") from exc
+
+    root = tk.Tk()
+    root.withdraw()
+    try:
+        selected = filedialog.asksaveasfilename(
+            title="Save EasyScan INI as",
+            defaultextension=".ini",
+            initialfile=default_name,
+            filetypes=[("INI files", "*.ini"), ("All files", "*.*")],
+        )
+    finally:
+        root.destroy()
+    if not selected:
+        raise HTTPException(status_code=400, detail="Save canceled.")
+    return Path(selected).expanduser()
+
+
 def default_config() -> EasyScanConfig:
     template_path = REPO_ROOT / "templates" / "example_random.ini"
     if template_path.exists():
@@ -428,7 +550,7 @@ def default_config() -> EasyScanConfig:
 
 
 def allowed_roots() -> list[Path]:
-    roots = [REPO_ROOT, Path.home()]
+    roots = [RUN_CWD, REPO_ROOT, Path.home()]
     unique: list[Path] = []
     for root in roots:
         resolved = root.resolve()
@@ -446,7 +568,7 @@ def ensure_allowed(path: Path) -> Path:
 
 
 def result_files(record: RunRecord) -> dict[str, Any]:
-    result_dir = record.run_dir / "result"
+    result_dir = record.result_dir
     files = []
     plots = []
     if result_dir.exists():
@@ -517,40 +639,79 @@ def preview_config(config: EasyScanConfig) -> dict[str, str]:
     return {"ini": serialize_config(config)}
 
 
+@app.post("/api/config/import")
+def import_config(request: ImportConfigRequest) -> dict[str, Any]:
+    try:
+        return as_payload(parse_easy_scan_text(request.content))
+    except Exception as exc:
+        raise HTTPException(status_code=400, detail=f"Failed to parse INI file: {exc}") from exc
+
+
+@app.post("/api/config/import/open")
+def import_config_from_file() -> dict[str, Any]:
+    path = choose_open_path()
+    if not path.is_file():
+        raise HTTPException(status_code=404, detail="INI file not found.")
+    try:
+        config = parse_easy_scan_template(path)
+    except Exception as exc:
+        raise HTTPException(status_code=400, detail=f"Failed to parse INI file: {exc}") from exc
+    payload = as_payload(config)
+    payload["config_file_path"] = str(path)
+    return payload
+
+
+@app.post("/api/config/export")
+def export_config(config: EasyScanConfig) -> Response:
+    return Response(
+        content=serialize_config(config),
+        media_type="text/plain; charset=utf-8",
+        headers={"Content-Disposition": 'attachment; filename="easyscan_config.ini"'},
+    )
+
+
+@app.post("/api/config/export/save")
+def export_config_to_file(config: EasyScanConfig) -> dict[str, str]:
+    default_name = Path(config.config_file_path).name if config.config_file_path.strip() else "easyscan_config.ini"
+    path = choose_save_path(default_name)
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text(serialize_config(config), encoding="utf-8")
+    return {"path": str(path)}
+
+
 @app.post("/api/runs")
 def start_run(config: EasyScanConfig) -> dict[str, Any]:
-    RUNS_ROOT.mkdir(exist_ok=True)
     run_id = time.strftime("%Y%m%d_%H%M%S")
     suffix = 1
-    while (RUNS_ROOT / run_id).exists():
+    config_path, log_path = config_target_paths(config, run_id)
+    while not config.config_file_path.strip() and (config_path.exists() or log_path.exists()):
         suffix += 1
         run_id = f"{time.strftime('%Y%m%d_%H%M%S')}_{suffix}"
-    run_dir = RUNS_ROOT / run_id
-    run_dir.mkdir(parents=True)
-    result_dir = run_dir / "result"
-    if result_dir.exists():
-        shutil.rmtree(result_dir)
-    config.result_folder = str(result_dir.relative_to(REPO_ROOT))
-    config_path = run_dir / "config.ini"
+        config_path, log_path = config_target_paths(config, run_id)
+    run_dir = RUN_CWD
+    result_dir = resolve_config_path(config.result_folder)
+    config_path.parent.mkdir(parents=True, exist_ok=True)
     config_path.write_text(serialize_config(config), encoding="utf-8")
-    record = RunRecord(run_id, run_dir, config_path)
+    record = RunRecord(run_id, run_dir, config_path, log_path, result_dir)
     runs[run_id] = record
     thread = threading.Thread(target=run_worker, args=(record,), daemon=True)
     thread.start()
-    return {"run_id": run_id, "status": record.status, "config_path": str(config_path)}
+    return {"run_id": run_id, "status": record.status, "config_path": str(config_path), "log_path": str(log_path)}
 
 
 @app.get("/api/runs/{run_id}")
 def get_run(run_id: str) -> dict[str, Any]:
     record = runs.get(run_id)
     if record is None:
-        run_dir = RUNS_ROOT / run_id
-        config_path = run_dir / "config.ini"
+        config_path, log_path = run_artifact_paths(run_id)
         if not config_path.exists():
             raise HTTPException(status_code=404, detail="Run not found.")
-        record = RunRecord(run_id, run_dir, config_path)
+        try:
+            result_dir = resolve_config_path(parse_easy_scan_template(config_path).result_folder)
+        except Exception:
+            result_dir = RUN_CWD / "result"
+        record = RunRecord(run_id, RUN_CWD, config_path, log_path, result_dir)
         record.status = "completed"
-        record.log_path = run_dir / "run.log"
     with record.lock:
         log_text = "".join(record.logs)
     if not log_text and record.log_path.exists():
