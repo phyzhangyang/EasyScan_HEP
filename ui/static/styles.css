@@ -414,6 +414,34 @@ th .help-tip::before {
   color: var(--danger);
 }
 
+.ai-config-panel {
+  margin-top: 14px;
+  border-top: 1px solid var(--line);
+  padding-top: 12px;
+}
+
+.ai-config-panel summary {
+  width: max-content;
+  color: #24437c;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.ai-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(180px, 1fr));
+  gap: 14px;
+  margin-top: 12px;
+}
+
+.ai-prompt {
+  margin: 14px 0 12px;
+}
+
+.ai-prompt textarea {
+  min-height: 112px;
+}
+
 .results {
   margin-top: 16px;
   display: grid;
@@ -523,6 +551,7 @@ th .help-tip::before {
 
 @media (max-width: 1000px) {
   .grid,
+  .ai-grid,
   .two-column {
     grid-template-columns: 1fr;
   }
