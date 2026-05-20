@@ -66,6 +66,7 @@ h3 {
 .panel-title,
 .path-row,
 .browser-toolbar,
+.config-actions,
 .program-header {
   display: flex;
   align-items: center;
@@ -111,6 +112,90 @@ label {
   font-weight: 600;
 }
 
+.disabled-field {
+  color: #98a2b3;
+}
+
+.disabled-field .help-tip {
+  opacity: 0.7;
+}
+
+.field-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.help-tip {
+  position: relative;
+  z-index: 20;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 16px;
+  height: 16px;
+  border: 1px solid #9fb3d9;
+  border-radius: 50%;
+  color: #24437c;
+  background: #eef4ff;
+  font-size: 11px;
+  font-weight: 700;
+  line-height: 1;
+  text-transform: none;
+  cursor: help;
+}
+
+.help-tip::after {
+  position: absolute;
+  left: 50%;
+  bottom: calc(100% + 8px);
+  width: max-content;
+  max-width: min(340px, calc(100vw - 48px));
+  padding: 8px 10px;
+  border-radius: 6px;
+  background: #17202a;
+  color: #ffffff;
+  box-shadow: 0 10px 28px rgba(16, 24, 40, 0.18);
+  content: attr(data-tooltip);
+  font-size: 12px;
+  font-weight: 500;
+  line-height: 1.4;
+  opacity: 0;
+  pointer-events: none;
+  text-align: left;
+  text-transform: none;
+  transform: translate(-50%, 4px);
+  transition: opacity 0.12s ease, transform 0.12s ease;
+  white-space: normal;
+}
+
+.help-tip::before {
+  position: absolute;
+  left: 50%;
+  bottom: calc(100% + 3px);
+  width: 10px;
+  height: 10px;
+  background: #17202a;
+  content: "";
+  opacity: 0;
+  pointer-events: none;
+  transform: translate(-50%, 4px) rotate(45deg);
+  transition: opacity 0.12s ease, transform 0.12s ease;
+}
+
+.help-tip:hover::after,
+.help-tip:focus::after,
+.help-tip:hover::before,
+.help-tip:focus::before {
+  opacity: 1;
+  transform: translate(-50%, 0);
+}
+
+.help-tip:hover::before,
+.help-tip:focus::before {
+  transform: translate(-50%, 0) rotate(45deg);
+}
+
 input,
 select,
 textarea {
@@ -122,6 +207,14 @@ textarea {
   color: var(--text);
   background: #ffffff;
   font: inherit;
+}
+
+input.not-used-control,
+select.not-used-control,
+textarea.not-used-control {
+  color: #98a2b3;
+  background: #f2f4f7;
+  font-weight: 700;
 }
 
 textarea {
@@ -185,7 +278,8 @@ button:disabled {
 
 .table-wrap {
   width: 100%;
-  overflow: auto;
+  overflow-x: auto;
+  overflow-y: visible;
 }
 
 table {
@@ -202,9 +296,21 @@ td {
 }
 
 th {
+  position: relative;
   color: var(--muted);
   font-size: 12px;
   text-transform: uppercase;
+  overflow: visible;
+}
+
+th .help-tip::after {
+  top: calc(100% + 8px);
+  bottom: auto;
+}
+
+th .help-tip::before {
+  top: calc(100% + 3px);
+  bottom: auto;
 }
 
 .program-card {
@@ -275,6 +381,23 @@ th {
 .status.stopped {
   color: var(--danger);
   background: #fff1f0;
+}
+
+.config-actions {
+  flex-wrap: wrap;
+}
+
+.config-status {
+  color: var(--muted);
+  font-weight: 700;
+}
+
+.config-status.completed {
+  color: var(--ok);
+}
+
+.config-status.failed {
+  color: var(--danger);
 }
 
 .results {

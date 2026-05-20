@@ -38,6 +38,7 @@ def open_ui_when_ready(url):
 
 def run_ui():
     url = "http://127.0.0.1:8000/"
+    os.environ["EASYSCAN_UI_CWD"] = os.getcwd()
     os.chdir(EASYSCAN_ROOT)
     if EASYSCAN_ROOT not in sys.path:
         sys.path.insert(0, EASYSCAN_ROOT)
