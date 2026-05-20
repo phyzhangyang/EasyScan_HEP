@@ -18,6 +18,7 @@ _onepoint = "ONEPOINT"
 _onepointbatch = "ONEPOINTBATCH"
 _random = "RANDOM"
 _grid = "GRID"
+_bestfit = "BESTFIT"
 _mcmc = "MCMC"
 _emcee = "EMCEE"
 _multinest = "MULTINEST"
@@ -26,7 +27,7 @@ _plot = "PLOT"
 _postprocess = "POSTPROCESS"
 _read = "READ"
 
-_all = [_onepoint, _onepointbatch, _random, _grid, _mcmc, _emcee, _multinest, _dynesty, _postprocess, _plot, _read]
+_all = [_onepoint, _onepointbatch, _random, _grid, _bestfit, _mcmc, _emcee, _multinest, _dynesty, _postprocess, _plot, _read]
 _no_random = [_onepoint, _onepointbatch, _grid, _postprocess, _plot, _read]
 _no_like   = [_onepoint, _onepointbatch, _random, _grid, _postprocess, _plot, _read]
 _post = [_postprocess, _plot]
