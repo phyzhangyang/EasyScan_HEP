@@ -106,7 +106,7 @@ class PLOTER():
             else:
                 self._data = pandas.read_csv(datafile, header=0, index_col=False, sep="[,\s\t]+", engine='python')
             # read specific data for mcmc
-            if ScanMethod == af._mcmc:
+            if ScanMethod in [af._mcmc, af._emcee]:
                 self._dataAllTry = pandas.read_csv(os.path.join(path, af.ResultFile_MCMC), header=0, index_col=False)
         else: # ScanMethod == plot or postprocess 
             ResultFile_name = af.ResultFile_post if postprocess else af.ResultFile
@@ -273,5 +273,4 @@ class PLOTER():
             subplot.set_ylabel(ii[1], **labelconf)
             subplot.tick_params(which = 'both', direction = 'out')
             plt.savefig(os.path.join(self._path, ii[3]))
-
 

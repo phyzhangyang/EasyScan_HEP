@@ -263,7 +263,7 @@ class CONTROLLER:
               af.Info('  ID= %s\tPrior= %s\tMin= %f\tMax= %f\tNbin=%i'%(ii[0],ii[1],ii[2],ii[3],self.GridBin[ii[0]]))
               continue
             
-            if self._ScanMethod == af._mcmc:
+            if self._ScanMethod in [af._mcmc, af._emcee]:
 
               if af.resume:
                 if ii[1].lower() == 'flat':

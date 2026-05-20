@@ -496,6 +496,72 @@ def mcmcrun(LnLike, Prior, n_params, n_live_points, inpar, fixedpar, outpar, Ste
     run_processes(processes)
 
 
+def emceerun(LnLike, Prior, n_params, n_live_points, inpar, fixedpar, outpar, StepSize, InitVal, n_print, outputfolder, num_processes):
+    try:
+        import emcee
+    except ImportError:
+        af.ErrorStop('No emcee module. Install it with "python3 -m pip install emcee" to use EMCEE.')
+    try:
+        import numpy
+    except ImportError:
+        af.ErrorStop('No numpy module. EMCEE needs numpy.')
+
+    data_file = open(os.path.join(outputfolder, af.ResultFile), 'a')
+    all_data_file = open(os.path.join(outputfolder, af.ResultFile_MCMC), 'a')
+    file_path = os.path.join(outputfolder, "SavedFile")
+    n_dims = len(inpar)
+    cube = [af.NaN] * n_params
+    n_accept = 0
+    n_call = 0
+    n_walkers = max(2 * n_dims, num_processes, 4)
+    n_steps = max(1, int(n_live_points / n_walkers) + int(n_live_points % n_walkers != 0))
+    initial = []
+
+    af.Info('Begin emcee ensemble MCMC ...')
+    af.Info('Walkers = %s, steps = %s'%(n_walkers, n_steps))
+
+    for _ in range(n_walkers):
+        walker = []
+        for name in inpar:
+            value = InitVal[name] + gauss(0, StepSize[name])
+            if value < 0:
+                value = random() * 0.01
+            if value > 1:
+                value = 1 - random() * 0.01
+            walker.append(min(max(value, 0.0), 1.0))
+        initial.append(walker)
+
+    def log_probability(unit_cube):
+        nonlocal n_accept, n_call
+        n_call += 1
+        if max(unit_cube) > 1 or min(unit_cube) < 0:
+            return -numpy.inf
+        for i in range(n_dims):
+            cube[i] = unit_cube[i]
+        Prior(cube, n_dims, n_params)
+        for i, name in enumerate(outpar):
+            cube[i + n_dims] = af.NaN
+        lnlike = LnLike(cube, n_dims, n_params, "")
+        all_out = cube.copy()
+        all_out.append(1)
+        saveCube(all_out, all_data_file, file_path, "0", False)
+        if lnlike > af.log_zero:
+            n_accept += 1
+            current = cube.copy()
+            current.append(1)
+            saveCube(current, data_file, file_path, str(n_accept), True)
+        if n_print and n_call % n_print == 0:
+            printPoint(n_call, cube, n_dims, inpar, fixedpar, outpar, lnlike, n_accept)
+        if lnlike <= af.log_zero:
+            return -numpy.inf
+        return lnlike
+
+    sampler = emcee.EnsembleSampler(n_walkers, n_dims, log_probability)
+    sampler.run_mcmc(numpy.array(initial), n_steps, progress=False)
+    data_file.close()
+    all_data_file.close()
+
+
 def multinestrun(LnLike, Prior, n_dims, n_params, seed, outputfiles_basename, n_live_points, verbose, resume, importance_nested_sampling, num_processes):
     import pymultinest
     # See https://johannesbuchner.github.io/PyMultiNest/_modules/pymultinest/run.html

@@ -233,6 +233,21 @@ elif ES.getScanMethod() == af._mcmc:
         outputfolder  = ES.getFolderName(),
         num_processes = ES.getParallelThreads())
 
+elif ES.getScanMethod() == af._emcee:
+    scanner.emceerun(
+        LnLike        = LnLike,
+        Prior         = Prior,
+        n_params      = len(ES.AllPar)+len(Constraint.Chi2),
+        n_live_points = ES.getPointNum(),
+        inpar         = ES.InPar,
+        fixedpar      = ES.FixedPar,
+        outpar        = ES.OutPar,
+        StepSize      = ES.getStepSize(),
+        InitVal       = ES.getInitialValue(),
+        n_print       = ES.getPrintNum(),
+        outputfolder  = ES.getFolderName(),
+        num_processes = ES.getParallelThreads())
+
 elif ES.getScanMethod() == af._multinest:
     scanner.multinestrun(
         LnLike               = LnLike,

@@ -19,13 +19,14 @@ _onepointbatch = "ONEPOINTBATCH"
 _random = "RANDOM"
 _grid = "GRID"
 _mcmc = "MCMC"
+_emcee = "EMCEE"
 _multinest = "MULTINEST"
 _dynesty = "DYNESTY"
 _plot = "PLOT"
 _postprocess = "POSTPROCESS"
 _read = "READ"
 
-_all = [_onepoint, _onepointbatch, _random, _grid, _mcmc, _multinest, _dynesty, _postprocess, _plot, _read]
+_all = [_onepoint, _onepointbatch, _random, _grid, _mcmc, _emcee, _multinest, _dynesty, _postprocess, _plot, _read]
 _no_random = [_onepoint, _onepointbatch, _grid, _postprocess, _plot, _read]
 _no_like   = [_onepoint, _onepointbatch, _random, _grid, _postprocess, _plot, _read]
 _post = [_postprocess, _plot]
@@ -112,12 +113,12 @@ def WriteResultInf(InPar, FixedPar, OutPar, Constraint, Path, ScanMethod):
       inf += 'probability,-2lnlike,'
     inf += ','.join(list(InPar.keys())+list(FixedPar.keys())+list(OutPar.keys())+list(Constraint.keys()))
 
-    if ScanMethod == _mcmc:
+    if ScanMethod in [_mcmc, _emcee]:
       inf += ",dwell"
     outfile = open(os.path.join(Path, ResultFile),'w')
     outfile.write(inf+'\n')
     outfile.close()
-    if ScanMethod == _mcmc:
+    if ScanMethod in [_mcmc, _emcee]:
       outfile = open(os.path.join(Path, ResultFile_MCMC),'w')
       outfile.write(inf+'\n')
       outfile.close()

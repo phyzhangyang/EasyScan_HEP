@@ -7,7 +7,7 @@ import shutil
 from pathlib import Path
 
 
-SCAN_METHODS = {"ONEPOINT", "ONEPOINTBATCH", "RANDOM", "GRID", "MCMC", "MULTINEST", "DYNESTY", "POSTPROCESS", "PLOT", "READ"}
+SCAN_METHODS = {"ONEPOINT", "ONEPOINTBATCH", "RANDOM", "GRID", "MCMC", "EMCEE", "MULTINEST", "DYNESTY", "POSTPROCESS", "PLOT", "READ"}
 NO_NUMBER_OF_POINTS = {"ONEPOINT", "ONEPOINTBATCH", "GRID", "POSTPROCESS", "PLOT", "READ"}
 NO_LIKE = {"ONEPOINT", "ONEPOINTBATCH", "RANDOM", "GRID", "POSTPROCESS", "PLOT", "READ"}
 PARALLEL_METHODS = {"RANDOM", "GRID", "MCMC", "ONEPOINTBATCH", "MULTINEST", "POSTPROCESS"}
@@ -47,6 +47,7 @@ FORBIDDEN_NAMES = {
     "RANDOM",
     "GRID",
     "MCMC",
+    "EMCEE",
     "MULTINEST",
     "DYNESTY",
     "POSTPROCESS",
@@ -183,7 +184,7 @@ def check_config_text(text, base_dir=None):
         required=False,
         used=True,
     )
-    if config.has_option("scan", "Random seed") and method not in {"RANDOM", "MCMC", "MULTINEST"}:
+    if config.has_option("scan", "Random seed") and method not in {"RANDOM", "MCMC", "EMCEE", "MULTINEST"}:
         warnings.append('"Random seed" is present but not used for this scan method.')
     if threads and threads > 1:
         if method not in PARALLEL_METHODS:
@@ -231,13 +232,13 @@ def check_config_text(text, base_dir=None):
                         errors.append(f'Input parameter "{name}" bins must be an integer.')
                 else:
                     warnings.append(f'Input parameter "{name}" has no GRID bins; EasyScan will use default 10.')
-            elif method == "MCMC":
+            elif method in {"MCMC", "EMCEE"}:
                 if len(parts) < 5:
-                    warnings.append(f'Input parameter "{name}" has no MCMC interval; EasyScan will use default 10.')
+                    warnings.append(f'Input parameter "{name}" has no {method} interval; EasyScan will use default 10.')
                 elif not check_float(parts[4], f'Input parameter "{name}" interval', errors):
                     pass
                 if len(parts) < 6:
-                    warnings.append(f'Input parameter "{name}" has no MCMC initial value; EasyScan will use midpoint.')
+                    warnings.append(f'Input parameter "{name}" has no {method} initial value; EasyScan will use midpoint.')
                 else:
                     check_float(parts[5], f'Input parameter "{name}" initial value', errors)
             elif method in {"RANDOM", "MULTINEST", "DYNESTY"} and len(parts) > 4:
