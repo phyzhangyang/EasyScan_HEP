@@ -248,6 +248,20 @@ elif ES.getScanMethod() == af._multinest:
         num_processes        = ES.getParallelThreads())
 
 
+elif ES.getScanMethod() == af._dynesty:
+    scanner.dynestyrun(
+        LnLike        = LnLike,
+        Prior         = Prior,
+        n_dims        = len(ES.InPar),
+        n_params      = len(ES.AllPar)+len(Constraint.Chi2),
+        inpar         = ES.InPar,
+        fixedpar      = ES.FixedPar,
+        outpar        = ES.OutPar,
+        n_live_points = ES.getPointNum(),
+        n_print       = ES.getPrintNum(),
+        outputfolder  = ES.getFolderName())
+
+
 elif ES.getScanMethod() == af._postprocess:
     scanner.postprocessrun(
             LnLike       = LnLike,

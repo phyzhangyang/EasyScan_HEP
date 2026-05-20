@@ -7,7 +7,7 @@ import shutil
 from pathlib import Path
 
 
-SCAN_METHODS = {"ONEPOINT", "ONEPOINTBATCH", "RANDOM", "GRID", "MCMC", "MULTINEST", "POSTPROCESS", "PLOT", "READ"}
+SCAN_METHODS = {"ONEPOINT", "ONEPOINTBATCH", "RANDOM", "GRID", "MCMC", "MULTINEST", "DYNESTY", "POSTPROCESS", "PLOT", "READ"}
 NO_NUMBER_OF_POINTS = {"ONEPOINT", "ONEPOINTBATCH", "GRID", "POSTPROCESS", "PLOT", "READ"}
 NO_LIKE = {"ONEPOINT", "ONEPOINTBATCH", "RANDOM", "GRID", "POSTPROCESS", "PLOT", "READ"}
 PARALLEL_METHODS = {"RANDOM", "GRID", "MCMC", "ONEPOINTBATCH", "MULTINEST", "POSTPROCESS"}
@@ -48,6 +48,7 @@ FORBIDDEN_NAMES = {
     "GRID",
     "MCMC",
     "MULTINEST",
+    "DYNESTY",
     "POSTPROCESS",
     "PLOT",
     "READ",
@@ -180,7 +181,7 @@ def check_config_text(text, base_dir=None):
         errors,
         warnings,
         required=False,
-        used=method in PARALLEL_METHODS,
+        used=True,
     )
     if config.has_option("scan", "Random seed") and method not in {"RANDOM", "MCMC", "MULTINEST"}:
         warnings.append('"Random seed" is present but not used for this scan method.')
@@ -239,7 +240,7 @@ def check_config_text(text, base_dir=None):
                     warnings.append(f'Input parameter "{name}" has no MCMC initial value; EasyScan will use midpoint.')
                 else:
                     check_float(parts[5], f'Input parameter "{name}" initial value', errors)
-            elif len(parts) > 4:
+            elif method in {"RANDOM", "MULTINEST", "DYNESTY"} and len(parts) > 4:
                 warnings.append(f'Input parameter "{name}" has extra fields ignored by {method}.')
     add_duplicate_errors("Input parameter", input_names, errors)
 

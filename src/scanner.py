@@ -557,4 +557,43 @@ def multinestrun(LnLike, Prior, n_dims, n_params, seed, outputfiles_basename, n_
                 merged_file.write(filetext)
                 if not filetext.endswith('\n'):
                     merged_file.write('\n')
+
+
+def dynestyrun(LnLike, Prior, n_dims, n_params, inpar, fixedpar, outpar, n_live_points, n_print, outputfolder):
+    try:
+        import dynesty
+    except ImportError:
+        af.ErrorStop('No dynesty module. Install it with "python3 -m pip install dynesty" to use DYNESTY.')
+
+    data_file = open(os.path.join(outputfolder, af.ResultFile), 'a')
+    file_path = os.path.join(outputfolder, "SavedFile")
+    cube = [af.NaN] * n_params
+    n_accept = 0
+    n_call = 0
+
+    af.Info('Begin dynesty nested sampling ...')
+
+    def prior_transform(unit_cube):
+        transformed = list(unit_cube)
+        Prior(transformed, n_dims, n_params)
+        return transformed
+
+    def log_likelihood(theta):
+        nonlocal n_accept, n_call
+        n_call += 1
+        for i in range(n_dims):
+            cube[i] = theta[i]
+        for i, name in enumerate(outpar):
+            cube[i + n_dims] = af.NaN
+        lnlike = LnLike(cube, n_dims, n_params, "")
+        if lnlike > af.log_zero:
+            n_accept += 1
+            saveCube(cube, data_file, file_path, str(n_accept), True)
+        if n_print and n_call % n_print == 0:
+            printPoint(n_call, cube, n_dims, inpar, fixedpar, outpar, lnlike, n_accept)
+        return lnlike
+
+    sampler = dynesty.NestedSampler(log_likelihood, prior_transform, n_dims, nlive=n_live_points)
+    sampler.run_nested()
+    data_file.close()
     
