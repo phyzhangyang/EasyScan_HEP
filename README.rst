@@ -95,4 +95,6 @@ The Web UI can build ``.ini`` configuration files visually, choose local
 paths from the browser UI, run EasyScan in the background, show live logs,
 stop running jobs, inspect result files and generated plots, and check
 configuration consistency before a run. Generated UI ``.ini`` and ``.log``
-artifacts are stored in the directory where the UI was opened.
+artifacts are stored in the directory where the UI was opened. The
+Configuration File panel can also call an OpenAI-compatible large language
+model API to turn a natural-language request into a checked ``.ini`` setup.

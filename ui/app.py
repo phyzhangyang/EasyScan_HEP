@@ -4,10 +4,13 @@ import json
 import os
 import re
 import signal
+import socket
 import subprocess
 import sys
 import threading
 import time
+import urllib.error
+import urllib.request
 from pathlib import Path
 from typing import Any, Optional
 
@@ -127,6 +130,15 @@ class EasyScanConfig(BaseModel):
 
 class ImportConfigRequest(BaseModel):
     content: str
+
+
+class LLMConfigRequest(BaseModel):
+    provider: str = "openai"
+    model: str = ""
+    api_key: str = ""
+    base_url: str = ""
+    prompt: str
+    current_config: EasyScanConfig
 
 
 class RunRecord:
@@ -431,6 +443,13 @@ def parse_easy_scan_text(text: str) -> EasyScanConfig:
             )
     if gaussian_constraints:
         config.gaussian_constraints = gaussian_constraints
+    freeform_chi2 = []
+    for row in constraint.get("FreeFormChi2", []):
+        parts = split_row(row)
+        if parts:
+            freeform_chi2.append(FreeFormChi2Entry(variable=parts[0], label=parts[1] if len(parts) > 1 else ""))
+    if freeform_chi2:
+        config.freeform_chi2 = freeform_chi2
 
     plot = sections.get("plot", {})
     plots = []
@@ -450,6 +469,224 @@ def parse_easy_scan_text(text: str) -> EasyScanConfig:
 
 def parse_easy_scan_template(path: Path) -> EasyScanConfig:
     return parse_easy_scan_text(path.read_text(encoding="utf-8"))
+
+
+LLM_PROVIDERS: dict[str, dict[str, str]] = {
+    "openai": {
+        "base_url": "https://api.openai.com/v1/chat/completions",
+        "model": "gpt-4.1-mini",
+        "requires_key": "1",
+    },
+    "deepseek": {
+        "base_url": "https://api.deepseek.com/chat/completions",
+        "model": "deepseek-chat",
+        "requires_key": "1",
+    },
+    "qwen": {
+        "base_url": "https://dashscope.aliyuncs.com/compatible-mode/v1/chat/completions",
+        "model": "qwen-plus",
+        "requires_key": "1",
+    },
+    "moonshot": {
+        "base_url": "https://api.moonshot.cn/v1/chat/completions",
+        "model": "moonshot-v1-8k",
+        "requires_key": "1",
+    },
+    "zhipu": {
+        "base_url": "https://open.bigmodel.cn/api/paas/v4/chat/completions",
+        "model": "glm-4-flash",
+        "requires_key": "1",
+    },
+    "siliconflow": {
+        "base_url": "https://api.siliconflow.cn/v1/chat/completions",
+        "model": "Qwen/Qwen2.5-72B-Instruct",
+        "requires_key": "1",
+    },
+    "openrouter": {
+        "base_url": "https://openrouter.ai/api/v1/chat/completions",
+        "model": "openai/gpt-4o-mini",
+        "requires_key": "1",
+    },
+    "ollama": {
+        "base_url": "http://127.0.0.1:11434/v1/chat/completions",
+        "model": "llama3.1",
+        "requires_key": "0",
+    },
+    "custom": {
+        "base_url": "",
+        "model": "",
+        "requires_key": "0",
+    },
+}
+
+
+def llm_provider_defaults(provider: str) -> dict[str, str]:
+    return LLM_PROVIDERS.get(provider.lower().strip(), LLM_PROVIDERS["custom"])
+
+
+def normalize_chat_url(provider: str, base_url: str) -> str:
+    value = base_url.strip()
+    if not value:
+        value = llm_provider_defaults(provider).get("base_url", "")
+    if not value:
+        raise HTTPException(status_code=400, detail="LLM API base URL is required.")
+    lowered = value.rstrip("/").lower()
+    if lowered.endswith("/chat/completions"):
+        return value.rstrip("/")
+    if lowered.endswith("/v1") or lowered.endswith("/compatible-mode/v1"):
+        return value.rstrip("/") + "/chat/completions"
+    if provider.lower().strip() == "deepseek":
+        return value.rstrip("/") + "/chat/completions"
+    return value.rstrip("/") + "/v1/chat/completions"
+
+
+def llm_system_prompt() -> str:
+    return """You convert natural-language EasyScan_HEP requests into a complete EasyScan_HEP INI file.
+Return only INI text. Do not use Markdown fences or explanations.
+Start from the current INI and change only what the user requests.
+Keep existing local paths, program blocks, variable names, constraints, and plots unless the user asks to change them.
+
+EasyScan_HEP syntax summary:
+- Required [scan] options: Result folder name, Scan method, Input parameters.
+- Supported Scan method values: RANDOM, BESTFIT, MCMC, EMCEE, DYNESTY, MULTINEST, ONEPOINT, ONEPOINT/path/to/batch.in.
+- Input parameters rows:
+  - RANDOM, BESTFIT, DYNESTY, MULTINEST: name, prior, min, max.
+  - MCMC, EMCEE: name, prior, min, max, interval, initial.
+  - Fixed or one-point mode: name, Fixed, value.
+  - prior must be flat, log, or Fixed.
+- Likelihood-based methods BESTFIT, MCMC, EMCEE, DYNESTY and MULTINEST need [constraint] with Gaussian or FreeFormChi2.
+- [programN] blocks describe external programs with Execute command, Command path, Input/Output file and variable rows.
+- [plot] rows: Histogram x, figure; Scatter x, y, figure; Color/Contour x, y, value, figure.
+"""
+
+
+def build_llm_messages(request: LLMConfigRequest) -> list[dict[str, str]]:
+    current_ini = serialize_config(request.current_config)
+    user_prompt = f"""Current EasyScan_HEP INI:
+
+{current_ini}
+
+User request:
+{request.prompt.strip()}
+
+Write the full updated EasyScan_HEP INI now."""
+    return [
+        {"role": "system", "content": llm_system_prompt()},
+        {"role": "user", "content": user_prompt},
+    ]
+
+
+def call_openai_compatible_llm(request: LLMConfigRequest) -> str:
+    provider = request.provider.lower().strip()
+    defaults = llm_provider_defaults(provider)
+    model = request.model.strip() or defaults.get("model", "")
+    if not model:
+        raise HTTPException(status_code=400, detail="LLM model is required.")
+    if defaults.get("requires_key") == "1" and not request.api_key.strip():
+        raise HTTPException(status_code=400, detail="LLM API key is required for this provider.")
+
+    body = {
+        "model": model,
+        "messages": build_llm_messages(request),
+        "temperature": 0.1,
+        "stream": False,
+    }
+    headers = {
+        "Content-Type": "application/json",
+        "Accept": "application/json",
+        "User-Agent": "EasyScan_HEP-UI",
+    }
+    if request.api_key.strip():
+        headers["Authorization"] = f"Bearer {request.api_key.strip()}"
+
+    url = normalize_chat_url(provider, request.base_url)
+    http_request = urllib.request.Request(
+        url,
+        data=json.dumps(body).encode("utf-8"),
+        headers=headers,
+        method="POST",
+    )
+    try:
+        with urllib.request.urlopen(http_request, timeout=120) as response:
+            payload = json.loads(response.read().decode("utf-8"))
+    except urllib.error.HTTPError as exc:
+        error_body = exc.read(3000).decode("utf-8", errors="replace").strip()
+        message = error_body or str(exc.reason)
+        raise HTTPException(status_code=502, detail=f"LLM API error {exc.code}: {message}") from exc
+    except (urllib.error.URLError, TimeoutError, socket.timeout) as exc:
+        reason = getattr(exc, "reason", exc)
+        raise HTTPException(status_code=502, detail=f"Can not reach LLM API: {reason}") from exc
+    except json.JSONDecodeError as exc:
+        raise HTTPException(status_code=502, detail="LLM API returned invalid JSON.") from exc
+
+    try:
+        content = payload["choices"][0]["message"]["content"]
+    except (KeyError, IndexError, TypeError) as exc:
+        raise HTTPException(status_code=502, detail="LLM API response did not contain a message.") from exc
+    if not isinstance(content, str) or not content.strip():
+        raise HTTPException(status_code=502, detail="LLM API returned an empty message.")
+    return content
+
+
+def extract_ini_from_llm_text(text: str) -> str:
+    fenced_blocks = re.findall(r"```(?:ini|cfg|text)?\s*(.*?)```", text, flags=re.IGNORECASE | re.DOTALL)
+    candidates = fenced_blocks if fenced_blocks else [text]
+    allowed_options = {
+        "Result folder name",
+        "Scan method",
+        "Input parameters",
+        "Number of points",
+        "Random seed",
+        "Interval of print",
+        "Parallel threads",
+        "Parallel folder",
+        "Program name",
+        "Execute command",
+        "Command path",
+        "Input file",
+        "Input variable",
+        "Output file",
+        "Output variable",
+        "Command executor",
+        "Time limit in minute",
+        "Clean output file",
+        "Bound",
+        "Gaussian",
+        "FreeFormChi2",
+        "Histogram",
+        "Scatter",
+        "Color",
+        "Contour",
+    }
+    for candidate in candidates:
+        lines: list[str] = []
+        in_ini = False
+        for raw_line in candidate.splitlines():
+            stripped = raw_line.strip()
+            if stripped.lower().startswith("[scan]"):
+                in_ini = True
+            if not in_ini:
+                continue
+            if stripped.startswith("[") and stripped.endswith("]"):
+                section_name = stripped.strip("[]").lower()
+                if section_name != "scan" and not section_name.startswith("program") and section_name not in {"constraint", "plot"}:
+                    break
+            if (
+                stripped
+                and not stripped.startswith("#")
+                and not (stripped.startswith("[") and stripped.endswith("]"))
+                and not raw_line.startswith((" ", "\t"))
+            ):
+                if ":" not in raw_line:
+                    break
+                key = raw_line.split(":", 1)[0].strip()
+                if key not in allowed_options:
+                    break
+            lines.append(raw_line.rstrip())
+        ini_text = "\n".join(lines).strip()
+        if ini_text:
+            return ini_text + "\n"
+    raise HTTPException(status_code=422, detail="The LLM response did not contain an EasyScan INI file.")
 
 
 def applescript_string(value: str) -> str:
@@ -690,6 +927,45 @@ def check_config(config: EasyScanConfig) -> dict[str, Any]:
     report = check_config_text(serialize_config(config), base_dir=REPO_ROOT)
     report["text"] = format_check_report(report)
     return report
+
+
+@app.post("/api/config/ai/generate")
+def generate_config_with_ai(request: LLMConfigRequest) -> dict[str, Any]:
+    if not request.prompt.strip():
+        raise HTTPException(status_code=400, detail="Natural-language request is required.")
+
+    llm_text = call_openai_compatible_llm(request)
+    ini_text = extract_ini_from_llm_text(llm_text)
+    try:
+        generated_config = parse_easy_scan_text(ini_text)
+    except Exception as exc:
+        raise HTTPException(
+            status_code=422,
+            detail={
+                "message": f"LLM output could not be parsed as an EasyScan INI file: {exc}",
+                "ini": ini_text,
+            },
+        ) from exc
+
+    generated_config.config_file_path = request.current_config.config_file_path
+    report = check_config_text(ini_text, base_dir=REPO_ROOT)
+    check_text = format_check_report(report)
+    if not report.get("ok"):
+        raise HTTPException(
+            status_code=422,
+            detail={
+                "message": "AI generated an INI file, but Check Config found errors.",
+                "check_text": check_text,
+                "ini": ini_text,
+            },
+        )
+
+    return {
+        "config": as_payload(generated_config),
+        "ini": ini_text,
+        "check": report,
+        "check_text": check_text,
+    }
 
 
 @app.post("/api/runs")

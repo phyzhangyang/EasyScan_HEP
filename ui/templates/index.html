@@ -28,6 +28,40 @@
           <button id="checkConfigBtn" class="secondary">Check Config</button>
           <span id="configFileStatus" class="config-status"></span>
         </div>
+        <details class="ai-config-panel">
+          <summary>AI Generate INI</summary>
+          <div class="ai-grid">
+            <label><span class="field-label">Provider <span class="help-tip" data-tooltip="OpenAI-compatible chat completion provider used to generate the INI file." tabindex="0" aria-label="Help: AI provider">?</span></span>
+              <select id="aiProvider">
+                <option value="openai">OpenAI</option>
+                <option value="deepseek">DeepSeek</option>
+                <option value="qwen">Qwen / DashScope</option>
+                <option value="moonshot">Moonshot Kimi</option>
+                <option value="zhipu">Zhipu GLM</option>
+                <option value="siliconflow">SiliconFlow</option>
+                <option value="openrouter">OpenRouter</option>
+                <option value="ollama">Ollama Local</option>
+                <option value="custom">Custom OpenAI-compatible</option>
+              </select>
+            </label>
+            <label><span class="field-label">Model <span class="help-tip" data-tooltip="Model name sent to the selected provider." tabindex="0" aria-label="Help: AI model">?</span></span>
+              <input id="aiModel" type="text" autocomplete="off">
+            </label>
+            <label><span class="field-label">API key <span class="help-tip" data-tooltip="Used only for this local request and not written into the INI file." tabindex="0" aria-label="Help: AI API key">?</span></span>
+              <input id="aiApiKey" type="password" autocomplete="off">
+            </label>
+            <label><span class="field-label">Base URL <span class="help-tip" data-tooltip="Chat completions endpoint. The field is editable for compatible providers." tabindex="0" aria-label="Help: AI base URL">?</span></span>
+              <input id="aiBaseUrl" type="text" autocomplete="off">
+            </label>
+          </div>
+          <label class="ai-prompt"><span class="field-label">Natural language request <span class="help-tip" data-tooltip="Describe the scan setup or the changes to make to the current UI configuration." tabindex="0" aria-label="Help: AI prompt">?</span></span>
+            <textarea id="aiPrompt" placeholder="Example: Use RANDOM with 2000 points, scan x from 0 to 3.14 and y from -3.14 to 3.14, keep the TestFunction program, and plot f and Chi2."></textarea>
+          </label>
+          <div class="config-actions">
+            <button id="aiGenerateConfigBtn" class="secondary">Generate INI with AI</button>
+            <span id="aiConfigStatus" class="config-status"></span>
+          </div>
+        </details>
         <pre id="checkBox" class="check-box hidden"></pre>
       </section>
 
