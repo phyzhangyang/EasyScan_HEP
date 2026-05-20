@@ -131,6 +131,39 @@ def check_float(value, context, errors):
         return False
 
 
+def is_relative_subpath(path_value, parent_value):
+    path = Path(path_value)
+    parent = Path(parent_value)
+    if path.is_absolute() or parent.is_absolute():
+        return False
+    path_parts = path.parts
+    parent_parts = parent.parts
+    return path_parts[: len(parent_parts)] == parent_parts
+
+
+def check_variable_rows(config, section, option, errors):
+    for row_index, row in enumerate(rows_for(config, section, option), start=1):
+        parts = split_row(row)
+        if len(parts) < 3:
+            continue
+        method = parts[2].strip().lower()
+        if method != "slha":
+            continue
+        if len(parts) < 6:
+            if len(parts) >= 4 and parts[3].strip().upper() not in {"BLOCK", "DECAY"}:
+                errors.append(
+                    f'"{option}" row {row_index} in [{section}] using SLHA must use "BLOCK" or "DECAY" as the fourth field and needs at least 6 fields.'
+                )
+            else:
+                errors.append(f'"{option}" row {row_index} in [{section}] using SLHA needs at least 6 fields.')
+            continue
+        slha_kind = parts[3].strip().upper()
+        if slha_kind not in {"BLOCK", "DECAY"}:
+            errors.append(
+                f'"{option}" row {row_index} in [{section}] using SLHA must use "BLOCK" or "DECAY" as the fourth field.'
+            )
+
+
 def check_config_text(text, base_dir=None):
     base_dir = Path(base_dir or os.getcwd()).expanduser().resolve()
     errors = []
@@ -185,6 +218,7 @@ def check_config_text(text, base_dir=None):
         required=False,
         used=True,
     )
+    parallel_folder_value = ""
     if config.has_option("scan", "Random seed") and method not in {"RANDOM", "MCMC", "EMCEE", "MULTINEST"}:
         warnings.append('"Random seed" is present but not used for this scan method.')
     if threads and threads > 1:
@@ -193,7 +227,10 @@ def check_config_text(text, base_dir=None):
         if not config.has_option("scan", "Parallel folder"):
             errors.append('Missing "Parallel folder" because "Parallel threads" is larger than 1.')
         else:
-            parallel_folder = resolve_path(config.get("scan", "Parallel folder"), base_dir)
+            parallel_folder_value = config.get("scan", "Parallel folder").strip()
+            if Path(parallel_folder_value).expanduser().is_absolute():
+                errors.append('"Parallel folder" must be a relative directory when "Parallel threads" is larger than 1.')
+            parallel_folder = resolve_path(parallel_folder_value, base_dir)
             if not parallel_folder.is_dir():
                 errors.append(f"Parallel folder does not exist: {parallel_folder}")
 
@@ -265,6 +302,17 @@ def check_config_text(text, base_dir=None):
             resolved_command_path = resolve_path(command_path or ".", base_dir)
             if command_path and not resolved_command_path.is_dir():
                 errors.append(f"Command path does not exist in [{section}]: {command_path}")
+            if threads and threads > 1 and parallel_folder_value:
+                if not command_path:
+                    errors.append(
+                        f'Missing "Command path" in [{section}] because parallel mode requires it to start with "Parallel folder".'
+                    )
+                elif Path(command_path).expanduser().is_absolute():
+                    errors.append(f'"Command path" in [{section}] must be relative in parallel mode.')
+                elif not is_relative_subpath(command_path, parallel_folder_value):
+                    errors.append(
+                        f'"Command path" in [{section}] must start with "Parallel folder" in parallel mode: {parallel_folder_value}'
+                    )
             if executable and not executable.startswith(("/", ".")) and shutil.which(executable) is None:
                 warnings.append(f'Executable "{executable}" in [{section}] is not on PATH.')
             elif executable.startswith("./"):
@@ -282,6 +330,8 @@ def check_config_text(text, base_dir=None):
                     errors.append(f"Input file does not exist in [{section}]: {parts[1]}")
                 if option == "Output file" and not path.parent.exists():
                     warnings.append(f"Output file parent does not exist in [{section}]: {path.parent}")
+        check_variable_rows(config, section, "Input variable", errors)
+        check_variable_rows(config, section, "Output variable", errors)
         for row in rows_for(config, section, "Output variable"):
             parts = split_row(row)
             if parts:
