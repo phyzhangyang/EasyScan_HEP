@@ -95,6 +95,33 @@ def resolve_path(value, base_dir):
     return (base_dir / path).resolve()
 
 
+def check_directory_writable(path, context, errors, missing_is_error=True):
+    if path.exists():
+        if not path.is_dir():
+            errors.append(f"{context} is not a directory: {path}")
+        elif not os.access(path, os.W_OK | os.X_OK):
+            errors.append(f"{context} is not writable: {path}")
+        return
+    parent = path.parent
+    if not parent.exists():
+        message = f"{context} parent directory does not exist: {parent}"
+        if missing_is_error:
+            errors.append(message)
+        return
+    if not os.access(parent, os.W_OK | os.X_OK):
+        errors.append(f"{context} parent directory is not writable: {parent}")
+
+
+def check_output_parent_writable(path, context, errors, warnings):
+    parent = path.parent
+    if not parent.exists():
+        warnings.append(f"{context} parent does not exist: {parent}")
+    elif not parent.is_dir():
+        errors.append(f"{context} parent is not a directory: {parent}")
+    elif not os.access(parent, os.W_OK | os.X_OK):
+        errors.append(f"{context} parent is not writable: {parent}")
+
+
 def add_duplicate_errors(kind, names, errors):
     seen = {}
     for name in names:
@@ -206,6 +233,8 @@ def check_config_text(text, base_dir=None):
         result_folder = config.get("scan", "Result folder name").strip()
         if " " in result_folder:
             errors.append('"Result folder name" must not contain spaces.')
+        else:
+            check_directory_writable(resolve_path(result_folder, base_dir), "Result folder", errors)
 
     check_positive_int(
         config,
@@ -215,6 +244,15 @@ def check_config_text(text, base_dir=None):
         warnings,
         required=method not in NO_NUMBER_OF_POINTS,
         used=method not in NO_NUMBER_OF_POINTS,
+    )
+    mcmc_walkers = check_positive_int(
+        config,
+        "scan",
+        "MCMC walkers",
+        errors,
+        warnings,
+        required=False,
+        used=method == "EMCEE",
     )
     check_positive_int(config, "scan", "Interval of print", errors, warnings, required=False, used=True)
     threads = check_positive_int(
@@ -243,6 +281,7 @@ def check_config_text(text, base_dir=None):
                 errors.append(f"Parallel folder does not exist: {parallel_folder}")
 
     input_names = []
+    sampled_input_names = []
     fixed_names = []
     if not config.has_option("scan", "Input parameters"):
         errors.append('Missing "Input parameters" in [scan].')
@@ -262,6 +301,7 @@ def check_config_text(text, base_dir=None):
                 if len(parts) > 3:
                     warnings.append(f'Input parameter "{name}" has extra fields ignored for Fixed/one-point mode.')
                 continue
+            sampled_input_names.append(name)
             if prior.lower() not in {"flat", "log"}:
                 errors.append(f'Input parameter "{name}" prior must be flat, log, or Fixed.')
             if len(parts) < 4:
@@ -303,6 +343,10 @@ def check_config_text(text, base_dir=None):
             elif method in {"RANDOM", "BESTFIT", "MULTINEST", "DYNESTY"} and len(parts) > 4:
                 warnings.append(f'Input parameter "{name}" has extra fields ignored by {method}.')
     add_duplicate_errors("Input parameter", input_names, errors)
+    if method == "EMCEE" and mcmc_walkers is not None:
+        minimum_walkers = 2 * len(sampled_input_names)
+        if minimum_walkers and mcmc_walkers < minimum_walkers:
+            errors.append(f'"MCMC walkers" for EMCEE must be at least 2 * sampled parameters ({minimum_walkers}).')
 
     program_sections = sorted(
         [section for section in config.sections() if section.lower().startswith("program")],
@@ -349,8 +393,8 @@ def check_config_text(text, base_dir=None):
                 path = resolve_path(parts[1], base_dir)
                 if option == "Input file" and not path.exists():
                     errors.append(f"Input file does not exist in [{section}]: {parts[1]}")
-                if option == "Output file" and not path.parent.exists():
-                    warnings.append(f"Output file parent does not exist in [{section}]: {path.parent}")
+                if option == "Output file":
+                    check_output_parent_writable(path, f"Output file in [{section}]", errors, warnings)
         check_variable_rows(config, section, "Input variable", errors)
         check_variable_rows(config, section, "Output variable", errors)
         for row in rows_for(config, section, "Output variable"):

@@ -77,6 +77,14 @@ def ReadIn(Configfile, ES, Programs, Constraint, Ploter):
     except ValueError:
         af.ErrorStop(notInteger("Number of points"))
     try:
+        ES.setMCMCWalkers(cf.getint('scan', 'MCMC walkers'))
+        if ES.getScanMethod() != af._emcee:
+            af.WarningNoWait('"MCMC walkers" in configure file is not used.')
+    except configparser.NoOptionError:
+        pass
+    except ValueError:
+        af.ErrorStop(notInteger("MCMC walkers"))
+    try:
         ES.setRandomSeed(cf.getint('scan', 'Random seed'))
     except configparser.NoOptionError:
         if ES.getScanMethod() not in af._no_random:

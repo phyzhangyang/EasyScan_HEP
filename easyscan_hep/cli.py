@@ -251,6 +251,7 @@ def run_scan() -> None:
             n_print=es.getPrintNum(),
             outputfolder=es.getFolderName(),
             num_processes=es.getParallelThreads(),
+            mcmc_walkers=es.getMCMCWalkers(),
         )
     elif es.getScanMethod() == af._multinest:
         scanner.multinestrun(
