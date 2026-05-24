@@ -895,6 +895,7 @@ def run_worker(record: RunRecord) -> None:
     if env.get("PYTHONPATH"):
         pythonpath.append(env["PYTHONPATH"])
     env["PYTHONPATH"] = os.pathsep.join(pythonpath)
+    env["EASYSCAN_RESULT_EXISTS_ACTION"] = "replace"
     with record.log_path.open("w", encoding="utf-8") as log_file:
         log_file.write("$ " + " ".join(command) + "\n")
         log_file.flush()
@@ -903,16 +904,13 @@ def run_worker(record: RunRecord) -> None:
                 command,
                 cwd=RUN_CWD,
                 env=env,
-                stdin=subprocess.PIPE,
+                stdin=subprocess.DEVNULL,
                 stdout=subprocess.PIPE,
                 stderr=subprocess.STDOUT,
                 text=True,
                 bufsize=1,
                 preexec_fn=os.setsid,
             )
-            if record.process.stdin:
-                record.process.stdin.write("r\n")
-                record.process.stdin.flush()
             assert record.process.stdout is not None
             for line in record.process.stdout:
                 line = clean_log_line(line)

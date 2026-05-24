@@ -100,18 +100,33 @@ class CONTROLLER:
             # Deal with the situation that the result folder already exists.
             if os.path.exists(self._FolderName):
                 af.Info(("* The Result file [%s] already exists." % name ))
-                while True:
-                    c = input("Choose: (r)replace, (b)backup, (s)stop\n")
-                    if c == "r":
+                action = os.environ.get("EASYSCAN_RESULT_EXISTS_ACTION", "").strip().lower()
+                action = {"replace": "r", "backup": "b", "stop": "s"}.get(action, action)
+                if action:
+                    if action == "r":
+                        af.Info('Use EASYSCAN_RESULT_EXISTS_ACTION=replace.')
                         shutil.rmtree(self._FolderName)
-                        break
-                    elif c == "b":
+                    elif action == "b":
+                        af.Info('Use EASYSCAN_RESULT_EXISTS_ACTION=backup.')
                         self.backup_result(self._FolderName)
-                        break
-                    elif c == "s":
+                    elif action == "s":
+                        af.Info('Use EASYSCAN_RESULT_EXISTS_ACTION=stop.')
                         exit(1)
                     else:
-                        af.Info("Wrong input! Please type in one of ('r','b','s')")
+                        af.ErrorStop('EASYSCAN_RESULT_EXISTS_ACTION must be "replace", "backup", or "stop".')
+                else:
+                    while True:
+                        c = input("Choose: (r)replace, (b)backup, (s)stop\n")
+                        if c == "r":
+                            shutil.rmtree(self._FolderName)
+                            break
+                        elif c == "b":
+                            self.backup_result(self._FolderName)
+                            break
+                        elif c == "s":
+                            exit(1)
+                        else:
+                            af.Info("Wrong input! Please type in one of ('r','b','s')")
             # Create result folder
             os.mkdir(self._FolderName)
             os.mkdir(os.path.join(self._FolderName,'SavedFile'))
