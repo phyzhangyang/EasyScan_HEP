@@ -1,4 +1,10 @@
 from setuptools import setup
+from glob import glob
+import os
+
+
+def file_glob(pattern):
+    return [path for path in glob(pattern) if os.path.isfile(path)]
 
 
 CORE_REQUIRES = [
@@ -51,6 +57,15 @@ setup(
     ],
     packages=["easyscan_hep", "ui"],
     package_data={"ui": ["templates/*.html", "static/*.js", "static/*.css"]},
+    data_files=[
+        ("templates", file_glob("templates/*.ini") + file_glob("templates/*.txt")),
+        ("utils", ["utils/TestFunction.py", "utils/TestFunction_input.dat", "utils/OnePointBatch.in"]),
+        ("utils/MSSM_mW", [
+            "utils/MSSM_mW/for_MSSM_mW.susyhit",
+            "utils/MSSM_mW/hbounds.txt",
+            "utils/MSSM_mW/makefile",
+        ]),
+    ],
     install_requires=CORE_REQUIRES,
     extras_require={
         "ui": UI_REQUIRES,

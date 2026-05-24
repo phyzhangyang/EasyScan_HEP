@@ -95,6 +95,10 @@ const NUMBER_OF_POINTS_LABELS = {
     label: "Number of points (live points)",
     help: "Number of live points used by dynesty nested sampling.",
   },
+  MULTINEST: {
+    label: "Number of points (live points)",
+    help: "Number of live points used by MultiNest.",
+  },
   GRID: {
     label: "Number of points (not used)",
     help: "Not used by GRID; use Bins in Input Parameters to set grid density.",
@@ -255,8 +259,8 @@ function scanMethod() {
 function updateTopLevelControls() {
   const method = scanMethod();
   const isOnePointBatch = method === "ONEPOINTBATCH";
-  const supportsRandomSeed = ["RANDOM", "MCMC", "EMCEE"].includes(method);
-  const supportsParallel = ["RANDOM", "GRID", "MCMC", "ONEPOINTBATCH"].includes(method);
+  const supportsRandomSeed = ["RANDOM", "MCMC", "EMCEE", "MULTINEST"].includes(method);
+  const supportsParallel = ["RANDOM", "GRID", "MCMC", "ONEPOINTBATCH", "MULTINEST"].includes(method);
   const parallelThreads = Number(state.parallel_threads || 1);
   const usesParallelFolder = supportsParallel && parallelThreads > 1;
   const batchInput = $('[data-bind="batch_file"]');
@@ -272,7 +276,7 @@ function updateTopLevelControls() {
   const parallelFolderInput = $('[data-bind="parallel_folder"]');
   const parallelFolderButton = $('[data-target="parallel_folder"]');
   const pointsText = NUMBER_OF_POINTS_LABELS[method] || NUMBER_OF_POINTS_LABELS.RANDOM;
-  const usesNumberOfPoints = ["RANDOM", "BESTFIT", "MCMC", "EMCEE", "DYNESTY"].includes(method);
+  const usesNumberOfPoints = ["RANDOM", "BESTFIT", "MCMC", "EMCEE", "DYNESTY", "MULTINEST"].includes(method);
 
   setElementDisabled(batchInput, !isOnePointBatch, true);
   setElementDisabled(batchButton, !isOnePointBatch);
@@ -304,8 +308,8 @@ function updateInputParameterHeaders() {
     name: true,
     prior: !["ONEPOINT", "ONEPOINTBATCH"].includes(method),
     value: true,
-    minimum: ["RANDOM", "GRID", "BESTFIT", "MCMC", "EMCEE", "DYNESTY"].includes(method),
-    maximum: ["RANDOM", "GRID", "BESTFIT", "MCMC", "EMCEE", "DYNESTY"].includes(method),
+    minimum: ["RANDOM", "GRID", "BESTFIT", "MCMC", "EMCEE", "DYNESTY", "MULTINEST"].includes(method),
+    maximum: ["RANDOM", "GRID", "BESTFIT", "MCMC", "EMCEE", "DYNESTY", "MULTINEST"].includes(method),
     bins: method === "GRID",
     interval: ["MCMC", "EMCEE"].includes(method),
     initial: ["MCMC", "EMCEE"].includes(method),
@@ -352,8 +356,8 @@ function updateInputParameterRows() {
       name: true,
       prior: !onePointMode,
       value: onePointMode || fixedPrior,
-      minimum: !fixedPrior && ["RANDOM", "GRID", "BESTFIT", "MCMC", "EMCEE", "DYNESTY"].includes(method),
-      maximum: !fixedPrior && ["RANDOM", "GRID", "BESTFIT", "MCMC", "EMCEE", "DYNESTY"].includes(method),
+      minimum: !fixedPrior && ["RANDOM", "GRID", "BESTFIT", "MCMC", "EMCEE", "DYNESTY", "MULTINEST"].includes(method),
+      maximum: !fixedPrior && ["RANDOM", "GRID", "BESTFIT", "MCMC", "EMCEE", "DYNESTY", "MULTINEST"].includes(method),
       bins: !fixedPrior && method === "GRID",
       interval: !fixedPrior && ["MCMC", "EMCEE"].includes(method),
       initial: !fixedPrior && ["MCMC", "EMCEE"].includes(method),

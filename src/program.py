@@ -68,14 +68,15 @@ class PROGRAM:
     def setComPath(self, cpath):
         if self._parallel_mode:
             af.Info("command path is '%s', parallel folder path is '%s'"%(cpath,     self._parallel_folder))
+            if not cpath:
+                af.ErrorStop('In parallel mode, "command path" must be set and start with "parallel folder" !')
+            if af.IsAbsolutePath(cpath):
+                af.ErrorStop('In parallel mode, "command path" must be a relative path !')
             if not cpath.startswith(self._parallel_folder):
                 af.ErrorStop('In parallel mode, "command path" has to start with "parallel folder" !')
             self._ComPath=cpath
         else:
-            if cpath.startswith('/home') or cpath.startswith('~'):
-                self._ComPath=cpath
-            else:
-                self._ComPath=os.path.join(af.CurrentPath, cpath)
+            self._ComPath = af.ResolvePath(cpath or ".")
         if not os.path.exists(self._ComPath):
             af.ErrorStop('Command path "%s" do not exist.'%self._ComPath)
         af.Info('Command path    = %s'% self._ComPath)
@@ -92,15 +93,16 @@ class PROGRAM:
                     break
                 af.ErrorStop('The input file of %s need two items (File ID, File path).'%self._ProgName)
                 
-            if ii[1].startswith('/home') or ii[1].startswith('~') :
+            if af.IsAbsolutePath(ii[1]):
                 if self._parallel_mode:
-                    af.ErrorStop('In parallel mode, it must be relative path for output file %s'%self._OutFileID )
+                    af.ErrorStop('In parallel mode, it must be relative path for input file %s'%self._InFileID )
+                ii[1] = af.ResolvePath(ii[1])
             else:
                 if not self._parallel_mode:
-                    ii[1] = os.path.join(af.CurrentPath, ii[1])
+                    ii[1] = af.ResolvePath(ii[1])
                 else:
                     if not ii[1].startswith(self._parallel_folder+"/"):
-                        af.ErrorStop('In parallel mode, input file %s be inside the "parallel_folder"! '%self._OutFileID )
+                        af.ErrorStop('In parallel mode, input file %s must be inside the "parallel_folder"! '%self._InFileID )
             self._InputFile[ii[0]]=ii[1]
             af.Info('  fileID= %s \tFile= %s'%(ii[0],ii[1]))
 
@@ -387,15 +389,16 @@ class PROGRAM:
         af.Debug('OutFileID',self._OutFileID)
         af.Info('Output file     = ')
         for ii in outputfile:
-            if ii[1].startswith('/home') or ii[1].startswith('~') :
+            if af.IsAbsolutePath(ii[1]):
                 if self._parallel_mode:
                     af.ErrorStop('In parallel mode, it must be relative path for output file %s'%self._OutFileID )
+                ii[1] = af.ResolvePath(ii[1])
             else:
                 if not self._parallel_mode:
-                    ii[1] = os.path.join(af.CurrentPath, ii[1])
+                    ii[1] = af.ResolvePath(ii[1])
                 else:
                     if not ii[1].startswith(self._parallel_folder+"/"):
-                        af.ErrorStop('In parallel mode, output file %s be inside the "parallel_folder"! '%self._OutFileID )
+                        af.ErrorStop('In parallel mode, output file %s must be inside the "parallel_folder"! '%self._OutFileID )
             self._OutputFile[ii[0]]=ii[1]
             af.Info('  ID= %s \tFile= %s'%(ii[0],ii[1]))
 
@@ -658,16 +661,26 @@ class PROGRAM:
           af.Debug('Runing Program %s with command'%self._ProgName,cmd)
 
           if self._executor:
-              ncwd = os.getcwd()
-              os.chdir(cwd)
-              os.system(cmd[0])
-              os.chdir(ncwd)
+              completed = subprocess.run(cmd[0], cwd=cwd, shell=True)
+              if completed.returncode != 0:
+                  af.WarningNoWait(
+                      'Program "%s" failed with exit code %s while running "%s".'
+                      %(self._ProgName, completed.returncode, cmd[0])
+                  )
+                  return False
           else:
             try:
                 t_begining = time.time()
-                process=subprocess.Popen(cmd, stdout=subprocess.PIPE,
-                        stderr=subprocess.STDOUT, cwd=cwd, preexec_fn=os.setpgrp,
-                        shell=True, text=True)
+                popen_kwargs = {
+                    "stdout": subprocess.PIPE,
+                    "stderr": subprocess.STDOUT,
+                    "cwd": cwd,
+                    "shell": True,
+                    "text": True,
+                }
+                if hasattr(os, "setpgrp"):
+                    popen_kwargs["preexec_fn"] = os.setpgrp
+                process=subprocess.Popen(cmd[0], **popen_kwargs)
                 while process.poll() is None:
                     ready, _, _ = select.select([process.stdout], [], [], 1.0)
                     if ready:
@@ -678,11 +691,29 @@ class PROGRAM:
                     if seconds_passed > self._timelimit*60: 
                         #try:
                         if process.poll() is None:
-                            os.killpg(os.getpgid(process.pid), signal.SIGTERM) 
+                            if hasattr(os, "killpg") and hasattr(os, "getpgid"):
+                                os.killpg(os.getpgid(process.pid), signal.SIGTERM)
+                            else:
+                                process.terminate()
+                            try:
+                                process.wait(timeout=5)
+                            except subprocess.TimeoutExpired:
+                                process.kill()
                         #except OSError:
                         #    pass
                         af.WarningNoWait(f"Program {self._ProgName} has been running more than {self._timelimit} minutes, it has been killed.")
                         return False
+                if process.stdout:
+                    for output in process.stdout:
+                        output = output.strip()
+                        if output:
+                            af.Info(f'Output message from Program {self._ProgName}:\n{output}')
+                if process.returncode != 0:
+                    af.WarningNoWait(
+                        'Program "%s" failed with exit code %s while running "%s".'
+                        %(self._ProgName, process.returncode, cmd[0])
+                    )
+                    return False
             except OSError as error:
                 if cwd and not os.path.exists(cwd):
                     raise Exception('Directory %s doesn\'t exist. Impossible to run' % cwd)
@@ -805,7 +836,7 @@ class PROGRAM:
     def Recover(self, ParallelAdd):
         for ii in self._InFileID:
             if (ii!= '') and os.path.isfile(ParallelAdd+self._InputFile[ii]+".ESbackup"):
-                os.system("mv %s.ESbackup %s" %(ParallelAdd+self._InputFile[ii],ParallelAdd+self._InputFile[ii]))
+                shutil.move(ParallelAdd+self._InputFile[ii]+".ESbackup", ParallelAdd+self._InputFile[ii])
 
     ## new function to use "math .." in [constrain]
     ## in order to add new variable in self.AllPar
@@ -866,8 +897,8 @@ class PROGRAM:
             else: 
                 if ii[2].lower() not in ["max", "min"]: 
                     af.ErrorStop( 'For "Bound" in program "%s", the third item "%s" must be "MAX" or "MIN" when there are 4 items.'%(self._ProgName, ii[2]) ) 
-                if not (ii[3].startswith('/home') or ii[3].startswith('~')):
-                    ii[3]=os.path.join(af.CurrentPath, ii[3])
+                if not af.IsAbsolutePath(ii[3]):
+                    ii[3]=af.ResolvePath(ii[3])
                 try:
                     open(ii[3])
                 except:
@@ -926,8 +957,8 @@ class PROGRAM:
                     af.Info('(%s,%s,%s) unsatisfy in "Bound" for program=%s'%(ii[0], ii[1], ii[2], self._ProgName))
                 phys = phys and physub
             else: 
-                if not (ii[3].startswith('/home') or ii[3].startswith('~')):
-                    ii[3]=os.path.join(af.CurrentPath, ii[3])
+                if not af.IsAbsolutePath(ii[3]):
+                    ii[3]=af.ResolvePath(ii[3])
                 boundata = numpy.loadtxt(ii[3]) 
                 x=boundata[:,0]
                 y=boundata[:,1]
@@ -955,4 +986,3 @@ class PROGRAM:
                 phys = phys and physub
 
         return phys
-

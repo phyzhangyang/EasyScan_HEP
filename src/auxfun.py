@@ -5,6 +5,7 @@
 
 # External modules.
 import time, os, sys
+from pathlib import Path
 from collections import OrderedDict
 # Internal modules
 from initialize import logger
@@ -35,6 +36,8 @@ _post = [_postprocess, _plot]
 ResultFile = 'ScanResult.txt'
 ResultFile_MCMC = 'All_ScanResult.txt'
 ResultFile_MultiNest = 'MultiNestData/.txt'
+ResultFile_EMCEE = 'EMCEEChain.txt'
+ResultFile_Dynesty = 'DynestySamples.txt'
 ResultFile_post = 'Previous_ScanResult.txt'
 
 
@@ -60,6 +63,16 @@ def Debug(debinfo,debvalue=''):
         logger.debug( ColorText(5, str(debinfo) ) )
     else:
         logger.debug( ColorText(5, str(debinfo)+': '+str(debvalue) ) )
+
+def ResolvePath(path, base_path=None):
+    base = Path(base_path or CurrentPath).expanduser()
+    target = Path(str(path)).expanduser()
+    if target.is_absolute():
+        return str(target)
+    return str(base / target)
+
+def IsAbsolutePath(path):
+    return Path(str(path)).expanduser().is_absolute()
 
 # Transform str into int or float if possible
 def autotype(s):

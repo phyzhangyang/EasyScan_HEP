@@ -561,9 +561,10 @@ Keep existing local paths, program blocks, variable names, constraints, and plot
 
 EasyScan_HEP syntax summary:
 - Required [scan] options: Result folder name, Scan method, Input parameters.
-- Supported Scan method values: RANDOM, BESTFIT, MCMC, EMCEE, DYNESTY, MULTINEST, ONEPOINT, ONEPOINT/path/to/batch.in.
+- Supported Scan method values: RANDOM, GRID, BESTFIT, MCMC, EMCEE, DYNESTY, MULTINEST, ONEPOINT, ONEPOINT/path/to/batch.in.
 - Input parameters rows:
   - RANDOM, BESTFIT, DYNESTY, MULTINEST: name, prior, min, max.
+  - GRID: name, prior, min, max, bins. To get N grid points on an axis, use bins = N - 1.
   - MCMC, EMCEE: name, prior, min, max, interval, initial.
   - Fixed or one-point mode: name, Fixed, value.
   - prior must be flat, log, or Fixed.

@@ -5,6 +5,7 @@ from __future__ import annotations
 
 import glob
 import os
+import shutil
 import subprocess
 import sys
 import tempfile
@@ -24,6 +25,10 @@ def main() -> int:
         tmp_path = Path(tmp)
         dist_dir = tmp_path / "dist"
         target_dir = tmp_path / "install"
+        egg_info = ROOT / "src" / "easyscan_hep.egg-info"
+
+        if egg_info.exists():
+            shutil.rmtree(egg_info)
 
         run([sys.executable, "-m", "build", "--outdir", str(dist_dir)])
         artifacts = sorted(glob.glob(str(dist_dir / "*")))
@@ -41,9 +46,13 @@ def main() -> int:
         if not executable.exists():
             raise RuntimeError("Installed easyscan console script was not found.")
 
+        installed_example = target_dir / "templates" / "example_random.ini"
+        if not installed_example.exists():
+            raise RuntimeError("Installed example template was not found in the wheel.")
+
         env = os.environ.copy()
         env["PYTHONPATH"] = str(target_dir)
-        run([str(executable), "--check", "templates/example_random.ini"], env=env)
+        run([str(executable), "--check", "templates/example_random.ini"], cwd=target_dir, env=env)
 
     print("Package check passed.", flush=True)
     return 0

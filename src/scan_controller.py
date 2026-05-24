@@ -3,6 +3,7 @@
 ####################################################################
 # External modules
 import os
+import shutil
 import time
 import math
 import random
@@ -46,9 +47,7 @@ class CONTROLLER:
             self._ScanMethod = self._ScanMethod[0]
         else:
             self._ScanMethod = "ONEPOINTBATCH"
-            self._ScanFile = os.path.join(os.path.sep, *method.split('/')[1:])
-            if not os.path.exists(self._ScanFile):
-                self._ScanFile = os.path.join(os.path.sep, af.CurrentPath, *method.split('/')[1:])
+            self._ScanFile = af.ResolvePath(method.split('/', 1)[1])
             if not os.path.exists(self._ScanFile):
                 af.ErrorStop('%s can not be found'%self._ScanFile)
         if self._ScanMethod not in af._all:
@@ -61,19 +60,18 @@ class CONTROLLER:
         BackupTime = time.strftime("_%Y_%m_%d_%H_%M_%S", time.localtime())
         name = os.path.basename(os.path.normpath(FolderName))
         BackupPath = os.path.join(af.CurrentPath,"Backup/%s%s"%(name, BackupTime))
-        action = r'cp -r ' if cp else r'mv '
         af.Info('Back up previous result into %s.'%BackupPath)
-        os.system(action+r" %s %s" %(FolderName, BackupPath))
+        if cp:
+            shutil.copytree(FolderName, BackupPath)
+        else:
+            shutil.move(FolderName, BackupPath)
     
     def setFolderName(self, name):
         if name.__contains__(' '):
             af.ErrorStop("The name of result folder contains space.")
     
         # Turn the result folder path into absolute path
-        if name.startswith('/home') or name.startswith('~'):
-            self._FolderName = name
-        else:
-            self._FolderName = os.path.join(af.CurrentPath, name)
+        self._FolderName = af.ResolvePath(name)
         
 
         if ( self._ScanMethod in af._post) or af.resume:
@@ -84,14 +82,14 @@ class CONTROLLER:
               # Backup previous results
               self.backup_result(self._FolderName, cp=True)
               # rm Figure and SavedFile folder
-              os.system(r"find %s -type f -name '*' | xargs rm" %os.path.join(self._FolderName,'SavedFile'))
-              os.system(r"find %s -type f -name '*' | xargs rm" %os.path.join(self._FolderName,'Figures'))
+              self.clean_directory(os.path.join(self._FolderName,'SavedFile'))
+              self.clean_directory(os.path.join(self._FolderName,'Figures'))
               # rename data file
               if not os.path.exists(os.path.join(self._FolderName,af.ResultFile_post)):
                 if not os.path.exists(os.path.join(self._FolderName,af.ResultFile)):
                   af.ErrorStop("No result data file in %s."%self._FolderName)
                 else:
-                  os.system(r"mv %s %s"%(os.path.join(self._FolderName, af.ResultFile), os.path.join(self._FolderName, af.ResultFile_post)))
+                  shutil.move(os.path.join(self._FolderName, af.ResultFile), os.path.join(self._FolderName, af.ResultFile_post))
             else: # af._plot or af.resume
               if not os.path.exists(os.path.join(self._FolderName,af.ResultFile)):
                 af.ErrorStop("No result data file in %s."%self._FolderName)
@@ -104,7 +102,7 @@ class CONTROLLER:
                 while True:
                     c = input("Choose: (r)replace, (b)backup, (s)stop\n")
                     if c == "r":
-                        os.system(r"rm -r %s" %self._FolderName)
+                        shutil.rmtree(self._FolderName)
                         break
                     elif c == "b":
                         self.backup_result(self._FolderName)
@@ -121,6 +119,16 @@ class CONTROLLER:
                 os.mkdir(self.MNOutputFile)
         af.Info('...............................................')
         af.Info('Result file name  = %s'%self._FolderName)
+
+    def clean_directory(self, folder):
+        if not os.path.isdir(folder):
+            return
+        for item in os.listdir(folder):
+            path = os.path.join(folder, item)
+            if os.path.isdir(path):
+                shutil.rmtree(path)
+            else:
+                os.remove(path)
 
 
     def setPointNum(self, ntot):
@@ -168,8 +176,10 @@ class CONTROLLER:
             if os.path.exists(destination_dir):
                 af.WarningWait(f"{destination_dir} already exists, skip copy.")
                 continue
-            command = f"cp -r {source_dir}/ {destination_dir}/"
-            os.system(command)
+            destination_parent = os.path.dirname(destination_dir)
+            if destination_parent:
+                os.makedirs(destination_parent, exist_ok=True)
+            shutil.copytree(source_dir, destination_dir)
 
     def setPrintNum(self, nprint):
         self._PrintNum = int(nprint)
@@ -239,6 +249,12 @@ class CONTROLLER:
 
             if lenii < 4 :
               af.ErrorStop(self.InputParInfo(ii[0], 4, "Minimum, Maximum"))
+            if ii[1].lower() not in ['flat', 'log']:
+              af.ErrorStop('Not ready. Choose prior from ["flat", "log", "fixed"].')
+            if ii[2] >= ii[3]:
+              af.ErrorStop('For "%s", "Minimum" should be smaller than "Maximum".'%ii[0])
+            if ii[1].lower() == 'log' and (ii[2] <= 0 or ii[3] <= 0):
+              af.ErrorStop('For "%s" with log prior, "Minimum" and "Maximum" should be positive.'%ii[0])
 
             if self._ScanMethod in [af._random, af._bestfit, af._multinest, af._dynesty]:
               if lenii > 4 :
@@ -254,8 +270,8 @@ class CONTROLLER:
                 af.WarningWait("'Number of bins' will take default value, 10.")
               else:
                 self.GridBin[ii[0]]=ii[4]
-                if self.GridBin[ii[0]] < 0 or type(ii[4]) != int:
-                  af.WarningNoWait(InputParInfo(ii[0], 5, "Minimum, Maximum, Number of bins"))
+                if type(ii[4]) != int or self.GridBin[ii[0]] < 1:
+                  af.WarningNoWait(self.InputParInfo(ii[0], 5, "Minimum, Maximum, Number of bins"))
                   af.ErrorStop("'Number of bins' is not a positive integer.")
                 if lenii> 5:
                   af.WarningNoWait(self.InputParInfo(ii[0], 5, "Minimum, Maximum, Number of bins"))
@@ -273,22 +289,26 @@ class CONTROLLER:
                 else:
                   af.ErrorStop('Not ready. Choose prior from ["flat", "log", "fixed"].')
                 IniV = InitVal_resume[ii[0]]
-              elif lenii == 6:
+              elif lenii >= 6:
                 if ii[1].lower() == 'flat':
                   self.MCMCiv[ii[0]] = float(ii[5]-ii[2])/float(ii[3]-ii[2])
                 elif ii[1].lower() == 'log':
+                  if ii[5] <= 0:
+                    af.ErrorStop('For "%s" with log prior, "Initial value" should be positive.'%ii[0])
                   self.MCMCiv[ii[0]] = (log10(ii[5])-log10(ii[2]))/(log10(ii[3]) - log10(ii[2]))
                 IniV = ii[5]
+                if lenii > 6:
+                  af.WarningNoWait(self.InputParInfo(ii[0], 6, "Minimum, Maximum, Interval, Initial value"))
+                  af.WarningWait("The rest %i values will be ignore."%(lenii-6) )
               elif lenii == 5:
                 af.WarningNoWait(self.InputParInfo(ii[0], 6, "Minimum, Maximum, Interval, Initial value"))
                 self.MCMCiv[ii[0]] = 1./2.
                 IniV = float(ii[3]+ii[2])/2.
                 af.WarningWait("'Initial value' will take default value, (Max-Min)/2.")
-              else: # lenii > 6
-                  af.WarningNoWait(self.InputParInfo(ii[0], 6, "Minimum, Maximum, Interval, Initial value"))
-                  af.WarningWait("The rest %i values will be ignore."%(lenii-6) )
 
               if lenii >= 5:
+                if float(ii[4]) <= 0:
+                  af.ErrorStop('For "%s", "Interval" should be larger than 0.'%ii[0])
                 # The scan range is normalized to 1
                 self.MCMCss[ii[0]] = 1.0/float(ii[4])
                 Step = float(ii[3]-ii[2])/float(ii[4])
