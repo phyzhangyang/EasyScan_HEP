@@ -171,22 +171,24 @@ def ReadIn(Configfile, ES, Programs, Constraint, Ploter):
         # Additional optional commands
         try:
             Programs[ii].setExecutor(cf.get(ii, 'Command executor'))
-        except:
+        except configparser.NoOptionError:
             af.Info(f'No "Command executor" setting, use "os.system" to execute commands if there is no "Time limit in minute" setting in {ii}.')
         try:
             Programs[ii].setTimeLimit(cf.getfloat(ii, 'Time limit in minute'))
             af.Info(f'There is "Time limit in minute" setting, subprocess.popen is used in {ii}.')
-        except:
+        except configparser.NoOptionError:
             af.Info(f'No "Time limit in minute" setting in {ii}.')
+        except ValueError:
+            af.ErrorStop(f'"Time limit in minute" in {ii} must be a number.')
         try:
             Programs[ii].setOutputClean(cf.get(ii, 'Clean output file'))
-        except:
+        except configparser.NoOptionError:
             af.Info('Delete output file(s) of %s before execute it. '%ii)
         try:
             Programs[ii].setBound(cf.get(ii, 'Bound'))
         except SystemExit:
             sys.exit(1)  
-        except:
+        except configparser.NoOptionError:
             af.Info('No Bound.')
         
     ## Read the constraints

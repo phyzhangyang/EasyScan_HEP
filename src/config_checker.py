@@ -131,6 +131,14 @@ def check_float(value, context, errors):
         return False
 
 
+def parse_float(value, context, errors):
+    try:
+        return float(value)
+    except (TypeError, ValueError):
+        errors.append(f"{context} must be a number.")
+        return None
+
+
 def is_relative_subpath(path_value, parent_value):
     path = Path(path_value)
     parent = Path(parent_value)
@@ -259,8 +267,13 @@ def check_config_text(text, base_dir=None):
             if len(parts) < 4:
                 errors.append(f'Input parameter "{name}" needs Minimum and Maximum.')
                 continue
-            check_float(parts[2], f'Input parameter "{name}" minimum', errors)
-            check_float(parts[3], f'Input parameter "{name}" maximum', errors)
+            minimum = parse_float(parts[2], f'Input parameter "{name}" minimum', errors)
+            maximum = parse_float(parts[3], f'Input parameter "{name}" maximum', errors)
+            if minimum is not None and maximum is not None:
+                if minimum >= maximum:
+                    errors.append(f'Input parameter "{name}" minimum must be smaller than maximum.')
+                if prior.lower() == "log" and (minimum <= 0 or maximum <= 0):
+                    errors.append(f'Input parameter "{name}" with log prior needs positive minimum and maximum.')
             if method == "GRID":
                 if len(parts) >= 5:
                     try:
@@ -273,12 +286,20 @@ def check_config_text(text, base_dir=None):
             elif method in {"MCMC", "EMCEE"}:
                 if len(parts) < 5:
                     warnings.append(f'Input parameter "{name}" has no {method} interval; EasyScan will use default 10.')
-                elif not check_float(parts[4], f'Input parameter "{name}" interval', errors):
-                    pass
+                else:
+                    interval = parse_float(parts[4], f'Input parameter "{name}" interval', errors)
+                    if interval is not None and interval <= 0:
+                        errors.append(f'Input parameter "{name}" interval must be larger than 0.')
                 if len(parts) < 6:
                     warnings.append(f'Input parameter "{name}" has no {method} initial value; EasyScan will use midpoint.')
                 else:
-                    check_float(parts[5], f'Input parameter "{name}" initial value', errors)
+                    initial = parse_float(parts[5], f'Input parameter "{name}" initial value', errors)
+                    if prior.lower() == "log" and initial is not None and initial <= 0:
+                        errors.append(f'Input parameter "{name}" with log prior needs a positive initial value.')
+                    if minimum is not None and maximum is not None and initial is not None and not minimum <= initial <= maximum:
+                        warnings.append(f'Input parameter "{name}" initial value is outside the scan range.')
+                if len(parts) > 6:
+                    warnings.append(f'Input parameter "{name}" has extra fields ignored by {method}.')
             elif method in {"RANDOM", "BESTFIT", "MULTINEST", "DYNESTY"} and len(parts) > 4:
                 warnings.append(f'Input parameter "{name}" has extra fields ignored by {method}.')
     add_duplicate_errors("Input parameter", input_names, errors)

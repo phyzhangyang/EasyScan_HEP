@@ -12,7 +12,10 @@ import auxfun as af
 import ploter
 import time
 import multiprocessing
-multiprocessing.set_start_method('fork')
+try:
+    multiprocessing.set_start_method('fork')
+except RuntimeError:
+    pass
     
 lock = multiprocessing.Lock()
 
@@ -31,6 +34,12 @@ def getFilelength(datafile):
   with open(datafile, 'r') as f:
     num_lines = sum(1 for line in f)
   return num_lines
+
+def sequence_value(values, index, default=af.NaN):
+  try:
+    return values[index]
+  except (TypeError, IndexError):
+    return default
   
 def saveCube(cube, data_file, file_path, num, save_file):
   result = []
@@ -610,6 +619,19 @@ def emceerun(LnLike, Prior, n_params, n_live_points, inpar, fixedpar, outpar, St
 
     sampler = emcee.EnsembleSampler(n_walkers, n_dims, log_probability)
     sampler.run_mcmc(numpy.array(initial), n_steps, progress=False)
+    chain_file = open(os.path.join(outputfolder, af.ResultFile_EMCEE), 'w')
+    chain_file.write('log_probability,' + ','.join(list(inpar.keys())) + '\n')
+    flat_chain = sampler.get_chain(flat=True)
+    flat_log_prob = sampler.get_log_prob(flat=True)
+    for unit_cube, log_prob in zip(flat_chain, flat_log_prob):
+        if not numpy.isfinite(log_prob):
+            continue
+        phys_cube = [af.NaN] * n_params
+        for i in range(n_dims):
+            phys_cube[i] = unit_cube[i]
+        Prior(phys_cube, n_dims, n_params)
+        chain_file.write(','.join([str(log_prob)] + [str(phys_cube[i]) for i in range(n_dims)]) + '\n')
+    chain_file.close()
     data_file.close()
     all_data_file.close()
 
@@ -713,5 +735,19 @@ def dynestyrun(LnLike, Prior, n_dims, n_params, inpar, fixedpar, outpar, n_live_
 
     sampler = dynesty.NestedSampler(log_likelihood, prior_transform, n_dims, nlive=n_live_points)
     sampler.run_nested()
+    results = sampler.results
+    samples_file = open(os.path.join(outputfolder, af.ResultFile_Dynesty), 'w')
+    samples_file.write('log_likelihood,log_weight,log_evidence,' + ','.join(list(inpar.keys())) + '\n')
+    logl = getattr(results, 'logl', [])
+    logwt = getattr(results, 'logwt', [])
+    logz = getattr(results, 'logz', [])
+    for index, sample in enumerate(getattr(results, 'samples', [])):
+        row = [
+            sequence_value(logl, index),
+            sequence_value(logwt, index),
+            sequence_value(logz, index),
+        ] + list(sample)
+        samples_file.write(','.join(str(item) for item in row) + '\n')
+    samples_file.close()
     data_file.close()
     
