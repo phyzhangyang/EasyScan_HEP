@@ -557,7 +557,7 @@ def mcmcrun(LnLike, Prior, n_params, n_live_points, inpar, fixedpar, outpar, Ste
     run_processes(processes)
 
 
-def emceerun(LnLike, Prior, n_params, n_live_points, inpar, fixedpar, outpar, StepSize, InitVal, n_print, outputfolder, num_processes):
+def emceerun(LnLike, Prior, n_params, n_live_points, inpar, fixedpar, outpar, StepSize, InitVal, n_print, outputfolder, num_processes, mcmc_walkers=0):
     try:
         import emcee
     except ImportError:
@@ -571,10 +571,17 @@ def emceerun(LnLike, Prior, n_params, n_live_points, inpar, fixedpar, outpar, St
     all_data_file = open(os.path.join(outputfolder, af.ResultFile_MCMC), 'a')
     file_path = os.path.join(outputfolder, "SavedFile")
     n_dims = len(inpar)
+    if n_dims < 1:
+        af.ErrorStop("EMCEE needs at least one sampled input parameter.")
     cube = [af.NaN] * n_params
     n_accept = 0
     n_call = 0
-    n_walkers = max(2 * n_dims, num_processes, 4)
+    if mcmc_walkers:
+        n_walkers = int(mcmc_walkers)
+        if n_walkers < 2 * n_dims:
+            af.ErrorStop('"MCMC walkers" for EMCEE must be at least twice the number of sampled parameters.')
+    else:
+        n_walkers = max(2 * n_dims, num_processes, 4)
     n_steps = max(1, int(n_live_points / n_walkers) + int(n_live_points % n_walkers != 0))
     initial = []
 

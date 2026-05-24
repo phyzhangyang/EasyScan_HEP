@@ -84,6 +84,7 @@
               <option>MCMC</option>
               <option>EMCEE</option>
               <option>DYNESTY</option>
+              <option>MULTINEST</option>
               <option>ONEPOINT</option>
               <option>ONEPOINTBATCH</option>
             </select>
@@ -96,6 +97,9 @@
           </label>
           <label id="numberOfPointsLabel"><span class="field-label"><span id="numberOfPointsLabelText">Number of points</span> <span id="numberOfPointsHelp" class="help-tip" data-tooltip="Number of scan points." tabindex="0" aria-label="Help: Number of points">?</span></span>
             <input data-bind="number_of_points" type="number" min="1">
+          </label>
+          <label id="mcmcWalkersLabel"><span class="field-label"><span id="mcmcWalkersLabelText">MCMC walkers</span> <span class="help-tip" data-tooltip="Number of ensemble walkers used by EMCEE. It must be at least twice the number of scanned parameters." tabindex="0" aria-label="Help: MCMC walkers">?</span></span>
+            <input data-bind="mcmc_walkers" type="number" min="1" placeholder="Auto">
           </label>
           <label id="randomSeedLabel"><span class="field-label"><span id="randomSeedLabelText">Random seed</span> <span class="help-tip" data-tooltip="Optional seed for reproducible random sampling." tabindex="0" aria-label="Help: Random seed">?</span></span>
             <input data-bind="random_seed" type="text" placeholder="Optional">
@@ -169,6 +173,22 @@
               <tbody id="gaussianBody"></tbody>
             </table>
           </div>
+          <div class="panel-title subsection-title block-title">
+            <h2>FreeFormChi2</h2>
+            <button id="addFreeFormChi2" class="secondary small">Add FreeFormChi2</button>
+          </div>
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>Variable <span class="help-tip" data-tooltip="Variable or expression that provides a chi-square contribution." tabindex="0" aria-label="Help: FreeFormChi2 variable">?</span></th>
+                  <th>Name <span class="help-tip" data-tooltip="Optional label for this free-form chi-square contribution." tabindex="0" aria-label="Help: FreeFormChi2 name">?</span></th>
+                  <th></th>
+                </tr>
+              </thead>
+              <tbody id="freeformChi2Body"></tbody>
+            </table>
+          </div>
         </div>
         <div>
           <div class="panel-title">
@@ -203,6 +223,13 @@
         </div>
         <pre id="logBox" class="log-box"></pre>
         <div id="results" class="results"></div>
+        <div class="history-panel">
+          <div class="panel-title history-title">
+            <h3>Run History</h3>
+            <button id="refreshHistoryBtn" class="secondary small">Refresh</button>
+          </div>
+          <div id="runHistory" class="run-history"></div>
+        </div>
       </section>
     </main>
 

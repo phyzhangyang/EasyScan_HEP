@@ -107,6 +107,7 @@ class EasyScanConfig(BaseModel):
     scan_method: str = "RANDOM"
     batch_file: str = "utils/OnePointBatch.in"
     number_of_points: str = "100"
+    mcmc_walkers: str = ""
     random_seed: str = ""
     print_interval: str = "1"
     parallel_threads: str = "1"
@@ -274,6 +275,8 @@ def serialize_config(config: EasyScanConfig) -> str:
         lines.append(f"Number of points:  {config.number_of_points}")
     elif method == "MCMC" and config.number_of_points:
         lines.append(f"Number of points:  {config.number_of_points}")
+    if method == "EMCEE" and config.mcmc_walkers:
+        lines.append(f"MCMC walkers:      {config.mcmc_walkers}")
     if config.random_seed:
         lines.append(f"Random seed:       {config.random_seed}")
     if config.print_interval:
@@ -387,6 +390,7 @@ def parse_easy_scan_text(text: str) -> EasyScanConfig:
     else:
         config.scan_method = method.upper()
     config.number_of_points = (scan.get("Number of points") or [config.number_of_points])[0]
+    config.mcmc_walkers = (scan.get("MCMC walkers") or [config.mcmc_walkers])[0]
     config.random_seed = (scan.get("Random seed") or [config.random_seed])[0]
     config.print_interval = (scan.get("Interval of print") or [config.print_interval])[0]
     config.parallel_threads = (scan.get("Parallel threads") or [config.parallel_threads])[0]
@@ -568,6 +572,7 @@ EasyScan_HEP syntax summary:
   - MCMC, EMCEE: name, prior, min, max, interval, initial.
   - Fixed or one-point mode: name, Fixed, value.
   - prior must be flat, log, or Fixed.
+- EMCEE may use optional "MCMC walkers"; it must be at least twice the number of sampled input parameters.
 - Likelihood-based methods BESTFIT, MCMC, EMCEE, DYNESTY and MULTINEST need [constraint] with Gaussian or FreeFormChi2.
 - [programN] blocks describe external programs with Execute command, Command path, Input/Output file and variable rows.
 - [plot] rows: Histogram x, figure; Scatter x, y, figure; Color/Contour x, y, value, figure.
@@ -650,6 +655,7 @@ def extract_ini_from_llm_text(text: str) -> str:
         "Scan method",
         "Input parameters",
         "Number of points",
+        "MCMC walkers",
         "Random seed",
         "Interval of print",
         "Parallel threads",
@@ -840,6 +846,47 @@ def result_files(record: RunRecord) -> dict[str, Any]:
     return {"result_dir": str(result_dir), "files": files, "plots": plots}
 
 
+def run_record_payload(record: RunRecord) -> dict[str, Any]:
+    return {
+        "run_id": record.run_id,
+        "status": record.status,
+        "return_code": record.return_code,
+        "started_at": record.started_at,
+        "ended_at": record.ended_at,
+        "config_path": str(record.config_path),
+        "log_path": str(record.log_path),
+        "result_dir": str(record.result_dir),
+    }
+
+
+def persisted_run_payloads() -> list[dict[str, Any]]:
+    items: list[dict[str, Any]] = []
+    seen = set(runs)
+    for config_path in sorted(RUN_CWD.glob("easyscan_*.ini")):
+        run_id = config_path.stem.removeprefix("easyscan_")
+        if run_id in seen:
+            continue
+        log_path = config_path.with_suffix(".log")
+        try:
+            result_dir = resolve_config_path(parse_easy_scan_template(config_path).result_folder)
+        except Exception:
+            result_dir = RUN_CWD / "result"
+        status = "completed" if log_path.exists() else "saved"
+        items.append(
+            {
+                "run_id": run_id,
+                "status": status,
+                "return_code": None,
+                "started_at": config_path.stat().st_mtime,
+                "ended_at": log_path.stat().st_mtime if log_path.exists() else None,
+                "config_path": str(config_path),
+                "log_path": str(log_path),
+                "result_dir": str(result_dir),
+            }
+        )
+    return items
+
+
 def run_worker(record: RunRecord) -> None:
     record.status = "running"
     command = [str(PYTHON_EXE), "-m", "easyscan_hep.cli", str(record.config_path)]
@@ -986,6 +1033,14 @@ def generate_config_with_ai(request: LLMConfigRequest) -> dict[str, Any]:
         "check": report,
         "check_text": check_text,
     }
+
+
+@app.get("/api/runs")
+def list_runs() -> dict[str, Any]:
+    current = [run_record_payload(record) for record in runs.values()]
+    history = current + persisted_run_payloads()
+    history.sort(key=lambda item: item.get("started_at") or 0, reverse=True)
+    return {"runs": history}
 
 
 @app.post("/api/runs")

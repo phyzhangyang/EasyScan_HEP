@@ -19,6 +19,7 @@ class CONTROLLER:
         self._RandomSeed = -1
         self._PrintNum   = 1
         self._AccepRate  = 0.25
+        self._MCMCWalkers = 0
         self._FlagTuneR  = False
         self._parallel_threads = 1
         self._parallel_mode = False
@@ -151,6 +152,12 @@ class CONTROLLER:
             af.ErrorStop('"Acceptance rate" must be in [0,1]. The suggest value is 0.5 for d<=2, 0.25 otherwise.')
         self._FlagTuneR = True
         af.Info('Acceptance rate   = %s'%self._AccepRate)
+
+    def setMCMCWalkers(self, walkers):
+        self._MCMCWalkers = int(walkers)
+        if self._MCMCWalkers < 1:
+            af.ErrorStop('"MCMC walkers" must be larger than 0.')
+        af.Info('MCMC walkers      = %s'%self._MCMCWalkers)
 
     def setParallelThreads(self, parallel_threads):
         self._parallel_threads = int(parallel_threads)
@@ -389,3 +396,5 @@ class CONTROLLER:
         return self._FlagTuneR
     def getAccepRate(self):
         return self._AccepRate
+    def getMCMCWalkers(self):
+        return self._MCMCWalkers
