@@ -23,7 +23,15 @@ On Ubuntu or Debian systems, install the basic system packages first::
 
     sudo apt install python3-pip python3-venv python3-tk
 
-Install EasyScan_HEP itself from the source directory with::
+For ordinary use, install EasyScan_HEP with pip::
+
+    python3 -m pip install easyscan-hep
+
+To install directly from the GitHub repository, use::
+
+    python3 -m pip install git+https://github.com/phyzhangyang/EasyScan_HEP.git
+
+For local development, install EasyScan_HEP from the source directory with::
 
     python3 -m pip install .
 
@@ -40,23 +48,33 @@ environment first and then install EasyScan_HEP there::
     python3 -m venv .venv
     .venv/bin/python -m pip install .
 
-Install the local Web UI dependencies with::
+Install the local Web UI dependencies with one of the following commands::
+
+    python3 -m pip install "easyscan-hep[ui]"
 
     python3 -m pip install ".[ui]"
 
 Install *dynesty* only if the Dynesty nested sampler is needed::
 
+    python3 -m pip install "easyscan-hep[dynesty]"
+
     python3 -m pip install ".[dynesty]"
 
 Install *emcee* only if the EMCEE ensemble MCMC sampler is needed::
+
+    python3 -m pip install "easyscan-hep[emcee]"
 
     python3 -m pip install ".[emcee]"
 
 Install *pymultinest* only if the MultiNest sampler is needed::
 
+    python3 -m pip install "easyscan-hep[multinest]"
+
     python3 -m pip install ".[multinest]"
 
 The Python-only optional features can be installed together with::
+
+    python3 -m pip install "easyscan-hep[all]"
 
     python3 -m pip install ".[all]"
 
@@ -76,6 +94,25 @@ The source-tree entry point remains available for development use::
 Check a configuration file without running a scan with::
 
     easyscan --check templates/example_random.ini
+
+Agents and scripts can request machine-readable output from the same
+checker::
+
+    easyscan --check templates/example_random.ini --json
+
+For non-interactive runs, explicitly choose how an existing result folder
+should be handled::
+
+    easyscan templates/example_random.ini --overwrite replace
+
+The agent-oriented runner captures terminal output to a log file and
+returns a structured report when ``--json`` is used::
+
+    easyscan --run templates/example_random.ini --overwrite stop --json
+
+Existing results can also be summarized without re-running a scan::
+
+    easyscan --results example_random --json
 
 Here *example_random.ini* is an example configuration file provided in EasyScan_HEP. It performs a scan on a simplified model,
 ::
@@ -117,12 +154,38 @@ artifacts are stored in the directory where the UI was opened. The
 Configuration File panel can also call an OpenAI-compatible large language
 model API to turn a natural-language request into a checked ``.ini`` setup.
 
+Agent skill installation
+------------------------
+
+EasyScan_HEP includes an agent skill that helps AI agents generate
+EasyScan_HEP ``.ini`` files before running scans. The skill is stored in::
+
+    agent-skills/easyscan-hep
+
+If EasyScan_HEP was installed from pip or from the source tree, install
+the bundled skill for Codex with::
+
+    easyscan --install-agent-skill codex
+
+For agents that support skill folders but use another location, copy the
+same skill directory manually or pass the desired target directory::
+
+    easyscan --install-agent-skill codex --target /path/to/skills/easyscan-hep
+
+The skill is intentionally ``.ini``-first: when a user asks for a scan or
+sampler setup, the agent should generate the EasyScan_HEP configuration
+file, run ``easyscan --check --json`` when available, and wait for the
+user to review the configuration before launching the scan. After
+generating and checking the file, the agent should also ask whether the
+user wants to inspect it with the EasyScan_HEP UI ``Check Config``
+workflow.
+
 Package release check
 ---------------------
 
 Before publishing a release package, install the packaging tools once::
 
-    python3 -m pip install build twine
+    python3 -m pip install -U "setuptools>=61" build twine
 
 Then build and smoke-test the source distribution and wheel with::
 

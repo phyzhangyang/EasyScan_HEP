@@ -31,6 +31,8 @@ ANSI_ESCAPE_RE = re.compile(r"\x1b\[[0-9;]*m")
 if str(SRC_ROOT) not in sys.path:
     sys.path.insert(0, str(SRC_ROOT))
 
+from easyscan_hep.config_io import split_row as split_config_row
+from easyscan_hep.results import read_results
 from config_checker import check_config_text, format_check_report
 
 app = FastAPI(title="EasyScan_HEP Local UI")
@@ -228,7 +230,7 @@ def clean_log_line(line: str) -> str:
 
 
 def split_row(row: str) -> list[str]:
-    return clean_items(row.split(","))
+    return clean_items(split_config_row(row))
 
 
 def variable_line(item: VariableEntry) -> str:
@@ -832,18 +834,11 @@ def ensure_allowed(path: Path) -> Path:
 
 def result_files(record: RunRecord) -> dict[str, Any]:
     result_dir = record.result_dir
-    files = []
-    plots = []
-    if result_dir.exists():
-        for path in sorted(result_dir.rglob("*")):
-            if not path.is_file():
-                continue
-            item = {"name": path.name, "path": str(path), "url": f"/api/files?path={path}"}
-            if path.suffix.lower() in {".png", ".jpg", ".jpeg", ".svg"}:
-                plots.append(item)
-            else:
-                files.append(item)
-    return {"result_dir": str(result_dir), "files": files, "plots": plots}
+    summary = read_results(result_dir)
+    for group in ("files", "plots"):
+        for item in summary[group]:
+            item["url"] = f"/api/files?path={item['path']}"
+    return summary
 
 
 def run_record_payload(record: RunRecord) -> dict[str, Any]:

@@ -7,6 +7,7 @@
 import time, os, sys
 from pathlib import Path
 from collections import OrderedDict
+from easyscan_hep.config_io import split_row
 # Internal modules
 from initialize import logger
 from initialize import resume
@@ -114,7 +115,7 @@ def string2list(s):
 
 # Parse string of input variable and output variable in configure file to list of items.
 def string2nestlist(s):
-    s = [x.split(',') for x in s.split('\n')]
+    s = [split_row(x) for x in s.split('\n')]
     s = [[autotype(x.strip()) for x in ss] for ss in s]
     return s
 

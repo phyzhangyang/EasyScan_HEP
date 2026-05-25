@@ -144,8 +144,23 @@ or `.venv/bin/python run.py`. `./script.py` follows the script shebang and may
 use a different Python with different installed packages.
 
 Prefer paths relative to the directory where `easyscan` will be launched, or
-`~` paths. Runtime path handling in parts of EasyScan_HEP treats `/home` and `~`
-as absolute but can mishandle macOS-style `/Users/...` paths.
+`~` paths. Absolute paths are supported for ordinary serial runs. In parallel
+mode, keep `Parallel folder`, `Command path`, input files, and output files
+relative to the launch directory, because EasyScan copies the parallel folder
+to worker directories.
+
+For agent workflows, check the file with machine-readable output:
+
+```bash
+easyscan --check config.ini --json
+```
+
+After the user confirms the configuration, non-interactive runs should choose
+an explicit result-folder policy:
+
+```bash
+easyscan --run config.ini --overwrite stop --json
+```
 
 ### File Declarations
 
