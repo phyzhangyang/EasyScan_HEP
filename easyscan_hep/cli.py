@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+import argparse
+import json
 import os
 import sys
 import threading
@@ -73,15 +75,124 @@ def run_ui() -> None:
 
 def run_check(argv: list[str]) -> None:
     configure_import_paths()
-    from config_checker import check_config_file, format_check_report
+    from config_checker import format_check_report
+    from easyscan_hep.api import check_config
 
-    config_args = [arg for arg in argv[1:] if arg != "--check"]
-    if len(config_args) != 1:
-        print("Usage: easyscan --check CONFIG.ini")
+    parser = argparse.ArgumentParser(prog="easyscan --check", description="Check an EasyScan_HEP config without running it.")
+    parser.add_argument("--check", action="store_true")
+    parser.add_argument("--json", action="store_true", dest="json_output")
+    parser.add_argument("--base-dir", default=None, help="Base directory for resolving relative paths.")
+    parser.add_argument("config", nargs="?")
+    args = parser.parse_args(argv[1:])
+    if not args.config:
+        parser.print_usage()
         sys.exit(1)
-    report = check_config_file(config_args[0])
-    print(format_check_report(report))
+    report = check_config(args.config, base_dir=args.base_dir)
+    if args.json_output:
+        print_json(report)
+    else:
+        print(format_check_report(report))
     sys.exit(0 if report["ok"] else 1)
+
+
+def print_json(payload) -> None:
+    print(json.dumps(payload, indent=2, sort_keys=True, ensure_ascii=False))
+
+
+def run_results(argv: list[str]) -> None:
+    from easyscan_hep.results import format_results_summary, read_results
+
+    parser = argparse.ArgumentParser(prog="easyscan --results", description="Read an EasyScan_HEP result directory.")
+    parser.add_argument("--results", dest="result_dir")
+    parser.add_argument("--json", action="store_true", dest="json_output")
+    parser.add_argument("--max-preview", type=int, default=5)
+    args = parser.parse_args(argv[1:])
+    if not args.result_dir:
+        parser.print_usage()
+        sys.exit(1)
+    summary = read_results(args.result_dir, max_preview=args.max_preview)
+    if args.json_output:
+        print_json(summary)
+    else:
+        print(format_results_summary(summary))
+    sys.exit(0 if summary["exists"] else 1)
+
+
+def run_agent_scan(argv: list[str]) -> None:
+    from easyscan_hep.api import run_config
+    from easyscan_hep.results import format_results_summary
+
+    parser = argparse.ArgumentParser(prog="easyscan --run", description="Run EasyScan_HEP with machine-readable options.")
+    parser.add_argument("--run", dest="run_config", nargs="?")
+    parser.add_argument("--json", action="store_true", dest="json_output")
+    parser.add_argument("--overwrite", choices=["replace", "backup", "stop"], default="stop")
+    parser.add_argument("--cwd", default=None, help="Launch directory. Defaults to the current directory.")
+    parser.add_argument("--log", default=None, help="Path to write captured run output.")
+    parser.add_argument("config", nargs="?")
+    args = parser.parse_args(argv[1:])
+    config = args.run_config or args.config
+    if not config:
+        parser.print_usage()
+        sys.exit(1)
+    report = run_config(config, cwd=args.cwd, overwrite=args.overwrite, log_path=args.log)
+    if args.json_output:
+        report = {key: value for key, value in report.items() if key != "stdout"}
+        print_json(report)
+    else:
+        if report["stdout"]:
+            print(report["stdout"], end="" if report["stdout"].endswith("\n") else "\n")
+        print("Run %s." % ("completed" if report["ok"] else "failed"))
+        print("Log file: %s" % report["log_path"])
+        if report.get("results"):
+            print(format_results_summary(report["results"]))
+    sys.exit(0 if report["ok"] else report["return_code"])
+
+
+def run_install_agent_skill(argv: list[str]) -> None:
+    from easyscan_hep.api import install_agent_skill
+
+    parser = argparse.ArgumentParser(prog="easyscan --install-agent-skill", description="Install the bundled EasyScan_HEP agent skill.")
+    parser.add_argument("--install-agent-skill", dest="agent", nargs="?", const="codex", default="codex")
+    parser.add_argument("--target", default=None, help="Target skill directory. Defaults to ~/.codex/skills/easyscan-hep for Codex.")
+    parser.add_argument("--json", action="store_true", dest="json_output")
+    args = parser.parse_args(argv[1:])
+    report = install_agent_skill(args.agent, target=args.target)
+    if args.json_output:
+        print_json(report)
+    else:
+        print("Installed EasyScan_HEP agent skill for %s." % report["agent"])
+        print("Source: %s" % report["source"])
+        print("Target: %s" % report["target"])
+    sys.exit(0)
+
+
+def apply_overwrite_option(argv: list[str]) -> list[str]:
+    cleaned = [argv[0]]
+    index = 1
+    while index < len(argv):
+        arg = argv[index]
+        if arg == "--overwrite":
+            if index + 1 >= len(argv):
+                print('Usage: easyscan CONFIG.ini --overwrite replace|backup|stop')
+                sys.exit(1)
+            action = argv[index + 1]
+            if action not in {"replace", "backup", "stop"}:
+                print('ERROR: --overwrite must be "replace", "backup", or "stop".')
+                sys.exit(1)
+            os.environ["EASYSCAN_RESULT_EXISTS_ACTION"] = action
+            index += 2
+            continue
+        if arg.startswith("--overwrite="):
+            action = arg.split("=", 1)[1]
+            if action not in {"replace", "backup", "stop"}:
+                print('ERROR: --overwrite must be "replace", "backup", or "stop".')
+                sys.exit(1)
+            os.environ["EASYSCAN_RESULT_EXISTS_ACTION"] = action
+            index += 1
+            continue
+        cleaned.append(arg)
+        index += 1
+    return cleaned
 
 
 def run_scan() -> None:
@@ -309,9 +420,19 @@ def main() -> None:
     if len(sys.argv) > 1 and sys.argv[1] in ["-ui", "--ui"]:
         run_ui()
         return
+    if "--install-agent-skill" in sys.argv:
+        run_install_agent_skill(sys.argv)
+        return
+    if "--results" in sys.argv:
+        run_results(sys.argv)
+        return
     if "--check" in sys.argv:
         run_check(sys.argv)
         return
+    if "--run" in sys.argv or "--json" in sys.argv:
+        run_agent_scan(sys.argv)
+        return
+    sys.argv = apply_overwrite_option(sys.argv)
     run_scan()
 
 

@@ -19,7 +19,7 @@ config check; only run a scan when the user later asks clearly to run it.
 
 1. **Detect or install EasyScan_HEP**
    - First check whether the current project or a parent directory is an EasyScan_HEP source tree. Look for `easyscan_hep/cli.py`, `bin/easyscan.py`, `pyproject.toml`, or `setup.py`.
-   - If a source tree is present, prefer running checks with `python3 -m easyscan_hep.cli --check <config.ini>` from that tree; `./bin/easyscan.py --check <config.ini>` is acceptable for source-tree compatibility.
+   - If a source tree is present, prefer running checks with `python3 -m easyscan_hep.cli --check <config.ini> --json` from that tree; `./bin/easyscan.py --check <config.ini> --json` is acceptable for source-tree compatibility.
    - If no source tree is present, check system installation with `command -v easyscan`, `python3 -m pip show easyscan-hep`, and `python3 -c "import easyscan_hep"`.
    - If EasyScan_HEP is missing, install it with `python3 -m pip install easyscan-hep`.
    - If the package imports but `easyscan` is not on `PATH`, use `python3 -m easyscan_hep.cli` as the fallback command.
@@ -34,11 +34,11 @@ config check; only run a scan when the user later asks clearly to run it.
    - Load `references/scan_methods.md` when selecting or explaining scan methods.
    - Load `references/external_programs.md` only when the request involves external physics programs such as SUSY-HIT, HiggsBounds, FeynHiggs, GM2Calc, micrOMEGAs, or a user-provided executable.
    - Put the generated `.ini` in the directory where `easyscan` should be launched unless the user asks for another location.
-   - Preserve user-provided paths and names. Prefer relative paths from the directory where `easyscan` will be launched, or `~` paths. Avoid macOS-style absolute `/Users/...` paths in generated config unless the user insists, because parts of the runtime path handling only special-case `/home` and `~`.
+   - Preserve user-provided paths and names. Prefer relative paths from the directory where `easyscan` will be launched, or `~` paths. Absolute paths are acceptable when the user needs them, but parallel mode still requires relative paths for `Parallel folder`, `Command path`, input files, and output files.
    - For external Python programs, prefer an explicit interpreter that matches the intended EasyScan runtime, such as `/usr/bin/python3 TestFunction.py` or `.venv/bin/python run.py`, instead of relying on `./script.py` and its shebang.
 
 4. **Check, then stop**
-   - Run `--check` if EasyScan_HEP is available and checking is feasible. This is allowed because it validates the config without running the scan.
+   - Run `--check --json` if EasyScan_HEP is available and checking is feasible. This is allowed because it validates the config without running the scan.
    - Run `--check` from the intended launch directory, because EasyScan_HEP resolves config paths relative to the current working directory.
    - Show the generated `.ini` path, summarize the scan method, parameters, program mappings, constraints, plots, and report the check result.
    - After generating the `.ini` and reporting the check result, ask the user whether they want to use the EasyScan_HEP UI `Check Config` workflow to inspect the same file.
@@ -70,7 +70,7 @@ Ask for only the fields needed for the requested scan:
 - Do not run a scan before the user has had a chance to inspect the `.ini`.
 - Do not delete or overwrite result directories without explicit user approval.
 - Prefer the installed `easyscan` command; fallback to `python3 -m easyscan_hep.cli` when PATH is not configured.
-- Use `--check` before suggesting a config is ready whenever the checker is available.
+- Use `--check --json` before suggesting a config is ready whenever the checker is available.
 - Keep generated paths relative to the launch directory or use `~` paths unless there is a strong reason otherwise.
 - For Python external programs, avoid ambiguous shebang execution; write the interpreter explicitly when environment consistency matters.
 

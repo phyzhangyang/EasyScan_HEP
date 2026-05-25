@@ -1,10 +1,10 @@
 import configparser
-import csv
 import io
 import os
-import re
 import shutil
 from pathlib import Path
+
+from easyscan_hep.config_io import parse_scan_method, resolve_path, rows_for, split_row
 
 
 SCAN_METHODS = {"ONEPOINT", "ONEPOINTBATCH", "RANDOM", "GRID", "BESTFIT", "MCMC", "EMCEE", "MULTINEST", "DYNESTY", "POSTPROCESS", "PLOT", "READ"}
@@ -58,41 +58,6 @@ FORBIDDEN_NAMES = {
     "probability",
     "-2lnlike",
 }
-
-
-def split_row(row):
-    try:
-        return [item.strip() for item in next(csv.reader([row], skipinitialspace=True))]
-    except csv.Error:
-        return [item.strip() for item in row.split(",")]
-
-
-def rows_for(config, section, option):
-    if not config.has_option(section, option):
-        return []
-    return [line.strip() for line in config.get(section, option).splitlines() if line.strip()]
-
-
-def parse_scan_method(value, base_dir):
-    method = value.strip()
-    batch_file = ""
-    if "/" in method and method.upper().startswith("ONEPOINT"):
-        batch_file = method.split("/", 1)[1]
-        method = "ONEPOINTBATCH"
-    else:
-        method = method.upper()
-    if batch_file:
-        batch_path = resolve_path(batch_file, base_dir)
-    else:
-        batch_path = None
-    return method, batch_file, batch_path
-
-
-def resolve_path(value, base_dir):
-    path = Path(value).expanduser()
-    if path.is_absolute():
-        return path
-    return (base_dir / path).resolve()
 
 
 def check_directory_writable(path, context, errors, missing_is_error=True):
@@ -426,11 +391,11 @@ def check_config_text(text, base_dir=None):
     return {"ok": not errors, "errors": errors, "warnings": warnings, "info": info}
 
 
-def check_config_file(path):
+def check_config_file(path, base_dir=None):
     path = Path(path).expanduser().resolve()
     if not path.is_file():
         return {"ok": False, "errors": [f"Config file does not exist: {path}"], "warnings": [], "info": []}
-    return check_config_text(path.read_text(encoding="utf-8"), base_dir=Path.cwd())
+    return check_config_text(path.read_text(encoding="utf-8"), base_dir=base_dir or Path.cwd())
 
 
 def format_check_report(report):

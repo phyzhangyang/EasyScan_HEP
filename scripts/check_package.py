@@ -53,6 +53,19 @@ def main() -> int:
         env = os.environ.copy()
         env["PYTHONPATH"] = str(target_dir)
         run([str(executable), "--check", "templates/example_random.ini"], cwd=target_dir, env=env)
+        run([str(executable), "--check", "templates/example_random.ini", "--json"], cwd=target_dir, env=env)
+        run(
+            [
+                str(executable),
+                "--install-agent-skill",
+                "codex",
+                "--target",
+                str(tmp_path / "skill" / "easyscan-hep"),
+                "--json",
+            ],
+            cwd=target_dir,
+            env=env,
+        )
 
     print("Package check passed.", flush=True)
     return 0
