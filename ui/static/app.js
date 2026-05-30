@@ -519,8 +519,7 @@ function renderPrograms() {
       (_, i) => `
         <details class="program-card" open>
           <summary class="program-summary">
-            <span>Program ${i + 1}</span>
-            <span class="program-summary-meta">${escapeHtml(state.programs[i].program_name || "")}</span>
+            Program ${i + 1}
           </summary>
           <div class="program-card-body">
             <div class="program-header">
@@ -1086,4 +1085,7 @@ bindRootFields();
 applyLlmProviderDefaults(true);
 rerender();
 updateConditionalControls();
+if (window.INITIAL_CONFIG_STATUS?.message) {
+  setConfigFileStatus(window.INITIAL_CONFIG_STATUS.message, window.INITIAL_CONFIG_STATUS.kind || "");
+}
 loadRunHistory();

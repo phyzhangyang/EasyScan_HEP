@@ -490,6 +490,12 @@ def parse_easy_scan_template(path: Path) -> EasyScanConfig:
     return parse_easy_scan_text(path.read_text(encoding="utf-8"))
 
 
+def load_config_file(path: Path) -> EasyScanConfig:
+    config = parse_easy_scan_template(path)
+    config.config_file_path = str(path)
+    return config
+
+
 LLM_PROVIDERS: dict[str, dict[str, str]] = {
     "openai": {
         "base_url": "https://api.openai.com/v1/chat/completions",
@@ -813,6 +819,20 @@ def default_config() -> EasyScanConfig:
     return EasyScanConfig()
 
 
+def initial_config_from_request(request: Request) -> tuple[EasyScanConfig | None, dict[str, str]]:
+    path_value = request.query_params.get("config") or os.environ.get("EASYSCAN_UI_INITIAL_CONFIG", "")
+    if not path_value:
+        return None, {}
+    path = resolve_config_path(path_value)
+    try:
+        path = ensure_allowed(path)
+        if not path.is_file():
+            return None, {"message": f"Initial INI file not found: {path}", "kind": "failed"}
+        return load_config_file(path), {"message": f"Loaded {path}.", "kind": "completed"}
+    except Exception as exc:
+        return None, {"message": f"Failed to load initial INI: {exc}", "kind": "failed"}
+
+
 
 def allowed_roots() -> list[Path]:
     roots = [RUN_CWD, REPO_ROOT, Path.home()]
@@ -925,13 +945,15 @@ def run_worker(record: RunRecord) -> None:
 
 @app.get("/", response_class=HTMLResponse)
 def index(request: Request) -> HTMLResponse:
-    payload = as_payload(default_config())
+    initial_config, initial_status = initial_config_from_request(request)
+    payload = as_payload(initial_config or default_config())
     static_version = int(max((UI_ROOT / "static" / "app.js").stat().st_mtime, (UI_ROOT / "static" / "styles.css").stat().st_mtime))
     return templates.TemplateResponse(
         request,
         "index.html",
         {
             "default_config": json.dumps(payload),
+            "initial_config_status": json.dumps(initial_status),
             "static_version": static_version,
         },
     )
@@ -956,12 +978,10 @@ def import_config_from_file() -> dict[str, Any]:
     if not path.is_file():
         raise HTTPException(status_code=404, detail="INI file not found.")
     try:
-        config = parse_easy_scan_template(path)
+        config = load_config_file(path)
     except Exception as exc:
         raise HTTPException(status_code=400, detail=f"Failed to parse INI file: {exc}") from exc
-    payload = as_payload(config)
-    payload["config_file_path"] = str(path)
-    return payload
+    return as_payload(config)
 
 
 @app.post("/api/config/export")
