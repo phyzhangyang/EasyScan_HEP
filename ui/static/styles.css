@@ -321,23 +321,10 @@ th .help-tip::before {
 }
 
 .program-summary {
-  display: flex;
-  align-items: center;
-  gap: 12px;
   padding: 14px;
   color: #24437c;
   font-weight: 700;
   cursor: pointer;
-}
-
-.program-summary-meta {
-  min-width: 0;
-  color: var(--muted);
-  font-size: 13px;
-  font-weight: 600;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
 }
 
 .program-card-body {
@@ -458,6 +445,20 @@ th .help-tip::before {
   color: #24437c;
   font-weight: 700;
   cursor: pointer;
+}
+
+.section-collapse-panel summary {
+  width: max-content;
+  color: #24437c;
+  font-size: 16px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.section-collapse-actions {
+  display: flex;
+  justify-content: flex-end;
+  margin: 10px 0 12px;
 }
 
 .ai-grid {

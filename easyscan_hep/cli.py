@@ -8,6 +8,7 @@ import os
 import sys
 import threading
 import time
+import urllib.parse
 import urllib.request
 import webbrowser
 from pathlib import Path
@@ -46,9 +47,26 @@ def open_ui_when_ready(url: str) -> None:
     print("Open this URL in your browser: %s" % url)
 
 
-def run_ui() -> None:
+def resolve_ui_config_path(path_value: str | None) -> Path | None:
+    if not path_value:
+        return None
+    path = Path(path_value).expanduser()
+    if not path.is_absolute():
+        path = Path.cwd() / path
+    path = path.resolve()
+    if not path.is_file():
+        print("ERROR: UI config file not found: %s" % path)
+        sys.exit(1)
+    return path
+
+
+def run_ui(config_path: str | None = None) -> None:
     configure_import_paths()
+    initial_config = resolve_ui_config_path(config_path)
     url = "http://127.0.0.1:8000/"
+    if initial_config is not None:
+        os.environ["EASYSCAN_UI_INITIAL_CONFIG"] = str(initial_config)
+        url = "%s?config=%s" % (url, urllib.parse.quote(str(initial_config), safe=""))
     os.environ["EASYSCAN_UI_CWD"] = os.getcwd()
 
     if ui_is_running(url):
@@ -418,7 +436,10 @@ def run_scan() -> None:
 def main() -> None:
     configure_import_paths()
     if len(sys.argv) > 1 and sys.argv[1] in ["-ui", "--ui"]:
-        run_ui()
+        if len(sys.argv) > 3:
+            print("Usage: easyscan -ui [config.ini]")
+            sys.exit(1)
+        run_ui(sys.argv[2] if len(sys.argv) == 3 else None)
         return
     if "--install-agent-skill" in sys.argv:
         run_install_agent_skill(sys.argv)

@@ -120,28 +120,30 @@
       </section>
 
       <section class="panel">
-        <div class="panel-title">
-          <h2>Input Parameters</h2>
-          <button id="addInputParam" class="secondary small">Add Parameter</button>
-        </div>
-        <div class="table-wrap">
-          <table>
-            <thead>
-              <tr>
-                <th><span id="inputHeaderName">Name</span> <span class="help-tip" data-tooltip="Parameter ID used in expressions, input variables, constraints, and plots." tabindex="0" aria-label="Help: Input parameter name">?</span></th>
-                <th><span id="inputHeaderPrior">Prior</span> <span class="help-tip" data-tooltip="Prior type for sampled parameters. Use flat or log for scans, Fixed for constants or one-point modes." tabindex="0" aria-label="Help: Prior">?</span></th>
-                <th><span id="inputHeaderValue">Value</span> <span class="help-tip" data-tooltip="Fixed value used when Prior is Fixed, ONEPOINT, or ONEPOINTBATCH." tabindex="0" aria-label="Help: Value">?</span></th>
-                <th><span id="inputHeaderMin">Min</span> <span class="help-tip" data-tooltip="Lower bound of the scanned parameter range." tabindex="0" aria-label="Help: Minimum">?</span></th>
-                <th><span id="inputHeaderMax">Max</span> <span class="help-tip" data-tooltip="Upper bound of the scanned parameter range." tabindex="0" aria-label="Help: Maximum">?</span></th>
-                <th><span id="inputHeaderBins">Bins</span> <span class="help-tip" data-tooltip="Number of bins used by GRID scans." tabindex="0" aria-label="Help: Bins">?</span></th>
-                <th><span id="inputHeaderInterval">Interval</span> <span class="help-tip" data-tooltip="MCMC proposal step or interval setting for this parameter." tabindex="0" aria-label="Help: Interval">?</span></th>
-                <th><span id="inputHeaderInitial">Initial</span> <span class="help-tip" data-tooltip="Initial parameter value used by MCMC; also used as a fallback fixed value." tabindex="0" aria-label="Help: Initial">?</span></th>
-                <th></th>
-              </tr>
-            </thead>
-            <tbody id="inputParamsBody"></tbody>
-          </table>
-        </div>
+        <details class="section-collapse-panel" open>
+          <summary>Input Parameters</summary>
+          <div class="section-collapse-actions">
+            <button id="addInputParam" class="secondary small">Add Parameter</button>
+          </div>
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th><span id="inputHeaderName">Name</span> <span class="help-tip" data-tooltip="Parameter ID used in expressions, input variables, constraints, and plots." tabindex="0" aria-label="Help: Input parameter name">?</span></th>
+                  <th><span id="inputHeaderPrior">Prior</span> <span class="help-tip" data-tooltip="Prior type for sampled parameters. Use flat or log for scans, Fixed for constants or one-point modes." tabindex="0" aria-label="Help: Prior">?</span></th>
+                  <th><span id="inputHeaderValue">Value</span> <span class="help-tip" data-tooltip="Fixed value used when Prior is Fixed, ONEPOINT, or ONEPOINTBATCH." tabindex="0" aria-label="Help: Value">?</span></th>
+                  <th><span id="inputHeaderMin">Min</span> <span class="help-tip" data-tooltip="Lower bound of the scanned parameter range." tabindex="0" aria-label="Help: Minimum">?</span></th>
+                  <th><span id="inputHeaderMax">Max</span> <span class="help-tip" data-tooltip="Upper bound of the scanned parameter range." tabindex="0" aria-label="Help: Maximum">?</span></th>
+                  <th><span id="inputHeaderBins">Bins</span> <span class="help-tip" data-tooltip="Number of bins used by GRID scans." tabindex="0" aria-label="Help: Bins">?</span></th>
+                  <th><span id="inputHeaderInterval">Interval</span> <span class="help-tip" data-tooltip="MCMC proposal step or interval setting for this parameter." tabindex="0" aria-label="Help: Interval">?</span></th>
+                  <th><span id="inputHeaderInitial">Initial</span> <span class="help-tip" data-tooltip="Initial parameter value used by MCMC; also used as a fallback fixed value." tabindex="0" aria-label="Help: Initial">?</span></th>
+                  <th></th>
+                </tr>
+              </thead>
+              <tbody id="inputParamsBody"></tbody>
+            </table>
+          </div>
+        </details>
       </section>
 
       <section class="panel">
@@ -251,6 +253,7 @@
 
     <script>
       window.DEFAULT_CONFIG = {{ default_config | safe }};
+      window.INITIAL_CONFIG_STATUS = {{ initial_config_status | safe }};
     </script>
     <script src="/static/app.js?v={{ static_version }}"></script>
   </body>

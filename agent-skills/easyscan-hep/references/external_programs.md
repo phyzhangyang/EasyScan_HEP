@@ -6,6 +6,10 @@ This document provides EasyScan_HEP configuration templates for common high-ener
 
 ## Critical Syntax Rules From EasyScan_HEP Runtime
 
+- When creating a config for an external program, ask the user for input/output
+  mappings instead of reading program files to guess them. Do not inspect source,
+  binaries, input cards, or output files unless the user explicitly asks for
+  that analysis. Simple existence checks are fine.
 - SLHA mappings must include `BLOCK` or `DECAY`: use
   `var, file_id, SLHA, BLOCK, BLOCKNAME, key...`, not
   `var, file_id, SLHA, BLOCKNAME, key`.

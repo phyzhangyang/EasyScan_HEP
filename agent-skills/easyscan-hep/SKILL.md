@@ -5,7 +5,8 @@ description: >
   MCMC, EMCEE, Dynesty, MultiNest, BESTFIT, nested sampling, likelihood fitting,
   exclusion scans, constraint scans, or the Chinese terms 扫描, 采样, 参数空间.
   Generate EasyScan_HEP .ini configuration files first, check them when possible,
-  and do not run scans until the user explicitly confirms.
+  and do not run scans until the user explicitly confirms. If scan details are
+  missing, ask for the minimum required fields before generating a config.
 ---
 
 # EasyScan_HEP Skill
@@ -26,8 +27,10 @@ config check; only run a scan when the user later asks clearly to run it.
 
 2. **Collect scan requirements**
    - Required information: scan purpose/model, scan method, input parameters with ranges or fixed values, scan size (`Number of points`, GRID point/interval counts, optimizer iterations, or live points), result folder, connected program command, input/output file mappings when EasyScan must write/read files, output variables, constraints, and requested plots.
+   - If the user only invokes this skill, says only "帮我做一个扫描", "do a scan", "sampling", or gives similarly vague intent with no concrete scan details, stop after discovery/installation checks and ask for the minimum fields listed below. Do not choose a default scan method, physics model, parameter range, external program, output variable, constraint, plot, result folder, or point count.
+   - If the user provides partial details, create an `.ini` only when enough information exists to express a valid EasyScan_HEP config. Otherwise ask for the missing fields. Do not read external program source, binaries, input cards, or output files to infer input/output mappings unless the user explicitly asks you to inspect those files.
    - If important information is missing, do not invent physics details. Ask the user for the missing fields in a compact checklist.
-   - If the user only wants a quick EasyScan_HEP test, generate a minimal built-in `TestFunction` style config.
+   - Generate a minimal built-in `TestFunction` style config only when the user explicitly asks for a quick EasyScan_HEP test or demo.
 
 3. **Generate the EasyScan_HEP `.ini`**
    - Load `references/ini_config_reference.md` when writing config syntax.
@@ -55,6 +58,17 @@ Ask for only the fields needed for the requested scan:
 - Constraints: Gaussian values, bounds, or free-form chi-square definitions.
 - Output: result folder and requested plot types.
 
+For a vague request such as "帮我做一个扫描", ask for this minimum set before writing any `.ini`:
+
+- Scan method and scan size.
+- Input parameters with ranges or fixed values.
+- Result folder.
+- External program command and command directory, unless the user explicitly wants the built-in `TestFunction` example.
+- Input-file mapping for each scanned parameter when EasyScan_HEP must write values.
+- Output file and output variable definitions when EasyScan_HEP must read results.
+- Constraints or objective definition for likelihood, nested-sampling, or best-fit methods.
+- Requested plots, or confirmation that no plots are needed.
+
 ## Scan Method Defaults
 
 - Use `RANDOM` for quick exploration when the user gives ranges but no fitting goal.
@@ -67,6 +81,10 @@ Ask for only the fields needed for the requested scan:
 ## Hard Rules
 
 - Generate EasyScan_HEP `.ini` files; do not write new scan-driver code when an `.ini` can express the task.
+- Do not create a default `.ini` from an empty or vague scan request. Ask for the minimum fields first.
+- Do not silently invent output variables, constraints, plots, or program mappings just to satisfy the checker.
+- Do not proactively inspect external program files to guess `Input file`, `Input variable`, `Output file`, or `Output variable`. Ask the user for these mappings. File existence checks such as `ls` or `test -e` are acceptable; content inspection is allowed only after an explicit user request.
+- When assumptions come from user-provided mappings or documented EasyScan_HEP examples, report them explicitly before writing the `.ini`.
 - Do not run a scan before the user has had a chance to inspect the `.ini`.
 - Do not delete or overwrite result directories without explicit user approval.
 - Prefer the installed `easyscan` command; fallback to `python3 -m easyscan_hep.cli` when PATH is not configured.
