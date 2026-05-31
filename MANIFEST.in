@@ -5,7 +5,6 @@ recursive-include scripts *.py
 recursive-include ui/templates *.html
 recursive-include ui/static *.css *.js
 recursive-include templates *.ini *.txt
-recursive-include agent-skills *.md
 include utils/TestFunction.py
 include utils/TestFunction_input.dat
 include utils/OnePointBatch.in
