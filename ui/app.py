@@ -460,15 +460,13 @@ def parse_easy_scan_text(text: str) -> EasyScanConfig:
                     label=parts[4] if len(parts) > 4 else "",
                 )
             )
-    if gaussian_constraints:
-        config.gaussian_constraints = gaussian_constraints
+    config.gaussian_constraints = gaussian_constraints
     freeform_chi2 = []
     for row in constraint.get("FreeFormChi2", []):
         parts = split_row(row)
         if parts:
             freeform_chi2.append(FreeFormChi2Entry(variable=parts[0], label=parts[1] if len(parts) > 1 else ""))
-    if freeform_chi2:
-        config.freeform_chi2 = freeform_chi2
+    config.freeform_chi2 = freeform_chi2
 
     plot = sections.get("plot", {})
     plots = []
@@ -481,8 +479,7 @@ def parse_easy_scan_text(text: str) -> EasyScanConfig:
                 plots.append(PlotEntry(kind=kind, x=parts[0], y=parts[1], figure_name=parts[2] if len(parts) > 2 else ""))
             elif len(parts) >= 3:
                 plots.append(PlotEntry(kind=kind, x=parts[0], y=parts[1], value=parts[2], figure_name=parts[3] if len(parts) > 3 else ""))
-    if plots:
-        config.plots = plots
+    config.plots = plots
     return config
 
 
