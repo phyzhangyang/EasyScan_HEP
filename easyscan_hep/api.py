@@ -5,8 +5,6 @@ from __future__ import annotations
 import configparser
 import json
 import os
-import shutil
-import site
 import subprocess
 import sys
 from pathlib import Path
@@ -17,6 +15,7 @@ from .results import read_results
 
 
 VALID_OVERWRITE_ACTIONS = {"replace", "backup", "stop"}
+AGENT_SKILL_REPOSITORY = "https://github.com/PhenoAgent/easyscan-skill.git"
 
 
 def source_root() -> Path:
@@ -123,30 +122,23 @@ def run_config(
     }
 
 
-def agent_skill_candidates() -> list[Path]:
-    root = source_root()
-    candidates = [
-        root / "agent-skills" / "easyscan-hep",
-        Path(sys.prefix) / "agent-skills" / "easyscan-hep",
-        Path(site.USER_BASE) / "agent-skills" / "easyscan-hep",
-    ]
-    return [path for path in candidates if path.is_dir()]
-
-
 def install_agent_skill(agent: str = "codex", target: str | Path | None = None) -> dict[str, str]:
-    """Install the bundled EasyScan_HEP skill into a local agent skill folder."""
+    """Install the EasyScan_HEP skill from its standalone repository."""
     agent = agent.lower()
     if target is None:
         if agent != "codex":
             raise ValueError('Only "codex" has a built-in default target. Pass target=... for other agents.')
         target = Path.home() / ".codex" / "skills" / "easyscan-hep"
     target = Path(target).expanduser().resolve()
-    candidates = agent_skill_candidates()
-    if not candidates:
-        raise FileNotFoundError("Bundled agent skill was not found. Install from the EasyScan_HEP source tree or wheel.")
-    source = candidates[0]
-    target.parent.mkdir(parents=True, exist_ok=True)
     if target.exists():
-        shutil.rmtree(target)
-    shutil.copytree(source, target)
-    return {"source": str(source), "target": str(target), "agent": agent}
+        raise FileExistsError(f"Target already exists: {target}. Update it with git pull or choose a new --target.")
+    target.parent.mkdir(parents=True, exist_ok=True)
+    completed = subprocess.run(
+        ["git", "clone", AGENT_SKILL_REPOSITORY, str(target)],
+        stdout=subprocess.PIPE,
+        stderr=subprocess.STDOUT,
+        text=True,
+    )
+    if completed.returncode != 0:
+        raise RuntimeError(completed.stdout.strip() or "Failed to clone EasyScan_HEP agent skill repository.")
+    return {"source": AGENT_SKILL_REPOSITORY, "target": str(target), "agent": agent, "action": "cloned"}

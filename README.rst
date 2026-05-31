@@ -142,6 +142,11 @@ same main entrypoint::
 
     easyscan -ui
 
+To open the UI with an existing configuration file already loaded, pass
+the ``.ini`` file after ``-ui``::
+
+    easyscan -ui templates/example_random.ini
+
 The UI runs at ``http://127.0.0.1:8000/`` and opens the browser
 automatically when possible. Keep the terminal open while using the UI.
 Press ``Control-C`` in that terminal to stop the server.
@@ -153,22 +158,28 @@ configuration consistency before a run. Generated UI ``.ini`` and ``.log``
 artifacts are stored in the directory where the UI was opened. The
 Configuration File panel can also call an OpenAI-compatible large language
 model API to turn a natural-language request into a checked ``.ini`` setup.
+When a new ``.ini`` file is imported, the UI state follows the file exactly:
+if the file has no ``[constraint]`` section, the constraint tables are
+cleared; if it has no ``[plot]`` section, the plot table is cleared.
 
 Agent skill installation
 ------------------------
 
-EasyScan_HEP includes an agent skill that helps AI agents generate
-EasyScan_HEP ``.ini`` files before running scans. The skill is stored in::
+The EasyScan_HEP agent skill is maintained separately from the EasyScan_HEP
+codebase at:
 
-    agent-skills/easyscan-hep
+    https://github.com/PhenoAgent/easyscan-skill
 
-If EasyScan_HEP was installed from pip or from the source tree, install
-the bundled skill for Codex with::
+For Codex, install the skill with::
 
     easyscan --install-agent-skill codex
 
-For agents that support skill folders but use another location, copy the
-same skill directory manually or pass the desired target directory::
+or clone the skill repository directly::
+
+    git clone https://github.com/PhenoAgent/easyscan-skill.git ~/.codex/skills/easyscan-hep
+
+For agents that support skill folders but use another location, pass the
+desired target directory or clone the repository there::
 
     easyscan --install-agent-skill codex --target /path/to/skills/easyscan-hep
 
@@ -179,6 +190,22 @@ user to review the configuration before launching the scan. After
 generating and checking the file, the agent should also ask whether the
 user wants to inspect it with the EasyScan_HEP UI ``Check Config``
 workflow.
+
+The skill is conservative about missing scan information. If the user only
+says "do a scan" or gives a similarly vague request, the agent should ask
+for the minimum required items first: scan method and size, scanned
+parameters, result folder, external program command and path, input/output
+file mappings, constraints or objective definitions when needed, and plots
+or confirmation that no plots are needed. It should not invent these
+physics or program details.
+
+For external programs, the skill should not inspect source files, binaries,
+input cards, output files, existing ``.ini`` files, templates, examples, or
+prior generated configs to guess ``Input file``, ``Input variable``,
+``Output file`` or ``Output variable`` mappings unless the user explicitly
+asks it to analyze those files for mappings. The user should provide these
+mappings, and the agent should record them transparently in the generated
+``.ini``.
 
 Package release check
 ---------------------

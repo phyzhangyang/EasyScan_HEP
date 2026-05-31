@@ -65,8 +65,6 @@ setup(
             "utils/MSSM_mW/hbounds.txt",
             "utils/MSSM_mW/makefile",
         ]),
-        ("agent-skills/easyscan-hep", file_glob("agent-skills/easyscan-hep/*.md")),
-        ("agent-skills/easyscan-hep/references", file_glob("agent-skills/easyscan-hep/references/*.md")),
     ],
     install_requires=CORE_REQUIRES,
     extras_require={

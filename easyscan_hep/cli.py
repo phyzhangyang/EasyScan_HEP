@@ -167,14 +167,25 @@ def run_agent_scan(argv: list[str]) -> None:
 
 
 def run_install_agent_skill(argv: list[str]) -> None:
-    from easyscan_hep.api import install_agent_skill
+    from easyscan_hep.api import AGENT_SKILL_REPOSITORY, install_agent_skill
 
-    parser = argparse.ArgumentParser(prog="easyscan --install-agent-skill", description="Install the bundled EasyScan_HEP agent skill.")
+    parser = argparse.ArgumentParser(prog="easyscan --install-agent-skill", description="Install the EasyScan_HEP agent skill from its standalone repository.")
     parser.add_argument("--install-agent-skill", dest="agent", nargs="?", const="codex", default="codex")
     parser.add_argument("--target", default=None, help="Target skill directory. Defaults to ~/.codex/skills/easyscan-hep for Codex.")
     parser.add_argument("--json", action="store_true", dest="json_output")
     args = parser.parse_args(argv[1:])
-    report = install_agent_skill(args.agent, target=args.target)
+    try:
+        report = install_agent_skill(args.agent, target=args.target)
+        report["ok"] = True
+    except Exception as exc:
+        report = {"ok": False, "source": AGENT_SKILL_REPOSITORY, "agent": args.agent, "target": args.target or "", "error": str(exc)}
+        if args.json_output:
+            print_json(report)
+        else:
+            print("Failed to install EasyScan_HEP agent skill.")
+            print("Source: %s" % report["source"])
+            print("Error: %s" % report["error"])
+        sys.exit(1)
     if args.json_output:
         print_json(report)
     else:
