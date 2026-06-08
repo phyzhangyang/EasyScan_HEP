@@ -65,6 +65,14 @@ setup(
             "utils/MSSM_mW/hbounds.txt",
             "utils/MSSM_mW/makefile",
         ]),
+        ("utils/SSM_DM_EWPT", [
+            "utils/SSM_DM_EWPT/bootstrap.py",
+            "utils/SSM_DM_EWPT/plot_dm_ewpt.py",
+            "utils/SSM_DM_EWPT/README.md",
+        ]),
+        ("utils/SSM_DM_EWPT/patches", [
+            "utils/SSM_DM_EWPT/patches/micromegas_7.1_easyscan.patch",
+        ]),
     ],
     install_requires=CORE_REQUIRES,
     extras_require={

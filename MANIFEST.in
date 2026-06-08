@@ -11,3 +11,4 @@ include utils/OnePointBatch.in
 include utils/MSSM_mW/for_MSSM_mW.susyhit
 include utils/MSSM_mW/hbounds.txt
 include utils/MSSM_mW/makefile
+recursive-include utils/SSM_DM_EWPT *.py *.md *.patch

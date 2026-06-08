@@ -1,0 +1,27 @@
+diff -ruN --unified=0 micromegas_7.1/SingletDM/main.c mm_patchwork/SingletDM/main.c
+--- micromegas_7.1/SingletDM/main.c	2026-05-15 15:56:01
++++ mm_patchwork/SingletDM/main.c	2026-06-08 09:44:17
+@@ -220,0 +221,4 @@
++    printf("ES_Omega_h2 %.16E\n",Omega);
++    printf("ES_Xf %.16E\n",Xf);
++    printf("ES_relic_err %d\n",err);
++    printf("ES_xi %.16E\n",isfinite(Omega) ? Omega/0.1188 : NAN);
+@@ -397,0 +402,4 @@
++  printf("ES_sigmaSIp_pb %.16E\n",csSIp);
++  printf("ES_sigmaSIn_pb %.16E\n",csSIn);
++  printf("ES_sigmaSDp_pb %.16E\n",csSDp);
++  printf("ES_sigmaSDn_pb %.16E\n",csSDn);
+@@ -405,0 +414 @@
++  double ddFactor=DD_factor(AllDDexp,0.1, Maxwell, &expName);
+@@ -408 +418,4 @@
+-  printf("DD_factor =%E\n", DD_factor(AllDDexp,0.1, Maxwell, &expName));
++  printf("DD_factor =%E\n", ddFactor);
++  printf("ES_DD_pval %.16E\n",pval);
++  printf("ES_DD_factor %.16E\n",ddFactor);
++  printf("ES_DD_excluded %d\n",pval<0.1 ? 1 : 0);
+diff -ruN --unified=0 micromegas_7.1/sources/omega.c mm_patchwork/sources/omega.c
+--- micromegas_7.1/sources/omega.c	2026-05-15 16:04:53
++++ mm_patchwork/sources/omega.c	2026-06-08 09:44:18
+@@ -5917 +5917 @@
+-    {   if(finite(ds) && ds < fabs(s3_2-s3_t)/100 ) Yt=Yeq(T2)+dY; else
++    {   if(isfinite(ds) && ds < fabs(s3_2-s3_t)/100 ) Yt=Yeq(T2)+dY; else
