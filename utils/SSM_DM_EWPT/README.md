@@ -10,7 +10,7 @@ prior, so the scan points are uniformly spaced in the plotted parameter plane.
 Fixed external versions:
 
 - micrOMEGAs 7.1
-- PhaseTracer 2.2.1
+- PhaseTracer 2.2.1, pinned to commit `a68b2fd2801e748d143058d828683f8f76b67ce3`
 
 Prepare the fixed-version external programs:
 
@@ -23,6 +23,13 @@ If the micrOMEGAs Zenodo download is unavailable, provide a local archive:
 
 ```bash
 python3 utils/SSM_DM_EWPT/bootstrap.py --micromegas-tar /path/to/micromegas_7.1.tgz
+```
+
+PhaseTracer is downloaded as a fixed source archive, not as a git checkout. To
+use a local source archive instead, pass:
+
+```bash
+python3 utils/SSM_DM_EWPT/bootstrap.py --phasetracer-tar /path/to/PhaseTracer.tar.gz
 ```
 
 PhaseTracer also needs its normal CMake dependencies, including Boost, Eigen,

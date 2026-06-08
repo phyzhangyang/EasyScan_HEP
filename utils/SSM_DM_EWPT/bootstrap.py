@@ -8,6 +8,7 @@ import os
 import shutil
 import subprocess
 import tarfile
+import tempfile
 import urllib.request
 from pathlib import Path
 
@@ -21,9 +22,9 @@ MICROMEGAS_VERSION = "7.1"
 MICROMEGAS_URL = "https://zenodo.org/records/20267206/files/micromegas_7.1.tgz?download=1"
 MICROMEGAS_DIR = PROGRAMS_DIR / "micromegas_7.1"
 
-PHASETRACER_URL = "https://github.com/PhaseTracer/PhaseTracer.git"
 PHASETRACER_REF = "2.2.1"
 PHASETRACER_COMMIT = "a68b2fd2801e748d143058d828683f8f76b67ce3"
+PHASETRACER_URL_TEMPLATE = "https://github.com/PhaseTracer/PhaseTracer/archive/{commit}.tar.gz"
 PHASETRACER_DIR = PROGRAMS_DIR / "PhaseTracer"
 
 PHASETRACER_DEPENDENCY_HELP = """
@@ -76,6 +77,20 @@ def download_file(url: str, dest: Path) -> None:
         shutil.copyfileobj(response, output)
 
 
+def extract_single_directory(archive: Path, dest: Path) -> None:
+    dest_parent = dest.parent
+    dest_parent.mkdir(parents=True, exist_ok=True)
+    with tempfile.TemporaryDirectory(prefix=".extract-", dir=dest_parent) as tmp:
+        tmp_dir = Path(tmp)
+        safe_extract(archive, tmp_dir)
+        candidates = [path for path in tmp_dir.iterdir() if path.is_dir()]
+        if len(candidates) != 1:
+            raise SystemExit(f"Could not locate a single source directory in {archive}.")
+        if dest.exists():
+            shutil.rmtree(dest)
+        candidates[0].rename(dest)
+
+
 def apply_patch_file(patch_file: Path, cwd: Path) -> None:
     dry = ["patch", "-l", "--forward", "--batch", "--dry-run", "-p1", "-i", str(patch_file)]
     apply = ["patch", "-l", "--forward", "--batch", "-p1", "-i", str(patch_file)]
@@ -121,10 +136,19 @@ def prepare_phasetracer(args: argparse.Namespace) -> None:
         shutil.rmtree(PHASETRACER_DIR)
     PROGRAMS_DIR.mkdir(parents=True, exist_ok=True)
     if not PHASETRACER_DIR.exists():
-        run(["git", "clone", "--branch", args.phasetracer_ref, "--depth", "1", args.phasetracer_url, str(PHASETRACER_DIR)])
-    commit = subprocess.check_output(["git", "rev-parse", "HEAD"], cwd=PHASETRACER_DIR, text=True).strip()
-    if commit != args.phasetracer_commit:
-        raise SystemExit(f"Unexpected PhaseTracer commit: {commit}; expected {args.phasetracer_commit}")
+        archive = (
+            Path(args.phasetracer_tar).expanduser().resolve()
+            if args.phasetracer_tar
+            else EXAMPLE_DIR / f"PhaseTracer-{args.phasetracer_ref}-{args.phasetracer_commit[:12]}.tar.gz"
+        )
+        if args.phasetracer_tar:
+            if not archive.is_file():
+                raise SystemExit(f"PhaseTracer archive was not found: {archive}")
+        else:
+            download_file(args.phasetracer_url, archive)
+        extract_single_directory(archive, PHASETRACER_DIR)
+        if not args.keep_archives and not args.phasetracer_tar and archive.exists():
+            archive.unlink()
     write_phasetracer_input()
     build_dir = PHASETRACER_DIR / "build-easyscan"
     if args.clean_build and build_dir.exists():
@@ -199,7 +223,8 @@ def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--micromegas-url", default=MICROMEGAS_URL)
     parser.add_argument("--micromegas-tar", default=None, help="Use a local micromegas_7.1 archive instead of downloading.")
-    parser.add_argument("--phasetracer-url", default=PHASETRACER_URL)
+    parser.add_argument("--phasetracer-url", default=None, help="Download a fixed PhaseTracer source archive from this URL.")
+    parser.add_argument("--phasetracer-tar", default=None, help="Use a local PhaseTracer source archive instead of downloading.")
     parser.add_argument("--phasetracer-ref", default=PHASETRACER_REF)
     parser.add_argument("--phasetracer-commit", default=PHASETRACER_COMMIT)
     parser.add_argument("--jobs", type=int, default=max(1, os.cpu_count() or 1))
@@ -208,12 +233,15 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--clean-build", action="store_true", default=True, help="Delete the PhaseTracer build directory after compiling.")
     parser.add_argument("--no-clean-build", action="store_false", dest="clean_build")
     parser.add_argument("--no-smoke", action="store_true")
-    return parser.parse_args()
+    args = parser.parse_args()
+    if args.phasetracer_url is None:
+        args.phasetracer_url = PHASETRACER_URL_TEMPLATE.format(commit=args.phasetracer_commit)
+    return args
 
 
 def main() -> int:
     args = parse_args()
-    require_tools(["git", "make", "cmake", "patch"])
+    require_tools(["make", "cmake", "patch"])
     prepare_micromegas(args)
     prepare_phasetracer(args)
     if not args.no_smoke:
