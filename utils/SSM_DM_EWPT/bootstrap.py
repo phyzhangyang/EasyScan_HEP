@@ -181,7 +181,7 @@ def smoke_test() -> None:
     mm_output = MICROMEGAS_DIR / "SingletDM" / "easyscan_micromegas.out"
     run(["./main data1.par > easyscan_micromegas.out"], cwd=MICROMEGAS_DIR / "SingletDM", shell=True)
     text = mm_output.read_text(encoding="utf-8", errors="replace")
-    for label in ("ES_Omega_h2", "ES_sigmaSIp_pb", "ES_DD_factor"):
+    for label in ("ES_Omega_h2", "ES_sigmaSIp_pb"):
         if label not in text:
             raise SystemExit(f"micrOMEGAs smoke test did not produce {label}.")
 

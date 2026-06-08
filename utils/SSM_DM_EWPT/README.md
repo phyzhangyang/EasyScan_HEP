@@ -47,6 +47,8 @@ python3 bin/easyscan.py templates/scan_SSM_DM_EWPT.ini
 
 The scanned `lambdaHS` uses the paper/micrOMEGAs convention. The PhaseTracer
 input file receives `lambda_hs = 2 * lambdaHS`.
+The micrOMEGAs patch only adds two EasyScan-readable labels to the native
+`SingletDM/main` output: `ES_Omega_h2` and `ES_sigmaSIp_pb`.
 
 EasyScan automatically writes color plots under `SSM_DM_EWPT_grid/Figures/`.
 To make a compact dark-matter/EWPT summary plot from the same `ScanResult.txt`,
