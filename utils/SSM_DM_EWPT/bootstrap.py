@@ -182,22 +182,7 @@ def write_micromegas_input() -> None:
 
 def write_phasetracer_input() -> None:
     path = PHASETRACER_DIR / "easyscan_phasetracer.in"
-    path.write_text(
-        "\n".join(
-            [
-                "ms 90",
-                "lambda_s 1",
-                "lambda_hs 0.60",
-                "Q 173",
-                "xi 1",
-                "daisy_flag 2",
-                "use_1L_EWSB_in_0L_mass 0",
-                "use_Goldstone_resum 1",
-                "",
-            ]
-        ),
-        encoding="utf-8",
-    )
+    path.write_text("90 1 0.60 173 1 2 0 1\n", encoding="utf-8")
 
 
 def smoke_test() -> None:
@@ -210,7 +195,7 @@ def smoke_test() -> None:
             raise SystemExit(f"micrOMEGAs smoke test did not produce {label}.")
 
     print("Running PhaseTracer smoke test.", flush=True)
-    run(["./bin/run_xSM_MSbar $(awk '{print $2}' easyscan_phasetracer.in)"], cwd=PHASETRACER_DIR, shell=True)
+    run(["./bin/run_xSM_MSbar $(cat easyscan_phasetracer.in)"], cwd=PHASETRACER_DIR, shell=True)
     pt_output = PHASETRACER_DIR / "output.txt"
     fields = pt_output.read_text(encoding="utf-8").strip().split()
     if len(fields) < 14:

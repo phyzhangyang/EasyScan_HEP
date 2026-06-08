@@ -52,8 +52,10 @@ python3 bin/easyscan.py --check templates/scan_SSM_DM_EWPT.ini --json
 python3 bin/easyscan.py templates/scan_SSM_DM_EWPT.ini
 ```
 
-The scanned `lambdaHS` uses the paper/micrOMEGAs convention. The PhaseTracer
-input file receives `lambda_hs = 2 * lambdaHS`.
+The scanned `lambdaHS` uses the paper/micrOMEGAs convention. The one-line
+PhaseTracer input is ordered as
+`ms lambda_s lambda_hs Q xi daisy_flag use_1L_EWSB_in_0L_mass use_Goldstone_resum`,
+with `lambda_hs = 2 * lambdaHS`.
 The micrOMEGAs patch only adds two EasyScan-readable labels to the native
 `SingletDM/main` output: `ES_Omega_h2` and `ES_sigmaSIp_pb`.
 
