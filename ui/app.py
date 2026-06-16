@@ -851,6 +851,18 @@ def ensure_allowed(path: Path) -> Path:
 
 def result_files(record: RunRecord) -> dict[str, Any]:
     result_dir = record.result_dir
+    if record.status != "completed" or record.return_code not in (0, None):
+        return {
+            "result_dir": str(result_dir),
+            "exists": result_dir.exists(),
+            "files": [],
+            "plots": [],
+            "tables": {},
+            "row_count": 0,
+            "columns": [],
+            "best_row": None,
+            "message": "Results are shown only after a successful run.",
+        }
     summary = read_results(result_dir)
     for group in ("files", "plots"):
         for item in summary[group]:

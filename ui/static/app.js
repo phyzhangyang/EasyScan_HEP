@@ -11,53 +11,6 @@ const $ = (selector, root = document) => root.querySelector(selector);
 const $$ = (selector, root = document) => Array.from(root.querySelectorAll(selector));
 const NOT_USED_TEXT = "not used";
 const NOT_USED_VALUE = "__not_used__";
-const LLM_PROVIDERS = {
-  openai: {
-    baseUrl: "https://api.openai.com/v1/chat/completions",
-    model: "gpt-4.1-mini",
-    requiresKey: true,
-  },
-  deepseek: {
-    baseUrl: "https://api.deepseek.com/chat/completions",
-    model: "deepseek-chat",
-    requiresKey: true,
-  },
-  qwen: {
-    baseUrl: "https://dashscope.aliyuncs.com/compatible-mode/v1/chat/completions",
-    model: "qwen-plus",
-    requiresKey: true,
-  },
-  moonshot: {
-    baseUrl: "https://api.moonshot.cn/v1/chat/completions",
-    model: "moonshot-v1-8k",
-    requiresKey: true,
-  },
-  zhipu: {
-    baseUrl: "https://open.bigmodel.cn/api/paas/v4/chat/completions",
-    model: "glm-4-flash",
-    requiresKey: true,
-  },
-  siliconflow: {
-    baseUrl: "https://api.siliconflow.cn/v1/chat/completions",
-    model: "Qwen/Qwen2.5-72B-Instruct",
-    requiresKey: true,
-  },
-  openrouter: {
-    baseUrl: "https://openrouter.ai/api/v1/chat/completions",
-    model: "openai/gpt-4o-mini",
-    requiresKey: true,
-  },
-  ollama: {
-    baseUrl: "http://127.0.0.1:11434/v1/chat/completions",
-    model: "llama3.1",
-    requiresKey: false,
-  },
-  custom: {
-    baseUrl: "",
-    model: "",
-    requiresKey: false,
-  },
-};
 
 const HELP_TEXT = {
   programName: "User-facing name for this external program block. It is used in logs to identify the program.",
@@ -684,51 +637,6 @@ function setConfigFileStatus(message, kind = "") {
   el.className = `config-status ${kind}`.trim();
 }
 
-function setAiConfigStatus(message, kind = "") {
-  const el = $("#aiConfigStatus");
-  if (!el) return;
-  el.textContent = message;
-  el.className = `config-status ${kind}`.trim();
-}
-
-function allProviderBaseUrls() {
-  return Object.values(LLM_PROVIDERS)
-    .map((item) => item.baseUrl)
-    .filter(Boolean);
-}
-
-function applyLlmProviderDefaults(force = false) {
-  const providerEl = $("#aiProvider");
-  const modelEl = $("#aiModel");
-  const apiKeyEl = $("#aiApiKey");
-  const baseUrlEl = $("#aiBaseUrl");
-  if (!providerEl || !modelEl || !apiKeyEl || !baseUrlEl) return;
-  const defaults = LLM_PROVIDERS[providerEl.value] || LLM_PROVIDERS.custom;
-  if (force || !modelEl.value.trim()) {
-    modelEl.value = defaults.model;
-  }
-  if (force || !baseUrlEl.value.trim() || allProviderBaseUrls().includes(baseUrlEl.value.trim())) {
-    baseUrlEl.value = defaults.baseUrl;
-  }
-  apiKeyEl.disabled = !defaults.requiresKey;
-  apiKeyEl.placeholder = defaults.requiresKey ? "Required" : "Not required";
-  if (!defaults.requiresKey) {
-    apiKeyEl.value = "";
-  }
-}
-
-function detailMessage(detail, fallback) {
-  if (!detail) return fallback;
-  if (typeof detail === "string") return detail;
-  if (detail.message) return detail.message;
-  if (detail.check_text) return detail.check_text;
-  try {
-    return JSON.stringify(detail);
-  } catch {
-    return fallback;
-  }
-}
-
 function showCheckReport(text, ok) {
   const box = $("#checkBox");
   if (!box || !text) return;
@@ -786,57 +694,6 @@ async function checkConfig() {
     return;
   }
   setConfigFileStatus(payload.ok ? "Config check passed." : "Config check found issues.", payload.ok ? "completed" : "failed");
-}
-
-async function generateConfigWithAI() {
-  const button = $("#aiGenerateConfigBtn");
-  const prompt = $("#aiPrompt")?.value.trim() || "";
-  if (!prompt) {
-    setAiConfigStatus("Enter a natural-language request first.", "failed");
-    return;
-  }
-
-  if (button) button.disabled = true;
-  setAiConfigStatus("Generating...");
-  setConfigFileStatus("Generating INI with AI...");
-  const response = await fetch("/api/config/ai/generate", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({
-      provider: $("#aiProvider")?.value || "openai",
-      model: $("#aiModel")?.value.trim() || "",
-      api_key: $("#aiApiKey")?.value.trim() || "",
-      base_url: $("#aiBaseUrl")?.value.trim() || "",
-      prompt,
-      current_config: state,
-    }),
-  });
-  const payload = await response.json().catch(() => ({}));
-  if (!response.ok) {
-    const detail = payload.detail || {};
-    if (detail.check_text) {
-      showCheckReport(detail.check_text, false);
-    } else if (detail.ini) {
-      showCheckReport(detail.ini, false);
-    }
-    const message = detailMessage(detail, "Failed to generate INI.");
-    setAiConfigStatus(message, "failed");
-    setConfigFileStatus(message, "failed");
-    if (button) button.disabled = false;
-    return;
-  }
-
-  if (payload.config) {
-    const existingPath = state.config_file_path;
-    if (existingPath && !payload.config.config_file_path) {
-      payload.config.config_file_path = existingPath;
-    }
-    replaceState(payload.config);
-  }
-  showCheckReport(payload.check_text || "Config check passed.", payload.check?.ok ?? true);
-  setAiConfigStatus("Generated and loaded into the UI.", "completed");
-  setConfigFileStatus("AI generated config loaded into the UI.", "completed");
-  if (button) button.disabled = false;
 }
 
 function updateLogBox(text) {
@@ -914,6 +771,7 @@ function renderResults(results) {
   const plots = results.plots || [];
   $("#results").innerHTML = `
     <div><strong>Result directory:</strong> ${escapeHtml(results.result_dir || "")}</div>
+    ${results.message ? `<div class="result-message">${escapeHtml(results.message)}</div>` : ""}
     <div class="result-list">
       ${files.map((item) => `<a href="${item.url}" target="_blank">${escapeHtml(item.name)}</a>`).join("")}
     </div>
@@ -1071,8 +929,6 @@ $("#addPlot").addEventListener("click", () => addRow("plots"));
 $("#importConfigBtn").addEventListener("click", importConfig);
 $("#exportConfigBtn").addEventListener("click", exportConfig);
 $("#checkConfigBtn").addEventListener("click", checkConfig);
-$("#aiProvider").addEventListener("change", () => applyLlmProviderDefaults(true));
-$("#aiGenerateConfigBtn").addEventListener("click", generateConfigWithAI);
 $("#runBtn").addEventListener("click", startRun);
 $("#stopBtn").addEventListener("click", stopRun);
 $("#refreshHistoryBtn").addEventListener("click", loadRunHistory);
@@ -1082,7 +938,6 @@ $("#rootSelect").addEventListener("change", (event) => loadBrowser(event.target.
 $("#selectCurrentBtn").addEventListener("click", () => choosePath(browserPath));
 
 bindRootFields();
-applyLlmProviderDefaults(true);
 rerender();
 updateConditionalControls();
 if (window.INITIAL_CONFIG_STATUS?.message) {

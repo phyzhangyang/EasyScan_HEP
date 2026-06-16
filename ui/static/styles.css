@@ -79,6 +79,25 @@ h3 {
   padding: 20px;
 }
 
+.app-footer {
+  max-width: 1440px;
+  margin: 0 auto;
+  padding: 0 20px 24px;
+  color: var(--muted);
+  font-size: 13px;
+  text-align: center;
+}
+
+.app-footer a {
+  color: var(--primary);
+  font-weight: 700;
+  text-decoration: none;
+}
+
+.app-footer a:hover {
+  text-decoration: underline;
+}
+
 .panel {
   background: var(--panel);
   border: 1px solid var(--line);
@@ -434,19 +453,6 @@ th .help-tip::before {
   color: var(--danger);
 }
 
-.ai-config-panel {
-  margin-top: 14px;
-  border-top: 1px solid var(--line);
-  padding-top: 12px;
-}
-
-.ai-config-panel summary {
-  width: max-content;
-  color: #24437c;
-  font-weight: 700;
-  cursor: pointer;
-}
-
 .section-collapse-panel summary {
   width: max-content;
   color: #24437c;
@@ -461,21 +467,6 @@ th .help-tip::before {
   margin: 10px 0 12px;
 }
 
-.ai-grid {
-  display: grid;
-  grid-template-columns: repeat(4, minmax(180px, 1fr));
-  gap: 14px;
-  margin-top: 12px;
-}
-
-.ai-prompt {
-  margin: 14px 0 12px;
-}
-
-.ai-prompt textarea {
-  min-height: 112px;
-}
-
 .results {
   margin-top: 16px;
   display: grid;
@@ -486,6 +477,10 @@ th .help-tip::before {
   display: flex;
   flex-wrap: wrap;
   gap: 8px;
+}
+
+.result-message {
+  color: var(--muted);
 }
 
 .result-list a {
@@ -667,7 +662,6 @@ th .help-tip::before {
 
 @media (max-width: 1000px) {
   .grid,
-  .ai-grid,
   .two-column {
     grid-template-columns: 1fr;
   }
