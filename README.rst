@@ -86,21 +86,7 @@ The ``templates/`` directory contains basic examples for ``RANDOM``, ``GRID``,
 
 Physical examples include::
 
-    cd utils/MSSM_mW
-    make
-    cd ../..
-    easyscan templates/scan_MSSM_for_mW.ini
-
     python3 utils/SSM_DM_EWPT/bootstrap.py
     easyscan templates/scan_SSM_DM_EWPT.ini
 
-The SSM example prepares fixed versions of ``micrOMEGAs 7.1`` and
-``PhaseTracer 2.2.0``.
 
-
-Development Check
------------------
-
-::
-
-    python3 scripts/check_package.py
