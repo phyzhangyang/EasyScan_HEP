@@ -57,7 +57,14 @@ log_config = logging_config_path()
 if log_config:
     logging.config.fileConfig(str(log_config), defaults={'logfilename': 'EASYSCAN.LOG'})
 else:
-    logging.basicConfig(filename='EASYSCAN.LOG', level=getattr(logging, options.logging), format='%(levelname)s:  %(message)s')
+    logging.basicConfig(
+        level=getattr(logging, options.logging),
+        format='%(levelname)s: %(message)s',
+        handlers=[
+            logging.StreamHandler(sys.stdout),
+            logging.FileHandler('EASYSCAN.LOG', mode='w'),
+        ],
+    )
 logging.root.setLevel(vars(logging)[options.logging])
 logging.getLogger('easyscan').setLevel(vars(logging)[options.logging])
                               
