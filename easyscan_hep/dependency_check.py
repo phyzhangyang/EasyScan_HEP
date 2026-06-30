@@ -149,8 +149,8 @@ def check_runtime_requirements(mode: str, config_path: str | Path | None = None)
             "Python %d.%d or newer is required; current Python is %s at %s."
             % (MIN_PYTHON[0], MIN_PYTHON[1], sys.version.split()[0], sys.executable)
         )
-        messages.append("Install Python 3.9 or newer, then reinstall EasyScan_HEP with:")
-        messages.append("  python3 -m pip install -U easyscan-hep")
+        messages.append("Install Python 3.9 or newer, then reinstall EasyScan_HEP from GitHub with:")
+        messages.append("  python3 -m pip install -U git+https://github.com/phyzhangyang/EasyScan_HEP.git")
 
     issues = [issue for issue in (check_requirement(requirement) for requirement in requirements_for(mode, config_path)) if issue]
     if issues:

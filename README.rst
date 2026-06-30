@@ -23,11 +23,7 @@ On Ubuntu or Debian systems, install the basic system packages first::
 
     sudo apt install python3-pip python3-venv python3-tk
 
-For ordinary use, install EasyScan_HEP with pip::
-
-    python3 -m pip install easyscan-hep
-
-To install directly from the GitHub repository, use::
+For ordinary use, install EasyScan_HEP directly from the GitHub repository::
 
     python3 -m pip install git+https://github.com/phyzhangyang/EasyScan_HEP.git
 
@@ -48,35 +44,52 @@ environment first and then install EasyScan_HEP there::
     python3 -m venv .venv
     .venv/bin/python -m pip install .
 
-Install the local Web UI dependencies with one of the following commands::
-
-    python3 -m pip install "easyscan-hep[ui]"
+If you are working from a local source tree, install the local Web UI
+dependencies with::
 
     python3 -m pip install ".[ui]"
 
-Install *dynesty* only if the Dynesty nested sampler is needed::
+If EasyScan_HEP was installed directly from GitHub, install the same UI
+dependencies with::
 
-    python3 -m pip install "easyscan-hep[dynesty]"
+    python3 -m pip install fastapi uvicorn jinja2 python-multipart
+
+Install *dynesty* only if the Dynesty nested sampler is needed. From a local
+source tree, use::
 
     python3 -m pip install ".[dynesty]"
 
-Install *emcee* only if the EMCEE ensemble MCMC sampler is needed::
+or install the sampler dependency directly::
 
-    python3 -m pip install "easyscan-hep[emcee]"
+    python3 -m pip install dynesty
+
+Install *emcee* only if the EMCEE ensemble MCMC sampler is needed. From a local
+source tree, use::
 
     python3 -m pip install ".[emcee]"
 
-Install *pymultinest* only if the MultiNest sampler is needed::
+or install the sampler dependency directly::
 
-    python3 -m pip install "easyscan-hep[multinest]"
+    python3 -m pip install emcee
+
+Install *pymultinest* only if the MultiNest sampler is needed. From a local
+source tree, use::
 
     python3 -m pip install ".[multinest]"
 
-The Python-only optional features can be installed together with::
+or install the Python wrapper directly::
 
-    python3 -m pip install "easyscan-hep[all]"
+    python3 -m pip install pymultinest
+
+From a local source tree, the Python-only optional features can be installed
+together with::
 
     python3 -m pip install ".[all]"
+
+For a GitHub-installed EasyScan_HEP, install those optional dependencies
+directly with::
+
+    python3 -m pip install fastapi uvicorn jinja2 python-multipart dynesty emcee
 
 The ``all`` extra includes the Web UI, Dynesty and EMCEE dependencies.
 MultiNest is kept separate because it may require additional native
@@ -168,7 +181,7 @@ Agent skill installation
 The EasyScan_HEP agent skill is maintained separately from the EasyScan_HEP
 codebase at:
 
-    https://github.com/PhenoAgent/easyscan-skill
+    https://github.com/Contract-Mediated-Agent/easyscan-skill
 
 For Codex, install the skill with::
 
@@ -176,7 +189,7 @@ For Codex, install the skill with::
 
 or clone the skill repository directly::
 
-    git clone https://github.com/PhenoAgent/easyscan-skill.git ~/.codex/skills/easyscan-hep
+    git clone https://github.com/Contract-Mediated-Agent/easyscan-skill.git ~/.codex/skills/easyscan-hep
 
 For agents that support skill folders but use another location, pass the
 desired target directory or clone the repository there::
@@ -207,10 +220,10 @@ asks it to analyze those files for mappings. The user should provide these
 mappings, and the agent should record them transparently in the generated
 ``.ini``.
 
-Package release check
----------------------
+Local package build check
+-------------------------
 
-Before publishing a release package, install the packaging tools once::
+Before building a source distribution or wheel for local testing, install the packaging tools once::
 
     python3 -m pip install -U "setuptools>=61" build twine
 

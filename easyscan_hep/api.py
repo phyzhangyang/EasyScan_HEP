@@ -15,7 +15,7 @@ from .results import read_results
 
 
 VALID_OVERWRITE_ACTIONS = {"replace", "backup", "stop"}
-AGENT_SKILL_REPOSITORY = "https://github.com/PhenoAgent/easyscan-skill.git"
+AGENT_SKILL_REPOSITORY = "https://github.com/Contract-Mediated-Agent/easyscan-skill.git"
 
 
 def source_root() -> Path:
