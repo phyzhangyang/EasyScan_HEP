@@ -1,10 +1,10 @@
 import configparser
-import csv
 import io
 import os
-import re
 import shutil
 from pathlib import Path
+
+from easyscan_hep.config_io import parse_scan_method, resolve_path, rows_for, split_row
 
 
 SCAN_METHODS = {"ONEPOINT", "ONEPOINTBATCH", "RANDOM", "GRID", "BESTFIT", "MCMC", "EMCEE", "MULTINEST", "DYNESTY", "POSTPROCESS", "PLOT", "READ"}
@@ -60,39 +60,31 @@ FORBIDDEN_NAMES = {
 }
 
 
-def split_row(row):
-    try:
-        return [item.strip() for item in next(csv.reader([row], skipinitialspace=True))]
-    except csv.Error:
-        return [item.strip() for item in row.split(",")]
+def check_directory_writable(path, context, errors, missing_is_error=True):
+    if path.exists():
+        if not path.is_dir():
+            errors.append(f"{context} is not a directory: {path}")
+        elif not os.access(path, os.W_OK | os.X_OK):
+            errors.append(f"{context} is not writable: {path}")
+        return
+    parent = path.parent
+    if not parent.exists():
+        message = f"{context} parent directory does not exist: {parent}"
+        if missing_is_error:
+            errors.append(message)
+        return
+    if not os.access(parent, os.W_OK | os.X_OK):
+        errors.append(f"{context} parent directory is not writable: {parent}")
 
 
-def rows_for(config, section, option):
-    if not config.has_option(section, option):
-        return []
-    return [line.strip() for line in config.get(section, option).splitlines() if line.strip()]
-
-
-def parse_scan_method(value, base_dir):
-    method = value.strip()
-    batch_file = ""
-    if "/" in method and method.upper().startswith("ONEPOINT"):
-        batch_file = method.split("/", 1)[1]
-        method = "ONEPOINTBATCH"
-    else:
-        method = method.upper()
-    if batch_file:
-        batch_path = resolve_path(batch_file, base_dir)
-    else:
-        batch_path = None
-    return method, batch_file, batch_path
-
-
-def resolve_path(value, base_dir):
-    path = Path(value).expanduser()
-    if path.is_absolute():
-        return path
-    return (base_dir / path).resolve()
+def check_output_parent_writable(path, context, errors, warnings):
+    parent = path.parent
+    if not parent.exists():
+        warnings.append(f"{context} parent does not exist: {parent}")
+    elif not parent.is_dir():
+        errors.append(f"{context} parent is not a directory: {parent}")
+    elif not os.access(parent, os.W_OK | os.X_OK):
+        errors.append(f"{context} parent is not writable: {parent}")
 
 
 def add_duplicate_errors(kind, names, errors):
@@ -131,6 +123,47 @@ def check_float(value, context, errors):
         return False
 
 
+def parse_float(value, context, errors):
+    try:
+        return float(value)
+    except (TypeError, ValueError):
+        errors.append(f"{context} must be a number.")
+        return None
+
+
+def is_relative_subpath(path_value, parent_value):
+    path = Path(path_value)
+    parent = Path(parent_value)
+    if path.is_absolute() or parent.is_absolute():
+        return False
+    path_parts = path.parts
+    parent_parts = parent.parts
+    return path_parts[: len(parent_parts)] == parent_parts
+
+
+def check_variable_rows(config, section, option, errors):
+    for row_index, row in enumerate(rows_for(config, section, option), start=1):
+        parts = split_row(row)
+        if len(parts) < 3:
+            continue
+        method = parts[2].strip().lower()
+        if method != "slha":
+            continue
+        if len(parts) < 6:
+            if len(parts) >= 4 and parts[3].strip().upper() not in {"BLOCK", "DECAY"}:
+                errors.append(
+                    f'"{option}" row {row_index} in [{section}] using SLHA must use "BLOCK" or "DECAY" as the fourth field and needs at least 6 fields.'
+                )
+            else:
+                errors.append(f'"{option}" row {row_index} in [{section}] using SLHA needs at least 6 fields.')
+            continue
+        slha_kind = parts[3].strip().upper()
+        if slha_kind not in {"BLOCK", "DECAY"}:
+            errors.append(
+                f'"{option}" row {row_index} in [{section}] using SLHA must use "BLOCK" or "DECAY" as the fourth field.'
+            )
+
+
 def check_config_text(text, base_dir=None):
     base_dir = Path(base_dir or os.getcwd()).expanduser().resolve()
     errors = []
@@ -165,6 +198,8 @@ def check_config_text(text, base_dir=None):
         result_folder = config.get("scan", "Result folder name").strip()
         if " " in result_folder:
             errors.append('"Result folder name" must not contain spaces.')
+        else:
+            check_directory_writable(resolve_path(result_folder, base_dir), "Result folder", errors)
 
     check_positive_int(
         config,
@@ -174,6 +209,15 @@ def check_config_text(text, base_dir=None):
         warnings,
         required=method not in NO_NUMBER_OF_POINTS,
         used=method not in NO_NUMBER_OF_POINTS,
+    )
+    mcmc_walkers = check_positive_int(
+        config,
+        "scan",
+        "MCMC walkers",
+        errors,
+        warnings,
+        required=False,
+        used=method == "EMCEE",
     )
     check_positive_int(config, "scan", "Interval of print", errors, warnings, required=False, used=True)
     threads = check_positive_int(
@@ -185,6 +229,7 @@ def check_config_text(text, base_dir=None):
         required=False,
         used=True,
     )
+    parallel_folder_value = ""
     if config.has_option("scan", "Random seed") and method not in {"RANDOM", "MCMC", "EMCEE", "MULTINEST"}:
         warnings.append('"Random seed" is present but not used for this scan method.')
     if threads and threads > 1:
@@ -193,11 +238,15 @@ def check_config_text(text, base_dir=None):
         if not config.has_option("scan", "Parallel folder"):
             errors.append('Missing "Parallel folder" because "Parallel threads" is larger than 1.')
         else:
-            parallel_folder = resolve_path(config.get("scan", "Parallel folder"), base_dir)
+            parallel_folder_value = config.get("scan", "Parallel folder").strip()
+            if Path(parallel_folder_value).expanduser().is_absolute():
+                errors.append('"Parallel folder" must be a relative directory when "Parallel threads" is larger than 1.')
+            parallel_folder = resolve_path(parallel_folder_value, base_dir)
             if not parallel_folder.is_dir():
                 errors.append(f"Parallel folder does not exist: {parallel_folder}")
 
     input_names = []
+    sampled_input_names = []
     fixed_names = []
     if not config.has_option("scan", "Input parameters"):
         errors.append('Missing "Input parameters" in [scan].')
@@ -217,13 +266,19 @@ def check_config_text(text, base_dir=None):
                 if len(parts) > 3:
                     warnings.append(f'Input parameter "{name}" has extra fields ignored for Fixed/one-point mode.')
                 continue
+            sampled_input_names.append(name)
             if prior.lower() not in {"flat", "log"}:
                 errors.append(f'Input parameter "{name}" prior must be flat, log, or Fixed.')
             if len(parts) < 4:
                 errors.append(f'Input parameter "{name}" needs Minimum and Maximum.')
                 continue
-            check_float(parts[2], f'Input parameter "{name}" minimum', errors)
-            check_float(parts[3], f'Input parameter "{name}" maximum', errors)
+            minimum = parse_float(parts[2], f'Input parameter "{name}" minimum', errors)
+            maximum = parse_float(parts[3], f'Input parameter "{name}" maximum', errors)
+            if minimum is not None and maximum is not None:
+                if minimum >= maximum:
+                    errors.append(f'Input parameter "{name}" minimum must be smaller than maximum.')
+                if prior.lower() == "log" and (minimum <= 0 or maximum <= 0):
+                    errors.append(f'Input parameter "{name}" with log prior needs positive minimum and maximum.')
             if method == "GRID":
                 if len(parts) >= 5:
                     try:
@@ -236,15 +291,27 @@ def check_config_text(text, base_dir=None):
             elif method in {"MCMC", "EMCEE"}:
                 if len(parts) < 5:
                     warnings.append(f'Input parameter "{name}" has no {method} interval; EasyScan will use default 10.')
-                elif not check_float(parts[4], f'Input parameter "{name}" interval', errors):
-                    pass
+                else:
+                    interval = parse_float(parts[4], f'Input parameter "{name}" interval', errors)
+                    if interval is not None and interval <= 0:
+                        errors.append(f'Input parameter "{name}" interval must be larger than 0.')
                 if len(parts) < 6:
                     warnings.append(f'Input parameter "{name}" has no {method} initial value; EasyScan will use midpoint.')
                 else:
-                    check_float(parts[5], f'Input parameter "{name}" initial value', errors)
+                    initial = parse_float(parts[5], f'Input parameter "{name}" initial value', errors)
+                    if prior.lower() == "log" and initial is not None and initial <= 0:
+                        errors.append(f'Input parameter "{name}" with log prior needs a positive initial value.')
+                    if minimum is not None and maximum is not None and initial is not None and not minimum <= initial <= maximum:
+                        warnings.append(f'Input parameter "{name}" initial value is outside the scan range.')
+                if len(parts) > 6:
+                    warnings.append(f'Input parameter "{name}" has extra fields ignored by {method}.')
             elif method in {"RANDOM", "BESTFIT", "MULTINEST", "DYNESTY"} and len(parts) > 4:
                 warnings.append(f'Input parameter "{name}" has extra fields ignored by {method}.')
     add_duplicate_errors("Input parameter", input_names, errors)
+    if method == "EMCEE" and mcmc_walkers is not None:
+        minimum_walkers = 2 * len(sampled_input_names)
+        if minimum_walkers and mcmc_walkers < minimum_walkers:
+            errors.append(f'"MCMC walkers" for EMCEE must be at least 2 * sampled parameters ({minimum_walkers}).')
 
     program_sections = sorted(
         [section for section in config.sections() if section.lower().startswith("program")],
@@ -265,6 +332,17 @@ def check_config_text(text, base_dir=None):
             resolved_command_path = resolve_path(command_path or ".", base_dir)
             if command_path and not resolved_command_path.is_dir():
                 errors.append(f"Command path does not exist in [{section}]: {command_path}")
+            if threads and threads > 1 and parallel_folder_value:
+                if not command_path:
+                    errors.append(
+                        f'Missing "Command path" in [{section}] because parallel mode requires it to start with "Parallel folder".'
+                    )
+                elif Path(command_path).expanduser().is_absolute():
+                    errors.append(f'"Command path" in [{section}] must be relative in parallel mode.')
+                elif not is_relative_subpath(command_path, parallel_folder_value):
+                    errors.append(
+                        f'"Command path" in [{section}] must start with "Parallel folder" in parallel mode: {parallel_folder_value}'
+                    )
             if executable and not executable.startswith(("/", ".")) and shutil.which(executable) is None:
                 warnings.append(f'Executable "{executable}" in [{section}] is not on PATH.')
             elif executable.startswith("./"):
@@ -280,8 +358,10 @@ def check_config_text(text, base_dir=None):
                 path = resolve_path(parts[1], base_dir)
                 if option == "Input file" and not path.exists():
                     errors.append(f"Input file does not exist in [{section}]: {parts[1]}")
-                if option == "Output file" and not path.parent.exists():
-                    warnings.append(f"Output file parent does not exist in [{section}]: {path.parent}")
+                if option == "Output file":
+                    check_output_parent_writable(path, f"Output file in [{section}]", errors, warnings)
+        check_variable_rows(config, section, "Input variable", errors)
+        check_variable_rows(config, section, "Output variable", errors)
         for row in rows_for(config, section, "Output variable"):
             parts = split_row(row)
             if parts:
@@ -311,11 +391,11 @@ def check_config_text(text, base_dir=None):
     return {"ok": not errors, "errors": errors, "warnings": warnings, "info": info}
 
 
-def check_config_file(path):
+def check_config_file(path, base_dir=None):
     path = Path(path).expanduser().resolve()
     if not path.is_file():
         return {"ok": False, "errors": [f"Config file does not exist: {path}"], "warnings": [], "info": []}
-    return check_config_text(path.read_text(encoding="utf-8"), base_dir=Path.cwd())
+    return check_config_text(path.read_text(encoding="utf-8"), base_dir=base_dir or Path.cwd())
 
 
 def format_check_report(report):

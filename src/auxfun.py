@@ -5,7 +5,9 @@
 
 # External modules.
 import time, os, sys
+from pathlib import Path
 from collections import OrderedDict
+from easyscan_hep.config_io import split_row
 # Internal modules
 from initialize import logger
 from initialize import resume
@@ -35,6 +37,8 @@ _post = [_postprocess, _plot]
 ResultFile = 'ScanResult.txt'
 ResultFile_MCMC = 'All_ScanResult.txt'
 ResultFile_MultiNest = 'MultiNestData/.txt'
+ResultFile_EMCEE = 'EMCEEChain.txt'
+ResultFile_Dynesty = 'DynestySamples.txt'
 ResultFile_post = 'Previous_ScanResult.txt'
 
 
@@ -60,6 +64,16 @@ def Debug(debinfo,debvalue=''):
         logger.debug( ColorText(5, str(debinfo) ) )
     else:
         logger.debug( ColorText(5, str(debinfo)+': '+str(debvalue) ) )
+
+def ResolvePath(path, base_path=None):
+    base = Path(base_path or CurrentPath).expanduser()
+    target = Path(str(path)).expanduser()
+    if target.is_absolute():
+        return str(target)
+    return str(base / target)
+
+def IsAbsolutePath(path):
+    return Path(str(path)).expanduser().is_absolute()
 
 # Transform str into int or float if possible
 def autotype(s):
@@ -101,7 +115,7 @@ def string2list(s):
 
 # Parse string of input variable and output variable in configure file to list of items.
 def string2nestlist(s):
-    s = [x.split(',') for x in s.split('\n')]
+    s = [split_row(x) for x in s.split('\n')]
     s = [[autotype(x.strip()) for x in ss] for ss in s]
     return s
 

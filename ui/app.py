@@ -21,9 +21,9 @@ from fastapi.templating import Jinja2Templates
 from pydantic import BaseModel, Field
 
 
-REPO_ROOT = Path(__file__).resolve().parents[1]
+REPO_ROOT = Path(os.environ.get("EASYSCAN_ROOT", Path(__file__).resolve().parents[1])).expanduser().resolve()
 RUN_CWD = Path(os.environ.get("EASYSCAN_UI_CWD", Path.cwd())).expanduser().resolve()
-UI_ROOT = REPO_ROOT / "ui"
+UI_ROOT = Path(__file__).resolve().parent
 SRC_ROOT = REPO_ROOT / "src"
 PYTHON_EXE = Path(sys.executable)
 ANSI_ESCAPE_RE = re.compile(r"\x1b\[[0-9;]*m")
@@ -31,6 +31,8 @@ ANSI_ESCAPE_RE = re.compile(r"\x1b\[[0-9;]*m")
 if str(SRC_ROOT) not in sys.path:
     sys.path.insert(0, str(SRC_ROOT))
 
+from easyscan_hep.config_io import split_row as split_config_row
+from easyscan_hep.results import read_results
 from config_checker import check_config_text, format_check_report
 
 app = FastAPI(title="EasyScan_HEP Local UI")
@@ -107,6 +109,7 @@ class EasyScanConfig(BaseModel):
     scan_method: str = "RANDOM"
     batch_file: str = "utils/OnePointBatch.in"
     number_of_points: str = "100"
+    mcmc_walkers: str = ""
     random_seed: str = ""
     print_interval: str = "1"
     parallel_threads: str = "1"
@@ -178,6 +181,10 @@ def path_for_config(path_value: str) -> str:
     path = Path(path_value).expanduser()
     if path.is_absolute():
         try:
+            return path.resolve().relative_to(RUN_CWD).as_posix()
+        except ValueError:
+            pass
+        try:
             return path.resolve().relative_to(REPO_ROOT).as_posix()
         except ValueError:
             return str(path)
@@ -188,7 +195,16 @@ def resolve_config_path(path_value: str) -> Path:
     path = Path(path_value).expanduser()
     if path.is_absolute():
         return path.resolve()
-    return (REPO_ROOT / path).resolve()
+    return (RUN_CWD / path).resolve()
+
+
+def config_base_dir(config: EasyScanConfig) -> Path:
+    if config.config_file_path.strip():
+        path = Path(config.config_file_path).expanduser()
+        if not path.is_absolute():
+            path = RUN_CWD / path
+        return path.resolve().parent
+    return RUN_CWD
 
 
 def run_artifact_paths(run_id: str) -> tuple[Path, Path]:
@@ -214,7 +230,7 @@ def clean_log_line(line: str) -> str:
 
 
 def split_row(row: str) -> list[str]:
-    return clean_items(row.split(","))
+    return clean_items(split_config_row(row))
 
 
 def variable_line(item: VariableEntry) -> str:
@@ -261,6 +277,8 @@ def serialize_config(config: EasyScanConfig) -> str:
         lines.append(f"Number of points:  {config.number_of_points}")
     elif method == "MCMC" and config.number_of_points:
         lines.append(f"Number of points:  {config.number_of_points}")
+    if method == "EMCEE" and config.mcmc_walkers:
+        lines.append(f"MCMC walkers:      {config.mcmc_walkers}")
     if config.random_seed:
         lines.append(f"Random seed:       {config.random_seed}")
     if config.print_interval:
@@ -374,6 +392,7 @@ def parse_easy_scan_text(text: str) -> EasyScanConfig:
     else:
         config.scan_method = method.upper()
     config.number_of_points = (scan.get("Number of points") or [config.number_of_points])[0]
+    config.mcmc_walkers = (scan.get("MCMC walkers") or [config.mcmc_walkers])[0]
     config.random_seed = (scan.get("Random seed") or [config.random_seed])[0]
     config.print_interval = (scan.get("Interval of print") or [config.print_interval])[0]
     config.parallel_threads = (scan.get("Parallel threads") or [config.parallel_threads])[0]
@@ -441,15 +460,13 @@ def parse_easy_scan_text(text: str) -> EasyScanConfig:
                     label=parts[4] if len(parts) > 4 else "",
                 )
             )
-    if gaussian_constraints:
-        config.gaussian_constraints = gaussian_constraints
+    config.gaussian_constraints = gaussian_constraints
     freeform_chi2 = []
     for row in constraint.get("FreeFormChi2", []):
         parts = split_row(row)
         if parts:
             freeform_chi2.append(FreeFormChi2Entry(variable=parts[0], label=parts[1] if len(parts) > 1 else ""))
-    if freeform_chi2:
-        config.freeform_chi2 = freeform_chi2
+    config.freeform_chi2 = freeform_chi2
 
     plot = sections.get("plot", {})
     plots = []
@@ -462,13 +479,18 @@ def parse_easy_scan_text(text: str) -> EasyScanConfig:
                 plots.append(PlotEntry(kind=kind, x=parts[0], y=parts[1], figure_name=parts[2] if len(parts) > 2 else ""))
             elif len(parts) >= 3:
                 plots.append(PlotEntry(kind=kind, x=parts[0], y=parts[1], value=parts[2], figure_name=parts[3] if len(parts) > 3 else ""))
-    if plots:
-        config.plots = plots
+    config.plots = plots
     return config
 
 
 def parse_easy_scan_template(path: Path) -> EasyScanConfig:
     return parse_easy_scan_text(path.read_text(encoding="utf-8"))
+
+
+def load_config_file(path: Path) -> EasyScanConfig:
+    config = parse_easy_scan_template(path)
+    config.config_file_path = str(path)
+    return config
 
 
 LLM_PROVIDERS: dict[str, dict[str, str]] = {
@@ -548,12 +570,14 @@ Keep existing local paths, program blocks, variable names, constraints, and plot
 
 EasyScan_HEP syntax summary:
 - Required [scan] options: Result folder name, Scan method, Input parameters.
-- Supported Scan method values: RANDOM, BESTFIT, MCMC, EMCEE, DYNESTY, MULTINEST, ONEPOINT, ONEPOINT/path/to/batch.in.
+- Supported Scan method values: RANDOM, GRID, BESTFIT, MCMC, EMCEE, DYNESTY, MULTINEST, ONEPOINT, ONEPOINT/path/to/batch.in.
 - Input parameters rows:
   - RANDOM, BESTFIT, DYNESTY, MULTINEST: name, prior, min, max.
+  - GRID: name, prior, min, max, bins. To get N grid points on an axis, use bins = N - 1.
   - MCMC, EMCEE: name, prior, min, max, interval, initial.
   - Fixed or one-point mode: name, Fixed, value.
   - prior must be flat, log, or Fixed.
+- EMCEE may use optional "MCMC walkers"; it must be at least twice the number of sampled input parameters.
 - Likelihood-based methods BESTFIT, MCMC, EMCEE, DYNESTY and MULTINEST need [constraint] with Gaussian or FreeFormChi2.
 - [programN] blocks describe external programs with Execute command, Command path, Input/Output file and variable rows.
 - [plot] rows: Histogram x, figure; Scatter x, y, figure; Color/Contour x, y, value, figure.
@@ -636,6 +660,7 @@ def extract_ini_from_llm_text(text: str) -> str:
         "Scan method",
         "Input parameters",
         "Number of points",
+        "MCMC walkers",
         "Random seed",
         "Interval of print",
         "Parallel threads",
@@ -782,13 +807,27 @@ def choose_save_path(default_name: str = "easyscan_config.ini") -> Path:
 
 
 def default_config() -> EasyScanConfig:
-    template_path = REPO_ROOT / "templates" / "example_random.ini"
-    if template_path.exists():
-        try:
-            return parse_easy_scan_template(template_path)
-        except Exception:
-            return EasyScanConfig()
+    for template_path in (RUN_CWD / "templates" / "example_random.ini", REPO_ROOT / "templates" / "example_random.ini"):
+        if template_path.exists():
+            try:
+                return parse_easy_scan_template(template_path)
+            except Exception:
+                return EasyScanConfig()
     return EasyScanConfig()
+
+
+def initial_config_from_request(request: Request) -> tuple[EasyScanConfig | None, dict[str, str]]:
+    path_value = request.query_params.get("config") or os.environ.get("EASYSCAN_UI_INITIAL_CONFIG", "")
+    if not path_value:
+        return None, {}
+    path = resolve_config_path(path_value)
+    try:
+        path = ensure_allowed(path)
+        if not path.is_file():
+            return None, {"message": f"Initial INI file not found: {path}", "kind": "failed"}
+        return load_config_file(path), {"message": f"Loaded {path}.", "kind": "completed"}
+    except Exception as exc:
+        return None, {"message": f"Failed to load initial INI: {exc}", "kind": "failed"}
 
 
 
@@ -812,40 +851,90 @@ def ensure_allowed(path: Path) -> Path:
 
 def result_files(record: RunRecord) -> dict[str, Any]:
     result_dir = record.result_dir
-    files = []
-    plots = []
-    if result_dir.exists():
-        for path in sorted(result_dir.rglob("*")):
-            if not path.is_file():
-                continue
-            item = {"name": path.name, "path": str(path), "url": f"/api/files?path={path}"}
-            if path.suffix.lower() in {".png", ".jpg", ".jpeg", ".svg"}:
-                plots.append(item)
-            else:
-                files.append(item)
-    return {"result_dir": str(result_dir), "files": files, "plots": plots}
+    if record.status != "completed" or record.return_code not in (0, None):
+        return {
+            "result_dir": str(result_dir),
+            "exists": result_dir.exists(),
+            "files": [],
+            "plots": [],
+            "tables": {},
+            "row_count": 0,
+            "columns": [],
+            "best_row": None,
+            "message": "Results are shown only after a successful run.",
+        }
+    summary = read_results(result_dir)
+    for group in ("files", "plots"):
+        for item in summary[group]:
+            item["url"] = f"/api/files?path={item['path']}"
+    return summary
+
+
+def run_record_payload(record: RunRecord) -> dict[str, Any]:
+    return {
+        "run_id": record.run_id,
+        "status": record.status,
+        "return_code": record.return_code,
+        "started_at": record.started_at,
+        "ended_at": record.ended_at,
+        "config_path": str(record.config_path),
+        "log_path": str(record.log_path),
+        "result_dir": str(record.result_dir),
+    }
+
+
+def persisted_run_payloads() -> list[dict[str, Any]]:
+    items: list[dict[str, Any]] = []
+    seen = set(runs)
+    for config_path in sorted(RUN_CWD.glob("easyscan_*.ini")):
+        run_id = config_path.stem.removeprefix("easyscan_")
+        if run_id in seen:
+            continue
+        log_path = config_path.with_suffix(".log")
+        try:
+            result_dir = resolve_config_path(parse_easy_scan_template(config_path).result_folder)
+        except Exception:
+            result_dir = RUN_CWD / "result"
+        status = "completed" if log_path.exists() else "saved"
+        items.append(
+            {
+                "run_id": run_id,
+                "status": status,
+                "return_code": None,
+                "started_at": config_path.stat().st_mtime,
+                "ended_at": log_path.stat().st_mtime if log_path.exists() else None,
+                "config_path": str(config_path),
+                "log_path": str(log_path),
+                "result_dir": str(result_dir),
+            }
+        )
+    return items
 
 
 def run_worker(record: RunRecord) -> None:
     record.status = "running"
-    command = [str(PYTHON_EXE), "bin/easyscan.py", str(record.config_path)]
+    command = [str(PYTHON_EXE), "-m", "easyscan_hep.cli", str(record.config_path)]
+    env = os.environ.copy()
+    pythonpath = [str(REPO_ROOT), str(SRC_ROOT)]
+    if env.get("PYTHONPATH"):
+        pythonpath.append(env["PYTHONPATH"])
+    env["PYTHONPATH"] = os.pathsep.join(pythonpath)
+    env["EASYSCAN_RESULT_EXISTS_ACTION"] = "replace"
     with record.log_path.open("w", encoding="utf-8") as log_file:
         log_file.write("$ " + " ".join(command) + "\n")
         log_file.flush()
         try:
             record.process = subprocess.Popen(
                 command,
-                cwd=REPO_ROOT,
-                stdin=subprocess.PIPE,
+                cwd=RUN_CWD,
+                env=env,
+                stdin=subprocess.DEVNULL,
                 stdout=subprocess.PIPE,
                 stderr=subprocess.STDOUT,
                 text=True,
                 bufsize=1,
                 preexec_fn=os.setsid,
             )
-            if record.process.stdin:
-                record.process.stdin.write("r\n")
-                record.process.stdin.flush()
             assert record.process.stdout is not None
             for line in record.process.stdout:
                 line = clean_log_line(line)
@@ -865,13 +954,15 @@ def run_worker(record: RunRecord) -> None:
 
 @app.get("/", response_class=HTMLResponse)
 def index(request: Request) -> HTMLResponse:
-    payload = as_payload(default_config())
+    initial_config, initial_status = initial_config_from_request(request)
+    payload = as_payload(initial_config or default_config())
     static_version = int(max((UI_ROOT / "static" / "app.js").stat().st_mtime, (UI_ROOT / "static" / "styles.css").stat().st_mtime))
     return templates.TemplateResponse(
         request,
         "index.html",
         {
             "default_config": json.dumps(payload),
+            "initial_config_status": json.dumps(initial_status),
             "static_version": static_version,
         },
     )
@@ -896,12 +987,10 @@ def import_config_from_file() -> dict[str, Any]:
     if not path.is_file():
         raise HTTPException(status_code=404, detail="INI file not found.")
     try:
-        config = parse_easy_scan_template(path)
+        config = load_config_file(path)
     except Exception as exc:
         raise HTTPException(status_code=400, detail=f"Failed to parse INI file: {exc}") from exc
-    payload = as_payload(config)
-    payload["config_file_path"] = str(path)
-    return payload
+    return as_payload(config)
 
 
 @app.post("/api/config/export")
@@ -924,7 +1013,7 @@ def export_config_to_file(config: EasyScanConfig) -> dict[str, str]:
 
 @app.post("/api/config/check")
 def check_config(config: EasyScanConfig) -> dict[str, Any]:
-    report = check_config_text(serialize_config(config), base_dir=REPO_ROOT)
+    report = check_config_text(serialize_config(config), base_dir=config_base_dir(config))
     report["text"] = format_check_report(report)
     return report
 
@@ -948,7 +1037,7 @@ def generate_config_with_ai(request: LLMConfigRequest) -> dict[str, Any]:
         ) from exc
 
     generated_config.config_file_path = request.current_config.config_file_path
-    report = check_config_text(ini_text, base_dir=REPO_ROOT)
+    report = check_config_text(ini_text, base_dir=config_base_dir(request.current_config))
     check_text = format_check_report(report)
     if not report.get("ok"):
         raise HTTPException(
@@ -966,6 +1055,14 @@ def generate_config_with_ai(request: LLMConfigRequest) -> dict[str, Any]:
         "check": report,
         "check_text": check_text,
     }
+
+
+@app.get("/api/runs")
+def list_runs() -> dict[str, Any]:
+    current = [run_record_payload(record) for record in runs.values()]
+    history = current + persisted_run_payloads()
+    history.sort(key=lambda item: item.get("started_at") or 0, reverse=True)
+    return {"runs": history}
 
 
 @app.post("/api/runs")

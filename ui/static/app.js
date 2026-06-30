@@ -5,58 +5,12 @@ let browserTarget = null;
 let browserSelect = "file";
 let browserPath = null;
 let browserInsert = "";
+let lastLogText = "";
 
 const $ = (selector, root = document) => root.querySelector(selector);
 const $$ = (selector, root = document) => Array.from(root.querySelectorAll(selector));
 const NOT_USED_TEXT = "not used";
 const NOT_USED_VALUE = "__not_used__";
-const LLM_PROVIDERS = {
-  openai: {
-    baseUrl: "https://api.openai.com/v1/chat/completions",
-    model: "gpt-4.1-mini",
-    requiresKey: true,
-  },
-  deepseek: {
-    baseUrl: "https://api.deepseek.com/chat/completions",
-    model: "deepseek-chat",
-    requiresKey: true,
-  },
-  qwen: {
-    baseUrl: "https://dashscope.aliyuncs.com/compatible-mode/v1/chat/completions",
-    model: "qwen-plus",
-    requiresKey: true,
-  },
-  moonshot: {
-    baseUrl: "https://api.moonshot.cn/v1/chat/completions",
-    model: "moonshot-v1-8k",
-    requiresKey: true,
-  },
-  zhipu: {
-    baseUrl: "https://open.bigmodel.cn/api/paas/v4/chat/completions",
-    model: "glm-4-flash",
-    requiresKey: true,
-  },
-  siliconflow: {
-    baseUrl: "https://api.siliconflow.cn/v1/chat/completions",
-    model: "Qwen/Qwen2.5-72B-Instruct",
-    requiresKey: true,
-  },
-  openrouter: {
-    baseUrl: "https://openrouter.ai/api/v1/chat/completions",
-    model: "openai/gpt-4o-mini",
-    requiresKey: true,
-  },
-  ollama: {
-    baseUrl: "http://127.0.0.1:11434/v1/chat/completions",
-    model: "llama3.1",
-    requiresKey: false,
-  },
-  custom: {
-    baseUrl: "",
-    model: "",
-    requiresKey: false,
-  },
-};
 
 const HELP_TEXT = {
   programName: "User-facing name for this external program block. It is used in logs to identify the program.",
@@ -94,6 +48,10 @@ const NUMBER_OF_POINTS_LABELS = {
   DYNESTY: {
     label: "Number of points (live points)",
     help: "Number of live points used by dynesty nested sampling.",
+  },
+  MULTINEST: {
+    label: "Number of points (live points)",
+    help: "Number of live points used by MultiNest.",
   },
   GRID: {
     label: "Number of points (not used)",
@@ -255,8 +213,8 @@ function scanMethod() {
 function updateTopLevelControls() {
   const method = scanMethod();
   const isOnePointBatch = method === "ONEPOINTBATCH";
-  const supportsRandomSeed = ["RANDOM", "MCMC", "EMCEE"].includes(method);
-  const supportsParallel = ["RANDOM", "GRID", "MCMC", "ONEPOINTBATCH"].includes(method);
+  const supportsRandomSeed = ["RANDOM", "MCMC", "EMCEE", "MULTINEST"].includes(method);
+  const supportsParallel = ["RANDOM", "GRID", "MCMC", "ONEPOINTBATCH", "MULTINEST"].includes(method);
   const parallelThreads = Number(state.parallel_threads || 1);
   const usesParallelFolder = supportsParallel && parallelThreads > 1;
   const batchInput = $('[data-bind="batch_file"]');
@@ -267,12 +225,14 @@ function updateTopLevelControls() {
   const pointsLabel = $("#numberOfPointsLabelText");
   const pointsHelp = $("#numberOfPointsHelp");
   const pointsInput = $('[data-bind="number_of_points"]');
+  const mcmcWalkersInput = $('[data-bind="mcmc_walkers"]');
   const randomSeedInput = $('[data-bind="random_seed"]');
   const parallelThreadsInput = $('[data-bind="parallel_threads"]');
   const parallelFolderInput = $('[data-bind="parallel_folder"]');
   const parallelFolderButton = $('[data-target="parallel_folder"]');
   const pointsText = NUMBER_OF_POINTS_LABELS[method] || NUMBER_OF_POINTS_LABELS.RANDOM;
-  const usesNumberOfPoints = ["RANDOM", "BESTFIT", "MCMC", "EMCEE", "DYNESTY"].includes(method);
+  const usesNumberOfPoints = ["RANDOM", "BESTFIT", "MCMC", "EMCEE", "DYNESTY", "MULTINEST"].includes(method);
+  const usesMcmcWalkers = method === "EMCEE";
 
   setElementDisabled(batchInput, !isOnePointBatch, true);
   setElementDisabled(batchButton, !isOnePointBatch);
@@ -283,6 +243,10 @@ function updateTopLevelControls() {
   setLabelDisabled(pointsLabelContainer, !usesNumberOfPoints);
   if (pointsLabel) pointsLabel.textContent = pointsText.label;
   if (pointsHelp) pointsHelp.dataset.tooltip = pointsText.help;
+
+  setElementDisabled(mcmcWalkersInput, !usesMcmcWalkers, true);
+  setLabelDisabled($("#mcmcWalkersLabel"), !usesMcmcWalkers);
+  setText("#mcmcWalkersLabelText", usesMcmcWalkers ? "MCMC walkers" : "MCMC walkers (not used)");
 
   setElementDisabled(randomSeedInput, !supportsRandomSeed, true);
   setLabelDisabled($("#randomSeedLabel"), !supportsRandomSeed);
@@ -304,8 +268,8 @@ function updateInputParameterHeaders() {
     name: true,
     prior: !["ONEPOINT", "ONEPOINTBATCH"].includes(method),
     value: true,
-    minimum: ["RANDOM", "GRID", "BESTFIT", "MCMC", "EMCEE", "DYNESTY"].includes(method),
-    maximum: ["RANDOM", "GRID", "BESTFIT", "MCMC", "EMCEE", "DYNESTY"].includes(method),
+    minimum: ["RANDOM", "GRID", "BESTFIT", "MCMC", "EMCEE", "DYNESTY", "MULTINEST"].includes(method),
+    maximum: ["RANDOM", "GRID", "BESTFIT", "MCMC", "EMCEE", "DYNESTY", "MULTINEST"].includes(method),
     bins: method === "GRID",
     interval: ["MCMC", "EMCEE"].includes(method),
     initial: ["MCMC", "EMCEE"].includes(method),
@@ -352,8 +316,8 @@ function updateInputParameterRows() {
       name: true,
       prior: !onePointMode,
       value: onePointMode || fixedPrior,
-      minimum: !fixedPrior && ["RANDOM", "GRID", "BESTFIT", "MCMC", "EMCEE", "DYNESTY"].includes(method),
-      maximum: !fixedPrior && ["RANDOM", "GRID", "BESTFIT", "MCMC", "EMCEE", "DYNESTY"].includes(method),
+      minimum: !fixedPrior && ["RANDOM", "GRID", "BESTFIT", "MCMC", "EMCEE", "DYNESTY", "MULTINEST"].includes(method),
+      maximum: !fixedPrior && ["RANDOM", "GRID", "BESTFIT", "MCMC", "EMCEE", "DYNESTY", "MULTINEST"].includes(method),
       bins: !fixedPrior && method === "GRID",
       interval: !fixedPrior && ["MCMC", "EMCEE"].includes(method),
       initial: !fixedPrior && ["MCMC", "EMCEE"].includes(method),
@@ -506,47 +470,66 @@ function renderPrograms() {
   $("#programs").innerHTML = state.programs
     .map(
       (_, i) => `
-        <div class="program-card">
-          <div class="program-header">
-            <h3>Program ${i + 1}</h3>
-            <button class="danger small" data-remove="programs.${i}">Remove Program</button>
+        <details class="program-card" open>
+          <summary class="program-summary">
+            Program ${i + 1}
+          </summary>
+          <div class="program-card-body">
+            <div class="program-header">
+              <h3>Program ${i + 1} settings</h3>
+              <button class="danger small" data-remove="programs.${i}">Remove Program</button>
+            </div>
+            <div class="grid">
+              <label>${labelText("Program name", "programName")}
+                ${input("Program name", `programs.${i}.program_name`)}
+              </label>
+              <label>${labelText("Execute command", "executeCommand")}
+                ${input("Execute command", `programs.${i}.execute_command`)}
+              </label>
+              <label>${labelText("Command path", "commandPath")}
+                <div class="path-row">
+                  ${input("Command path", `programs.${i}.command_path`)}
+                  <button class="icon-button browse" data-target="programs.${i}.command_path" data-select="dir" title="Choose folder">...</button>
+                </div>
+              </label>
+              <label><span class="field-label"><span id="program${i}ExecutorLabelText">Command executor</span> ${helpTip("commandExecutor")}</span>
+                ${select(`programs.${i}.command_executor`, ["", "os.system", "subprocess.popen"])}
+              </label>
+              <label>${labelText("Time limit in minutes", "timeLimit")}
+                ${input("Time limit", `programs.${i}.time_limit`)}
+              </label>
+              <label>${labelText("Clean output file", "cleanOutput")}
+                ${select(`programs.${i}.clean_output`, ["", "Yes", "No"])}
+              </label>
+            </div>
+            ${renderFileRows(i, "input_files", "Input Files", "file")}
+            ${renderVariableRows(i, "input_variables", "Input Variables")}
+            ${renderFileRows(i, "output_files", "Output Files", "file")}
+            ${renderVariableRows(i, "output_variables", "Output Variables")}
+            <div class="subsection">
+              <label>${labelText("Bound", "bound")}
+                <div class="path-row">
+                  <textarea data-field="programs.${i}.bounds" placeholder="Example: x, y, MAX, bounds.dat">${escapeHtml(state.programs[i].bounds)}</textarea>
+                  <button class="icon-button browse" data-target="programs.${i}.bounds" data-select="file" data-insert="bound-file" title="Choose bound file">...</button>
+                </div>
+              </label>
+            </div>
           </div>
-          <div class="grid">
-            <label>${labelText("Program name", "programName")}
-              ${input("Program name", `programs.${i}.program_name`)}
-            </label>
-            <label>${labelText("Execute command", "executeCommand")}
-              ${input("Execute command", `programs.${i}.execute_command`)}
-            </label>
-            <label>${labelText("Command path", "commandPath")}
-              <div class="path-row">
-                ${input("Command path", `programs.${i}.command_path`)}
-                <button class="icon-button browse" data-target="programs.${i}.command_path" data-select="dir" title="Choose folder">...</button>
-              </div>
-            </label>
-            <label><span class="field-label"><span id="program${i}ExecutorLabelText">Command executor</span> ${helpTip("commandExecutor")}</span>
-              ${select(`programs.${i}.command_executor`, ["", "os.system", "subprocess.popen"])}
-            </label>
-            <label>${labelText("Time limit in minutes", "timeLimit")}
-              ${input("Time limit", `programs.${i}.time_limit`)}
-            </label>
-            <label>${labelText("Clean output file", "cleanOutput")}
-              ${select(`programs.${i}.clean_output`, ["", "Yes", "No"])}
-            </label>
-          </div>
-          ${renderFileRows(i, "input_files", "Input Files", "file")}
-          ${renderVariableRows(i, "input_variables", "Input Variables")}
-          ${renderFileRows(i, "output_files", "Output Files", "file")}
-          ${renderVariableRows(i, "output_variables", "Output Variables")}
-          <div class="subsection">
-            <label>${labelText("Bound", "bound")}
-              <div class="path-row">
-                <textarea data-field="programs.${i}.bounds" placeholder="Example: x, y, MAX, bounds.dat">${escapeHtml(state.programs[i].bounds)}</textarea>
-                <button class="icon-button browse" data-target="programs.${i}.bounds" data-select="file" data-insert="bound-file" title="Choose bound file">...</button>
-              </div>
-            </label>
-          </div>
-        </div>
+        </details>
+      `
+    )
+    .join("");
+}
+
+function renderFreeFormChi2() {
+  $("#freeformChi2Body").innerHTML = state.freeform_chi2
+    .map(
+      (_, i) => `
+        <tr>
+          <td>${input("Variable", `freeform_chi2.${i}.variable`)}</td>
+          <td>${input("Name", `freeform_chi2.${i}.label`)}</td>
+          <td><button class="danger small" data-remove="freeform_chi2.${i}">Remove</button></td>
+        </tr>
       `
     )
     .join("");
@@ -590,6 +573,7 @@ function renderAll() {
   renderInputParameters();
   renderPrograms();
   renderGaussian();
+  renderFreeFormChi2();
   renderPlots();
 }
 
@@ -616,7 +600,9 @@ function removePath(path) {
   const parts = path.split(".");
   const index = Number(parts.pop());
   const arr = getPath(parts.join("."));
-  if (Array.isArray(arr) && arr.length > 1) {
+  const root = parts[0];
+  const keepAtLeastOne = ["input_parameters", "programs"].includes(root);
+  if (Array.isArray(arr) && (arr.length > 1 || !keepAtLeastOne)) {
     arr.splice(index, 1);
   }
   rerender();
@@ -629,6 +615,8 @@ function addRow(kind, programIndex = null) {
     state.programs.push(structuredClone(state.programs[0]));
   } else if (kind === "gaussian_constraints") {
     state.gaussian_constraints.push({ variable: "", mean: "", deviation: "", kind: "symm", label: "" });
+  } else if (kind === "freeform_chi2") {
+    state.freeform_chi2.push({ variable: "", label: "" });
   } else if (kind === "plots") {
     state.plots.push({ kind: "Color", x: "", y: "", value: "", figure_name: "" });
   } else if (programIndex !== null) {
@@ -647,51 +635,6 @@ function setConfigFileStatus(message, kind = "") {
   if (!el) return;
   el.textContent = message;
   el.className = `config-status ${kind}`.trim();
-}
-
-function setAiConfigStatus(message, kind = "") {
-  const el = $("#aiConfigStatus");
-  if (!el) return;
-  el.textContent = message;
-  el.className = `config-status ${kind}`.trim();
-}
-
-function allProviderBaseUrls() {
-  return Object.values(LLM_PROVIDERS)
-    .map((item) => item.baseUrl)
-    .filter(Boolean);
-}
-
-function applyLlmProviderDefaults(force = false) {
-  const providerEl = $("#aiProvider");
-  const modelEl = $("#aiModel");
-  const apiKeyEl = $("#aiApiKey");
-  const baseUrlEl = $("#aiBaseUrl");
-  if (!providerEl || !modelEl || !apiKeyEl || !baseUrlEl) return;
-  const defaults = LLM_PROVIDERS[providerEl.value] || LLM_PROVIDERS.custom;
-  if (force || !modelEl.value.trim()) {
-    modelEl.value = defaults.model;
-  }
-  if (force || !baseUrlEl.value.trim() || allProviderBaseUrls().includes(baseUrlEl.value.trim())) {
-    baseUrlEl.value = defaults.baseUrl;
-  }
-  apiKeyEl.disabled = !defaults.requiresKey;
-  apiKeyEl.placeholder = defaults.requiresKey ? "Required" : "Not required";
-  if (!defaults.requiresKey) {
-    apiKeyEl.value = "";
-  }
-}
-
-function detailMessage(detail, fallback) {
-  if (!detail) return fallback;
-  if (typeof detail === "string") return detail;
-  if (detail.message) return detail.message;
-  if (detail.check_text) return detail.check_text;
-  try {
-    return JSON.stringify(detail);
-  } catch {
-    return fallback;
-  }
 }
 
 function showCheckReport(text, ok) {
@@ -753,61 +696,26 @@ async function checkConfig() {
   setConfigFileStatus(payload.ok ? "Config check passed." : "Config check found issues.", payload.ok ? "completed" : "failed");
 }
 
-async function generateConfigWithAI() {
-  const button = $("#aiGenerateConfigBtn");
-  const prompt = $("#aiPrompt")?.value.trim() || "";
-  if (!prompt) {
-    setAiConfigStatus("Enter a natural-language request first.", "failed");
-    return;
+function updateLogBox(text) {
+  const logBox = $("#logBox");
+  if (!logBox) return;
+  const wasNearBottom = logBox.scrollHeight - logBox.scrollTop - logBox.clientHeight < 96;
+  if (text !== lastLogText) {
+    logBox.textContent = text || "";
+    lastLogText = text || "";
   }
-
-  if (button) button.disabled = true;
-  setAiConfigStatus("Generating...");
-  setConfigFileStatus("Generating INI with AI...");
-  const response = await fetch("/api/config/ai/generate", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({
-      provider: $("#aiProvider")?.value || "openai",
-      model: $("#aiModel")?.value.trim() || "",
-      api_key: $("#aiApiKey")?.value.trim() || "",
-      base_url: $("#aiBaseUrl")?.value.trim() || "",
-      prompt,
-      current_config: state,
-    }),
-  });
-  const payload = await response.json().catch(() => ({}));
-  if (!response.ok) {
-    const detail = payload.detail || {};
-    if (detail.check_text) {
-      showCheckReport(detail.check_text, false);
-    } else if (detail.ini) {
-      showCheckReport(detail.ini, false);
-    }
-    const message = detailMessage(detail, "Failed to generate INI.");
-    setAiConfigStatus(message, "failed");
-    setConfigFileStatus(message, "failed");
-    if (button) button.disabled = false;
-    return;
+  if (wasNearBottom || ["queued", "running"].includes(String($("#runStatus")?.textContent || "").toLowerCase())) {
+    requestAnimationFrame(() => {
+      logBox.scrollTop = logBox.scrollHeight;
+    });
   }
-
-  if (payload.config) {
-    const existingPath = state.config_file_path;
-    if (existingPath && !payload.config.config_file_path) {
-      payload.config.config_file_path = existingPath;
-    }
-    replaceState(payload.config);
-  }
-  showCheckReport(payload.check_text || "Config check passed.", payload.check?.ok ?? true);
-  setAiConfigStatus("Generated and loaded into the UI.", "completed");
-  setConfigFileStatus("AI generated config loaded into the UI.", "completed");
-  if (button) button.disabled = false;
 }
 
 async function startRun() {
   $("#runBtn").disabled = true;
   $("#stopBtn").disabled = false;
-  $("#logBox").textContent = "";
+  lastLogText = "";
+  updateLogBox("");
   $("#results").innerHTML = "";
   setStatus("queued");
   const response = await fetch("/api/runs", {
@@ -824,8 +732,9 @@ async function startRun() {
     return;
   }
   activeRunId = payload.run_id;
+  await loadRunHistory();
   pollRun();
-  pollTimer = setInterval(pollRun, 1200);
+  pollTimer = setInterval(pollRun, 800);
 }
 
 async function pollRun() {
@@ -834,13 +743,13 @@ async function pollRun() {
   const payload = await response.json();
   if (!response.ok) return;
   setStatus(payload.status);
-  $("#logBox").textContent = payload.logs || "";
-  $("#logBox").scrollTop = $("#logBox").scrollHeight;
+  updateLogBox(payload.logs || "");
   renderResults(payload.results);
   if (["completed", "failed", "stopped"].includes(payload.status)) {
     clearInterval(pollTimer);
     $("#runBtn").disabled = false;
     $("#stopBtn").disabled = true;
+    await loadRunHistory();
   }
 }
 
@@ -862,6 +771,7 @@ function renderResults(results) {
   const plots = results.plots || [];
   $("#results").innerHTML = `
     <div><strong>Result directory:</strong> ${escapeHtml(results.result_dir || "")}</div>
+    ${results.message ? `<div class="result-message">${escapeHtml(results.message)}</div>` : ""}
     <div class="result-list">
       ${files.map((item) => `<a href="${item.url}" target="_blank">${escapeHtml(item.name)}</a>`).join("")}
     </div>
@@ -878,6 +788,67 @@ function renderResults(results) {
         .join("")}
     </div>
   `;
+}
+
+function formatRunTime(timestamp) {
+  if (!timestamp) return "";
+  return new Date(timestamp * 1000).toLocaleString();
+}
+
+async function loadRunHistory() {
+  const container = $("#runHistory");
+  if (!container) return;
+  const response = await fetch("/api/runs");
+  const payload = await response.json().catch(() => ({}));
+  if (!response.ok) {
+    container.innerHTML = `<div class="history-empty">Can not load run history.</div>`;
+    return;
+  }
+  const runs = payload.runs || [];
+  if (!runs.length) {
+    container.innerHTML = `<div class="history-empty">No runs yet.</div>`;
+    return;
+  }
+  container.innerHTML = `
+    <table class="history-table">
+      <thead>
+        <tr>
+          <th>Run</th>
+          <th>Status</th>
+          <th>Started</th>
+          <th>Result folder</th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody>
+        ${runs
+          .map(
+            (item) => `
+              <tr>
+                <td title="${escapeHtml(item.config_path || "")}">${escapeHtml(item.run_id || "")}</td>
+                <td><span class="status ${escapeHtml(item.status || "")}">${escapeHtml(item.status || "")}</span></td>
+                <td>${escapeHtml(formatRunTime(item.started_at))}</td>
+                <td title="${escapeHtml(item.result_dir || "")}">${escapeHtml(item.result_dir || "")}</td>
+                <td><button class="secondary small" data-view-run="${escapeHtml(item.run_id || "")}">View</button></td>
+              </tr>
+            `
+          )
+          .join("")}
+      </tbody>
+    </table>
+  `;
+}
+
+async function viewRun(runId) {
+  if (!runId) return;
+  activeRunId = runId;
+  const response = await fetch(`/api/runs/${runId}`);
+  const payload = await response.json().catch(() => ({}));
+  if (!response.ok) return;
+  setStatus(payload.status || "completed");
+  lastLogText = "";
+  updateLogBox(payload.logs || "");
+  renderResults(payload.results);
 }
 
 async function openBrowser(target, selectKind, insertMode = "", startPath = null) {
@@ -904,7 +875,10 @@ async function loadBrowser(path = null) {
     .map(
       (entry) => `
         <div class="browser-entry">
-          <div class="entry-name">${entry.is_dir ? "[Folder]" : "[File]"} ${escapeHtml(entry.name)}</div>
+          <div class="entry-name">
+            <span class="entry-icon ${entry.is_dir ? "folder-icon" : "file-icon"}" aria-hidden="true"></span>
+            <span>${escapeHtml(entry.name)}</span>
+          </div>
           <button class="secondary small" data-open-path="${escapeHtml(entry.path)}" ${entry.is_dir ? "" : "disabled"}>Open</button>
           <button class="primary small" data-pick-path="${escapeHtml(entry.path)}" ${entry.selectable ? "" : "disabled"}>Choose</button>
         </div>
@@ -942,26 +916,31 @@ document.addEventListener("click", async (event) => {
     await loadBrowser(button.dataset.openPath);
   } else if (button.dataset.pickPath) {
     await choosePath(button.dataset.pickPath);
+  } else if (button.dataset.viewRun) {
+    await viewRun(button.dataset.viewRun);
   }
 });
 
 $("#addInputParam").addEventListener("click", () => addRow("input_parameters"));
 $("#addProgram").addEventListener("click", () => addRow("programs"));
 $("#addGaussian").addEventListener("click", () => addRow("gaussian_constraints"));
+$("#addFreeFormChi2").addEventListener("click", () => addRow("freeform_chi2"));
 $("#addPlot").addEventListener("click", () => addRow("plots"));
 $("#importConfigBtn").addEventListener("click", importConfig);
 $("#exportConfigBtn").addEventListener("click", exportConfig);
 $("#checkConfigBtn").addEventListener("click", checkConfig);
-$("#aiProvider").addEventListener("change", () => applyLlmProviderDefaults(true));
-$("#aiGenerateConfigBtn").addEventListener("click", generateConfigWithAI);
 $("#runBtn").addEventListener("click", startRun);
 $("#stopBtn").addEventListener("click", stopRun);
+$("#refreshHistoryBtn").addEventListener("click", loadRunHistory);
 $("#closeBrowser").addEventListener("click", () => $("#browserModal").classList.add("hidden"));
 $("#upBtn").addEventListener("click", () => loadBrowser($("#upBtn").dataset.path));
 $("#rootSelect").addEventListener("change", (event) => loadBrowser(event.target.value));
 $("#selectCurrentBtn").addEventListener("click", () => choosePath(browserPath));
 
 bindRootFields();
-applyLlmProviderDefaults(true);
 rerender();
 updateConditionalControls();
+if (window.INITIAL_CONFIG_STATUS?.message) {
+  setConfigFileStatus(window.INITIAL_CONFIG_STATUS.message, window.INITIAL_CONFIG_STATUS.kind || "");
+}
+loadRunHistory();
