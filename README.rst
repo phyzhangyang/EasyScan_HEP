@@ -140,12 +140,12 @@ Local Web UI
 EasyScan_HEP also provides a local single-user Web UI. Start it with the
 same main entrypoint::
 
-    easyscan -ui
+    easyscan --ui
 
 To open the UI with an existing configuration file already loaded, pass
-the ``.ini`` file after ``-ui``::
+the ``.ini`` file after ``--ui``::
 
-    easyscan -ui templates/example_random.ini
+    easyscan --ui templates/example_random.ini
 
 The UI runs at ``http://127.0.0.1:8000/`` and opens the browser
 automatically when possible. Keep the terminal open while using the UI.

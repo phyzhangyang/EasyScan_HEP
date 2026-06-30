@@ -62,6 +62,9 @@ def resolve_ui_config_path(path_value: str | None) -> Path | None:
 
 def run_ui(config_path: str | None = None) -> None:
     configure_import_paths()
+    from easyscan_hep.dependency_check import ensure_runtime_requirements
+
+    ensure_runtime_requirements("ui", config_path)
     initial_config = resolve_ui_config_path(config_path)
     url = "http://127.0.0.1:8000/"
     if initial_config is not None:
@@ -71,8 +74,8 @@ def run_ui(config_path: str | None = None) -> None:
 
     if ui_is_running(url):
         webbrowser.open(url)
-        print("EasyScan_HEP Local UI is already running.")
-        print("Opened %s" % url)
+        print("EasyScan_HEP Local UI is already running.", flush=True)
+        print("Opened %s" % url, flush=True)
         return
 
     try:
@@ -84,10 +87,10 @@ def run_ui(config_path: str | None = None) -> None:
         sys.exit(1)
 
     threading.Thread(target=open_ui_when_ready, args=(url,), daemon=True).start()
-    print("Starting EasyScan_HEP Local UI at %s" % url)
-    print("Keep this terminal open while using the UI.")
-    print("Press Control-C here to stop the server.")
-    print("")
+    print("Starting EasyScan_HEP Local UI at %s" % url, flush=True)
+    print("Keep this terminal open while using the UI.", flush=True)
+    print("Press Control-C here to stop the server.", flush=True)
+    print("", flush=True)
     uvicorn.run("ui.app:app", host="127.0.0.1", port=8000)
 
 
@@ -117,6 +120,15 @@ def print_json(payload) -> None:
     print(json.dumps(payload, indent=2, sort_keys=True, ensure_ascii=False))
 
 
+def print_main_usage() -> None:
+    print("Usage:")
+    print("  easyscan CONFIG.ini [--overwrite replace|backup|stop]")
+    print("  easyscan --ui [config.ini]")
+    print("  easyscan --check CONFIG.ini [--json]")
+    print("  easyscan --run CONFIG.ini [--overwrite replace|backup|stop] [--json]")
+    print("  easyscan --results RESULT_DIR [--json]")
+
+
 def run_results(argv: list[str]) -> None:
     from easyscan_hep.results import format_results_summary, read_results
 
@@ -137,6 +149,7 @@ def run_results(argv: list[str]) -> None:
 
 
 def run_agent_scan(argv: list[str]) -> None:
+    from easyscan_hep.dependency_check import ensure_runtime_requirements
     from easyscan_hep.api import run_config
     from easyscan_hep.results import format_results_summary
 
@@ -152,6 +165,7 @@ def run_agent_scan(argv: list[str]) -> None:
     if not config:
         parser.print_usage()
         sys.exit(1)
+    ensure_runtime_requirements("run", config)
     report = run_config(config, cwd=args.cwd, overwrite=args.overwrite, log_path=args.log)
     if args.json_output:
         report = {key: value for key, value in report.items() if key != "stdout"}
@@ -226,6 +240,9 @@ def apply_overwrite_option(argv: list[str]) -> list[str]:
 
 def run_scan() -> None:
     configure_import_paths()
+    from easyscan_hep.dependency_check import ensure_runtime_requirements
+
+    ensure_runtime_requirements("scan", sys.argv[1] if len(sys.argv) > 1 else None)
 
     # Internal modules are imported only after UI/check handling because
     # initialize.py parses command-line arguments during import.
@@ -446,9 +463,15 @@ def run_scan() -> None:
 
 def main() -> None:
     configure_import_paths()
+    if len(sys.argv) == 1:
+        print_main_usage()
+        sys.exit(1)
+    if sys.argv[1] in ["-h", "--help"]:
+        print_main_usage()
+        sys.exit(0)
     if len(sys.argv) > 1 and sys.argv[1] in ["-ui", "--ui"]:
         if len(sys.argv) > 3:
-            print("Usage: easyscan -ui [config.ini]")
+            print("Usage: easyscan --ui [config.ini]")
             sys.exit(1)
         run_ui(sys.argv[2] if len(sys.argv) == 3 else None)
         return
@@ -464,7 +487,14 @@ def main() -> None:
     if "--run" in sys.argv or "--json" in sys.argv:
         run_agent_scan(sys.argv)
         return
-    sys.argv = apply_overwrite_option(sys.argv)
+    cleaned_argv = apply_overwrite_option(sys.argv)
+    if len(cleaned_argv) == 1:
+        print_main_usage()
+        sys.exit(1)
+    if cleaned_argv[1].startswith("-"):
+        print_main_usage()
+        sys.exit(1)
+    sys.argv = cleaned_argv
     run_scan()
 
 
