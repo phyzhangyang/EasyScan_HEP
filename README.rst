@@ -2,18 +2,18 @@
 EasyScan_HEP
 ============
 
-:EasyScan_HEP: A tool for connecting programs to scan the parameter space of physics models
+:EasyScan_HEP 2: Agent-Ready Parameter Scans for High-Energy Physics
 :Author: Yang Zhang, Liangliang Shang, Yang Xiao, Yuanfang Yue
 :Version: 2.0
 :GitHub: https://github.com/phyzhangyang/EasyScan_HEP
 :Website: https://easyscanhep.hepforge.org
-:Documentation: https://arxiv.org/pdf/2304.03636.pdf
+:Documentation: https://arxiv.org/pdf/2304.03636.pdf  https://arxiv.org/pdf/2607.xxxxx.pdf
 
 
 Installation instructions
 -------------------------
 
-EasyScan_HEP is a Python3 code. The core scan workflow depends on
+The core scan workflow depends on
 *numpy*, *scipy*, *matplotlib* and *pandas*. These core Python
 dependencies are installed automatically when EasyScan_HEP is installed
 with pip. The MultiNest sampler additionally requires the optional
