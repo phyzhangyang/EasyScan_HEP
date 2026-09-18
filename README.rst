@@ -7,7 +7,7 @@ EasyScan_HEP
 :Version: 2.0
 :GitHub: https://github.com/phyzhangyang/EasyScan_HEP
 :Website: https://easyscanhep.hepforge.org
-:Documentation: https://arxiv.org/pdf/2304.03636.pdf  https://arxiv.org/pdf/2607.xxxxx.pdf
+:Documentation: https://arxiv.org/pdf/2304.03636.pdf  https://arxiv.org/pdf/2606.31214 .pdf
 
 
 Overview
